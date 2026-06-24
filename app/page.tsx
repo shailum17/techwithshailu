@@ -1,0 +1,205 @@
+import Link from 'next/link';
+import JobCardsGrid from '@/components/JobCardsGrid';
+import ToolCard from '@/components/ToolCard';
+import HeroSection from '@/components/HeroSection';
+import FadeUp from '@/components/FadeUp';
+
+async function getFeaturedJobs() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/jobs?featured=true`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
+
+async function getFeaturedTools() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/tools?featured=true`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
+
+const roadmaps = [
+  { id: 'frontend',      title: 'Frontend Roadmap',    icon: '🌐', level: 'Beginner',     color: 'text-blue-400',   modules: 12, time: '24h 30m' },
+  { id: 'dsa',           title: 'DSA Path',            icon: '🧩', level: 'Intermediate', color: 'text-yellow-400', modules: 10, time: '30h' },
+  { id: 'backend',       title: 'Backend Roadmap',     icon: '⚙️', level: 'Intermediate', color: 'text-green-400',  modules: 11, time: '28h' },
+  { id: 'system-design', title: 'System Design',       icon: '🏗️', level: 'Advanced',     color: 'text-purple-light', modules: 8, time: '20h' },
+  { id: 'aiml',          title: 'AI/ML Basics',        icon: '🤖', level: 'Beginner',     color: 'text-lime',       modules: 9,  time: '22h' },
+];
+
+const blogPreviews = [
+  { slug: 'goldman-sachs-off-campus-2026',  title: 'Goldman Sachs Off-Campus Drive 2026',        category: 'Jobs',     emoji: '💼', date: 'Jun 20' },
+  { slug: 'best-ai-tools-for-students-2026', title: '15 Best AI Tools for CS Students in 2026',  category: 'AI Tools', emoji: '🤖', date: 'Jun 18' },
+  { slug: 'dsa-roadmap-placements-2026',    title: 'DSA Roadmap for Placements 2026',            category: 'Roadmap',  emoji: '🗺️', date: 'Jun 15' },
+];
+
+const placeholderJobs = [
+  { _id: 'p1', title: 'Software Engineering Intern', company: 'Google',    location: 'Remote',     type: 'Internship' as const, salary: '₹50K–₹80K/mo', tags: ['Python','GCP','ML'],    is_featured: true },
+  { _id: 'p2', title: 'Software Developer Intern',   company: 'Microsoft', location: 'Hyderabad',  type: 'Internship' as const, salary: '₹60K–₹90K/mo', tags: ['C#','Azure','.NET'],    is_featured: true },
+  { _id: 'p3', title: 'SDE Intern',                  company: 'Amazon',    location: 'Bengaluru',  type: 'Internship' as const, salary: '₹45K–₹70K/mo', tags: ['Java','AWS','DSA'],     is_featured: true },
+  { _id: 'p4', title: 'Backend Developer Intern',    company: 'LinkedIn',  location: 'Remote',     type: 'Internship' as const, salary: '₹60K–₹90K/mo', tags: ['Node.js','GraphQL'],    is_featured: true },
+  { _id: 'p5', title: 'SWE Intern',                  company: 'Ola',       location: 'Bengaluru',  type: 'Internship' as const, salary: '₹40K–₹60K/mo', tags: ['React','TypeScript'],   is_featured: false },
+  { _id: 'p6', title: 'Software Intern',             company: 'Paytm',     location: 'Noida',      type: 'Internship' as const, salary: '₹35K–₹55K/mo', tags: ['Java','Spring','SQL'],   is_featured: false },
+];
+
+const placeholderTools = [
+  { name: 'ChatGPT',       description: 'Conversational AI for writing, coding, research and more.', category: 'Writing',      url: 'https://chat.openai.com',   is_free: true,  is_featured: true,  votes: 12400 },
+  { name: 'Midjourney',    description: 'Generate stunning, professional-quality images from text.', category: 'Image',        url: 'https://midjourney.com',    is_free: false, is_featured: true,  votes: 9800 },
+  { name: 'GitHub Copilot',description: 'AI pair programmer that writes code as you type.',          category: 'Coding',       url: 'https://copilot.github.com', is_free: false, is_featured: true,  votes: 8600 },
+  { name: 'Notion AI',     description: 'Smart writing assistant built into your Notion workspace.', category: 'Productivity', url: 'https://notion.so',          is_free: true,  is_featured: true,  votes: 6500 },
+];
+
+export default async function HomePage() {
+  const [featuredJobs, featuredTools] = await Promise.all([getFeaturedJobs(), getFeaturedTools()]);
+  const jobs  = featuredJobs.length  > 0 ? featuredJobs  : placeholderJobs;
+  const tools = featuredTools.length > 0 ? featuredTools : placeholderTools;
+
+  return (
+    <>
+      <HeroSection />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 pb-24">
+
+        {/* ── Latest Jobs ──────────────────────────────────────── */}
+        <section>
+          <FadeUp>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="section-title">Latest Jobs & Internships</h2>
+                <p className="text-gray-400 mt-1 text-sm">
+                  <span className="text-lime font-semibold">128 jobs found</span> — fresh openings for CS students and freshers
+                </p>
+              </div>
+              <Link href="/jobs" className="text-lime hover:text-lime-bright text-sm font-medium transition-colors hidden sm:block">
+                View all →
+              </Link>
+            </div>
+          </FadeUp>
+          <JobCardsGrid jobs={jobs} />
+          <div className="text-center mt-6 sm:hidden">
+            <Link href="/jobs" className="btn-lime">View all jobs →</Link>
+          </div>
+        </section>
+
+        {/* ── Featured AI Tools ────────────────────────────────── */}
+        <section>
+          <FadeUp>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="section-title">Featured AI Tools</h2>
+                <p className="text-gray-400 mt-1 text-sm">Hand-picked tools every CS student should know</p>
+              </div>
+              <Link href="/ai-tools" className="text-lime hover:text-lime-bright text-sm font-medium transition-colors hidden sm:block">
+                View all 124 tools →
+              </Link>
+            </div>
+          </FadeUp>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {tools.slice(0, 4).map((tool: Parameters<typeof ToolCard>[0] & { _id?: string; votes?: number }, i: number) => (
+              <FadeUp key={tool._id || tool.name} delay={i * 0.1}>
+                <ToolCard {...tool} />
+              </FadeUp>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Study Roadmaps ───────────────────────────────────── */}
+        <section>
+          <FadeUp>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="section-title">Study Roadmaps</h2>
+                <p className="text-gray-400 mt-1 text-sm">Step-by-step guides to land your dream tech job</p>
+              </div>
+              <Link href="/resources" className="text-lime hover:text-lime-bright text-sm font-medium transition-colors hidden sm:block">
+                View all →
+              </Link>
+            </div>
+          </FadeUp>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {roadmaps.map(({ id, title, icon, level, color, modules, time }, i) => (
+              <FadeUp key={id} delay={i * 0.08}>
+                <Link href={`/resources/${id}`}>
+                  <div className="glass-card p-5 hover:border-lime/30 transition-all duration-300
+                                  hover:shadow-lime-glow hover:-translate-y-1 cursor-pointer h-full flex flex-col">
+                    <div className="text-3xl mb-3">{icon}</div>
+                    <h3 className="font-poppins font-semibold text-white text-sm mb-1">{title}</h3>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-white/5 w-fit mb-3 ${color}`}>
+                      {level}
+                    </span>
+                    <div className="flex items-center gap-3 text-gray-500 text-xs mt-auto pt-3 border-t border-white/5">
+                      <span>📚 {modules} modules</span>
+                      <span>⏱ {time}</span>
+                    </div>
+                  </div>
+                </Link>
+              </FadeUp>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Latest Blog Posts ────────────────────────────────── */}
+        <section>
+          <FadeUp>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="section-title">Latest Articles</h2>
+                <p className="text-gray-400 mt-1 text-sm">Tips, guides & updates for CS students</p>
+              </div>
+              <Link href="/blog" className="text-lime hover:text-lime-bright text-sm font-medium transition-colors hidden sm:block">
+                View all →
+              </Link>
+            </div>
+          </FadeUp>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {blogPreviews.map(({ slug, title, category, emoji, date }, i) => (
+              <FadeUp key={slug} delay={i * 0.1}>
+                <Link href={`/blog/${slug}`}>
+                  <article className="glass-card p-5 flex flex-col gap-3 h-full
+                                      hover:border-purple-brand/40 transition-all duration-300
+                                      hover:-translate-y-1 hover:shadow-purple-glow cursor-pointer">
+                    <div className="w-full h-28 rounded-xl bg-gradient-to-br from-purple-brand/25 to-dark-card
+                                    flex items-center justify-center text-4xl">
+                      {emoji}
+                    </div>
+                    <span className="tag-lime w-fit">{category}</span>
+                    <h3 className="font-poppins font-semibold text-white text-sm leading-snug
+                                   hover:text-lime transition-colors">
+                      {title}
+                    </h3>
+                    <p className="text-gray-500 text-xs mt-auto">{date} · techwithshailu</p>
+                  </article>
+                </Link>
+              </FadeUp>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Community CTA ────────────────────────────────────── */}
+        <FadeUp>
+          <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-brand/10 via-transparent to-lime/10 pointer-events-none" />
+            <div className="relative z-10">
+              <p className="text-4xl mb-4">💬</p>
+              <h2 className="font-poppins font-bold text-2xl md:text-3xl text-white mb-3">Join the Community</h2>
+              <p className="text-gray-400 max-w-xl mx-auto mb-6 text-sm leading-relaxed">
+                Get daily job updates, interview tips, and AI tool drops directly on WhatsApp & Telegram.
+                1000+ students already in the group!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://t.me/techwithshailu" target="_blank" rel="noopener noreferrer" className="btn-lime px-8 py-3">
+                  📱 Join Telegram
+                </a>
+                <a href="https://instagram.com/techwithshailu" target="_blank" rel="noopener noreferrer" className="btn-purple px-8 py-3">
+                  📸 Follow on Instagram
+                </a>
+              </div>
+            </div>
+          </div>
+        </FadeUp>
+
+      </div>
+    </>
+  );
+}
