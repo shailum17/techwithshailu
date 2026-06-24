@@ -13,7 +13,7 @@ export default function JobsPage({
   searchParams: Promise<{ q?: string; type?: string; location?: string; batch_year?: string; sort?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="min-h-screen" />}>
+    <Suspense fallback={<div className="min-h-screen bg-surface-secondary" />}>
       <JobsContent searchParams={searchParams} />
     </Suspense>
   );

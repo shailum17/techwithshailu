@@ -13,7 +13,7 @@ export default function AIToolsPage({
   searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="min-h-screen" />}>
+    <Suspense fallback={<div className="min-h-screen bg-surface-secondary" />}>
       <AIToolsContent searchParams={searchParams} />
     </Suspense>
   );
