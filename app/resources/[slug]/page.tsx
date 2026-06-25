@@ -112,9 +112,15 @@ const roadmapData: Record<string, RoadmapData> = {
 const allRoadmapsForNav = Object.entries(roadmapData).map(([id, d]) => ({ id, title: d.title }));
 
 const levelColor: Record<string, string> = {
-  Beginner:     'text-green-600 bg-green-50 border-green-200',
-  Intermediate: 'text-amber-600 bg-amber-50 border-amber-200',
-  Advanced:     'text-red-600 bg-red-50 border-red-200',
+  Beginner:     'text-lime border-lime/40',
+  Intermediate: 'text-amber-400 border-amber-400/40',
+  Advanced:     'text-red-400 border-red-400/40',
+};
+
+const levelBg: Record<string, string> = {
+  Beginner:     'rgba(168,230,61,0.1)',
+  Intermediate: 'rgba(245,158,11,0.1)',
+  Advanced:     'rgba(239,68,68,0.1)',
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -136,7 +142,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
   const next = data.nodes.find(n => n.status === 'in-progress');
 
   return (
-    <div className="pt-20 min-h-screen pb-20 bg-surface-secondary">
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-7">
 
@@ -157,20 +163,22 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
             {/* Breadcrumb */}
             <nav className="text-sm text-ink-muted mb-5 flex items-center gap-2 flex-wrap">
               <Link href="/" className="hover:text-lime transition-colors">Home</Link>
-              <span>/</span>
+              <span className="text-ink-faint">/</span>
               <Link href="/resources" className="hover:text-lime transition-colors">Roadmaps</Link>
-              <span>/</span>
+              <span className="text-ink-faint">/</span>
               <span className="text-ink">{data.title}</span>
             </nav>
 
             {/* Header card */}
-            <div className="bg-white border border-surface-border rounded-2xl p-6 md:p-8 shadow-card mb-6">
+            <div className="rounded-2xl p-6 md:p-8 mb-6"
+                 style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
               <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
                 <div>
                   <h1 className="font-poppins font-bold text-2xl md:text-3xl text-ink">{data.title}</h1>
                   <p className="text-ink-muted mt-1">{data.subtitle}</p>
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 ${levelColor[data.level]}`}>
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full border flex-shrink-0 ${levelColor[data.level]}`}
+                      style={{ background: levelBg[data.level] }}>
                   {data.level}
                 </span>
               </div>
@@ -192,7 +200,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
                     <span>{data.completedModules} of {data.modules} modules completed</span>
                     <span className="text-lime font-medium">{pct}%</span>
                   </div>
-                  <div className="h-2 bg-surface-border rounded-full overflow-hidden">
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: '#2A2A2A' }}>
                     <div className="h-full bg-lime rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -201,8 +209,8 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
 
             {/* Next Up panel */}
             {next && (
-              <div className="bg-lime-light border border-lime/30 rounded-2xl p-5 mb-6 flex items-center
-                              justify-between flex-wrap gap-4">
+              <div className="rounded-2xl p-5 mb-6 flex items-center justify-between flex-wrap gap-4"
+                   style={{ background: 'rgba(168,230,61,0.08)', border: '1px solid rgba(168,230,61,0.3)' }}>
                 <div>
                   <p className="text-xs text-lime font-semibold uppercase tracking-wider mb-1">Next Up</p>
                   <h3 className="font-poppins font-bold text-ink">{next.title}</h3>
@@ -219,7 +227,8 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
             <RoadmapTrack nodes={data.nodes} />
 
             {/* Community CTA */}
-            <div className="bg-white border border-surface-border rounded-2xl p-6 text-center mt-8 shadow-card">
+            <div className="rounded-2xl p-6 text-center mt-8"
+                 style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
               <p className="text-ink-muted text-sm mb-4">
                 Following this roadmap? Join our Telegram for daily tips and curated resources.
               </p>

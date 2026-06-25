@@ -36,15 +36,16 @@ export default function CategoryTabs({ categories, active }: CategoryTabsProps) 
             {isActive && (
               <motion.span
                 layoutId="activeTab"
-                className="absolute inset-0 bg-lime rounded-full -z-10"
+                className="absolute inset-0 rounded-full -z-10"
+                style={{ background: '#A8E63D' }}
                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
               />
             )}
             {!isActive && (
-              <span className="absolute inset-0 border border-surface-border rounded-full -z-10
-                               hover:border-ink-faint transition-colors" />
+              <span className="absolute inset-0 rounded-full -z-10 transition-colors"
+                    style={{ border: '1px solid #2A2A2A' }} />
             )}
-            <span className={isActive ? 'text-white font-semibold' : 'text-ink-muted hover:text-ink'}>
+            <span className={isActive ? 'text-black font-semibold' : 'text-ink-muted hover:text-ink'}>
               {cat}
             </span>
           </button>

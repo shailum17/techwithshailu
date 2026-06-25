@@ -31,9 +31,17 @@ ALL_TOOLS.forEach(t => { catCount[t.cat] = (catCount[t.cat] || 0) + 1; });
 const categoryColors: Record<string, string> = {
   Writing:      'text-blue-600 bg-blue-50 border-blue-200',
   Image:        'text-pink-600 bg-pink-50 border-pink-200',
-  Coding:       'text-lime bg-lime-light border-lime/30',
+  Coding:       'text-purple-600 bg-purple-50 border-purple-200',
   Productivity: 'text-amber-600 bg-amber-50 border-amber-200',
   Research:     'text-purple-brand bg-purple-tint border-purple-brand/30',
+};
+
+const categoryAvatarBg: Record<string, string> = {
+  Writing:      'bg-blue-100 text-blue-600',
+  Image:        'bg-pink-100 text-pink-600',
+  Coding:       'bg-purple-100 text-purple-600',
+  Productivity: 'bg-amber-100 text-amber-600',
+  Research:     'bg-purple-tint text-purple-brand',
 };
 
 function ToolCard({ name, desc, cat, url, free, votes, active }: {
@@ -41,6 +49,8 @@ function ToolCard({ name, desc, cat, url, free, votes, active }: {
   free: boolean; votes: number; active: boolean;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [upvoted, setUpvoted] = useState(false);
+  const [localVotes, setLocalVotes] = useState(votes);
 
   const handleTilt = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = cardRef.current;
@@ -53,6 +63,13 @@ function ToolCard({ name, desc, cat, url, free, votes, active }: {
   const resetTilt = () => { if (cardRef.current) cardRef.current.style.transform = ''; };
 
   const colorClass = categoryColors[cat] || 'text-ink-muted bg-surface-tertiary border-surface-border';
+  const avatarClass = categoryAvatarBg[cat] || 'bg-surface-tertiary text-ink-muted';
+
+  const handleUpvote = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (upvoted) { setLocalVotes(v => v - 1); setUpvoted(false); }
+    else { setLocalVotes(v => v + 1); setUpvoted(true); }
+  };
 
   return (
     <div
@@ -60,33 +77,37 @@ function ToolCard({ name, desc, cat, url, free, votes, active }: {
       onMouseMove={handleTilt}
       onMouseLeave={resetTilt}
       style={{ transition: 'transform 0.15s ease, box-shadow 0.25s ease', transformStyle: 'preserve-3d' }}
-      className={`group flex flex-col gap-3 p-4 rounded-2xl bg-white cursor-pointer
-                  border shadow-card transition-colors ${
+      className={`group flex flex-col gap-3 p-4 rounded-2xl cursor-pointer
+                  border shadow-card transition-all duration-300 ${
                     active
                       ? 'border-lime shadow-lime-glow'
-                      : 'border-surface-border hover:border-purple-brand/40 hover:shadow-card-hover'
+                      : 'border-surface-border hover:border-lime/50 hover:shadow-[0_8px_28px_rgba(168,230,61,0.15)]'
                   }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-surface-tertiary border border-surface-border
-                          flex items-center justify-center text-sm font-bold text-ink-muted
-                          group-hover:scale-110 transition-transform flex-shrink-0">
+          {/* Colored avatar bg per category */}
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold
+                          group-hover:scale-110 transition-transform flex-shrink-0 ${avatarClass}`}>
             {name.slice(0, 2)}
           </div>
           <div>
             <p className="text-ink text-sm font-semibold font-poppins group-hover:text-lime transition-colors">
               {name}
             </p>
-            <p className="text-ink-faint text-xs mt-0.5">{(votes / 1000).toFixed(1)}K upvotes</p>
+            {/* Upvote button — clickable */}
+            <button
+              onClick={handleUpvote}
+              className={`flex items-center gap-1 text-xs mt-0.5 transition-colors ${
+                upvoted ? 'text-lime font-semibold' : 'text-ink-faint hover:text-lime'
+              }`}
+            >
+              <span>▲</span>
+              <span>{(localVotes / 1000).toFixed(1)}K</span>
+            </button>
           </div>
         </div>
-        <button className="flex items-center gap-1 text-ink-faint hover:text-lime text-xs
-                           border border-surface-border rounded-lg px-2 py-1
-                           hover:border-lime/30 transition-colors flex-shrink-0">
-          + {Math.round(votes / 100) / 10}K
-        </button>
       </div>
 
       <p className="text-ink-muted text-xs leading-relaxed line-clamp-2">{desc}</p>
@@ -94,16 +115,19 @@ function ToolCard({ name, desc, cat, url, free, votes, active }: {
       <div className="flex flex-wrap gap-1.5">
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${colorClass}`}>{cat}</span>
         {free && (
-          <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full border text-lime bg-lime-light border-lime/30">
             Free
           </span>
         )}
       </div>
 
+      {/* Lime Try Now button */}
       <a href={url} target="_blank" rel="noopener noreferrer"
-         className="btn-lime text-xs py-2 text-center mt-auto"
+         className="text-xs py-2 text-center mt-auto rounded-xl font-semibold transition-all duration-200
+                    hover:shadow-lime-glow active:scale-95"
+         style={{ background: '#A8E63D', color: '#000' }}
          onClick={e => e.stopPropagation()}>
-        Try Now
+        Try Now →
       </a>
     </div>
   );
@@ -129,14 +153,14 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
   };
 
   return (
-    <div className="pt-20 min-h-screen bg-surface-secondary">
+    <div className="pt-20 min-h-screen" style={{ background: '#0A0A0A' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-7">
 
           {/* Sidebar */}
           <aside className="w-full lg:w-60 flex-shrink-0">
-            <div className="bg-white border border-surface-border rounded-2xl p-5
-                            sticky top-24 space-y-6 shadow-card">
+            <div className="rounded-2xl p-5 sticky top-24 space-y-6"
+                 style={{ background: '#111111', border: '1px solid #2A2A2A', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
               <div>
                 <h1 className="font-poppins font-bold text-ink text-base">Discover</h1>
                 <p className="text-ink-muted text-xs mt-1 leading-snug">
@@ -146,7 +170,7 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
 
               {/* Quick filters */}
               <div>
-                <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">Quick Filters</p>
+                <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">Quick Filters</p>
                 {[
                   { label: 'All Tools',    count: ALL_TOOLS.length },
                   { label: 'Trending',     count: 12 },
@@ -164,16 +188,17 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
 
               {/* Categories */}
               <div>
-                <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">Categories</p>
+                <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">Categories</p>
                 {CATEGORIES.map(cat => (
                   <button key={cat}
                     onClick={() => setActiveCategory(cat === activeCategory ? 'All' : cat)}
                     className={`w-full flex items-center justify-between text-sm py-1.5 px-2 rounded-lg
                                 transition-colors text-left ${
                                   activeCategory === cat
-                                    ? 'text-lime bg-lime-light font-medium'
+                                    ? 'text-lime font-medium'
                                     : 'text-ink-muted hover:text-ink hover:bg-surface-hover'
-                                }`}>
+                                }`}
+                    style={activeCategory === cat ? { background: 'rgba(168,230,61,0.08)' } : {}}>
                     <span>{cat}</span>
                     <span className={`text-xs ${activeCategory === cat ? 'text-lime' : 'text-ink-faint'}`}>
                       {catCount[cat] || 0}
@@ -184,7 +209,7 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
 
               {/* Pricing */}
               <div>
-                <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">Pricing</p>
+                <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">Pricing</p>
                 {[
                   { label: 'Free',     count: ALL_TOOLS.filter(t => t.free).length },
                   { label: 'Freemium', count: 34 },
@@ -205,7 +230,7 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
 
               {/* Sort */}
               <div>
-                <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">Sort By</p>
+                <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">Sort By</p>
                 {[
                   { label: 'Most Popular', value: 'popular' },
                   { label: 'Newest',       value: 'newest' },
@@ -215,9 +240,10 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                     onClick={() => setSort(value as typeof sort)}
                     className={`w-full text-left text-sm py-1.5 px-2 rounded-lg transition-colors ${
                       sort === value
-                        ? 'text-lime bg-lime-light font-medium'
+                        ? 'text-lime font-medium'
                         : 'text-ink-muted hover:text-ink hover:bg-surface-hover'
-                    }`}>
+                    }`}
+                    style={sort === value ? { background: 'rgba(168,230,61,0.08)' } : {}}>
                     {label}
                   </button>
                 ))}
@@ -241,9 +267,14 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                   onClick={() => setActiveCategory(cat)}
                   className={`text-sm px-4 py-1.5 rounded-full border transition-all ${
                     activeCategory === cat
-                      ? 'border-lime text-lime bg-lime-light font-semibold'
-                      : 'border-surface-border text-ink-muted hover:border-ink-faint hover:text-ink'
-                  }`}>
+                      ? 'text-lime font-semibold'
+                      : 'text-ink-muted hover:text-ink'
+                  }`}
+                  style={
+                    activeCategory === cat
+                      ? { borderColor: 'rgba(168,230,61,0.5)', background: 'rgba(168,230,61,0.08)' }
+                      : { borderColor: '#2A2A2A', background: 'transparent' }
+                  }>
                   {cat}
                 </button>
               ))}
@@ -259,12 +290,21 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                 </svg>
                 <input type="text" value={q} onChange={e => setQ(e.target.value)}
                   placeholder="Search AI tools..."
-                  className="w-full bg-white border border-surface-border rounded-xl px-4 py-2.5 pl-10
-                             text-ink placeholder-ink-faint text-sm focus:outline-none focus:border-lime/50 shadow-card" />
+                  className="w-full rounded-xl px-4 py-2.5 pl-10 pr-16
+                             text-ink placeholder-ink-faint text-sm focus:outline-none"
+                  style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'rgba(168,230,61,0.5)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2A2A2A')}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint
+                                  rounded px-1.5 py-0.5 font-mono"
+                      style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
+                  ⌘K
+                </span>
               </div>
               <select value={sort} onChange={e => setSort(e.target.value as typeof sort)}
-                className="bg-white border border-surface-border rounded-xl px-4 py-2.5 text-ink
-                           text-sm focus:outline-none focus:border-lime/50 cursor-pointer shadow-card">
+                className="rounded-xl px-4 py-2.5 text-ink text-sm focus:outline-none cursor-pointer"
+                style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
                 <option value="popular">Most Popular</option>
                 <option value="newest">Newest</option>
                 <option value="az">A–Z</option>
@@ -272,7 +312,7 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
             </div>
 
             <p className="text-ink-muted text-sm mb-4">
-              <span className="text-ink font-semibold">{filtered.length}</span> tools found
+              <span className="text-lime font-semibold">{filtered.length}</span> tools found
             </p>
 
             {filtered.length > 0 ? (
@@ -291,7 +331,8 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                 ))}
               </motion.div>
             ) : (
-              <div className="bg-white border border-surface-border rounded-2xl p-12 text-center shadow-card">
+              <div className="rounded-2xl p-12 text-center"
+                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
                 <p className="font-poppins font-semibold text-ink">No tools found</p>
                 <p className="text-ink-muted text-sm mt-1">Try a different search or category</p>
               </div>

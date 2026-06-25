@@ -25,14 +25,14 @@ const containerVariants = {
 };
 const wordVariants = {
   hidden:  { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 const floatingCards = [
-  { title: '200+ Courses',      sub: 'Curated for every skill level',          pos: 'top-28 left-4 xl:left-12',  rotate: -4 },
-  { title: 'Active Community',  sub: 'Connect. Collaborate. Grow.',            pos: 'top-28 right-4 xl:right-12', rotate:  4 },
-  { title: 'Hands-on Projects', sub: 'Build. Ship. Add to portfolio.',         pos: 'bottom-48 left-4 xl:left-16', rotate: 3 },
-  { title: 'Track Progress',    sub: 'Stay consistent. Achieve more.',         pos: 'bottom-48 right-4 xl:right-16', rotate: -3 },
+  { title: '200+ Courses',      sub: 'Curated for every skill level',    pos: 'top-28 left-4 xl:left-12',      rotate: -4 },
+  { title: 'Active Community',  sub: 'Connect. Collaborate. Grow.',      pos: 'top-28 right-4 xl:right-12',    rotate:  4 },
+  { title: 'Hands-on Projects', sub: 'Build. Ship. Add to portfolio.',   pos: 'bottom-48 left-4 xl:left-16',   rotate:  3 },
+  { title: 'Track Progress',    sub: 'Stay consistent. Achieve more.',   pos: 'bottom-48 right-4 xl:right-16', rotate: -3 },
 ];
 
 const statsData = [
@@ -55,22 +55,36 @@ function StatItem({ label, end, suffix, divisor }: typeof statsData[0]) {
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20 bg-white">
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20"
+             style={{ background: '#0A0A0A' }}>
 
       {/* Dot grid */}
-      <div className="hero-bg absolute inset-0 opacity-60 pointer-events-none" />
-      <div className="absolute inset-0 bg-hero-glow pointer-events-none" />
+      <div className="hero-bg absolute inset-0 opacity-40 pointer-events-none" />
 
-      {/* Soft purple blob */}
-      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] bg-purple-tint rounded-full blur-3xl opacity-60 pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-lime-light rounded-full blur-3xl opacity-70 pointer-events-none" />
+      {/* Hero radial glow */}
+      <div className="absolute inset-0 pointer-events-none"
+           style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(168,230,61,0.12), transparent)' }} />
+
+      {/* Purple blob */}
+      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-3xl opacity-20 pointer-events-none"
+           style={{ background: 'rgba(155,127,232,0.4)' }} />
+      {/* Lime blob */}
+      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full blur-3xl opacity-15 pointer-events-none"
+           style={{ background: 'rgba(168,230,61,0.5)' }} />
 
       {/* Floating feature cards — desktop only */}
       {floatingCards.map((c, i) => (
         <motion.div
           key={i}
-          className={`absolute hidden xl:block glass-card px-4 py-3 w-52 ${c.pos}`}
-          style={{ rotate: c.rotate }}
+          className={`absolute hidden xl:block px-4 py-3 w-52 ${c.pos} rounded-2xl`}
+          style={{
+            rotate: c.rotate,
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(168,230,61,0.18)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+          }}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.4 + i * 0.15, duration: 0.5 }}
@@ -88,8 +102,8 @@ export default function HeroSection() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 bg-lime-light border border-lime/30
-                     rounded-full px-4 py-1.5 mb-7"
+          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-7"
+          style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.3)' }}
         >
           <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
           <span className="text-lime text-sm font-medium">Empowering CS Students Worldwide</span>
@@ -97,12 +111,15 @@ export default function HeroSection() {
 
         {/* Staggered headline */}
         <motion.h1
-          className="font-poppins font-bold text-5xl sm:text-6xl md:text-7xl leading-[1.1] mb-5
-                     flex flex-wrap justify-center gap-x-4"
+          className="font-poppins font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.1] mb-5
+                     flex flex-wrap justify-center gap-x-4 relative"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
+          {/* Radial glow behind headline */}
+          <span className="absolute inset-0 pointer-events-none"
+                style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(168,230,61,0.08), transparent)', zIndex: -1 }} />
           {['Learn.', 'Build.'].map(w => (
             <motion.span key={w} variants={wordVariants} className="text-ink">{w}</motion.span>
           ))}
@@ -136,8 +153,9 @@ export default function HeroSection() {
           </MagneticButton>
           <MagneticButton
             href="/resources"
-            className="border border-surface-border text-ink font-semibold px-8 py-3.5 rounded-xl
-                       hover:border-ink-faint hover:bg-surface-hover transition-all duration-200 inline-block text-base"
+            className="inline-block px-8 py-3.5 text-base rounded-xl font-semibold
+                       text-ink-muted hover:text-ink transition-all duration-200"
+            style={{ border: '1px solid #2A2A2A', background: 'transparent' }}
           >
             Explore Roadmaps
           </MagneticButton>
@@ -151,16 +169,17 @@ export default function HeroSection() {
           className="flex items-center justify-center gap-3"
         >
           <div className="flex -space-x-2">
-            {['bg-purple-brand', 'bg-lime', 'bg-blue-400', 'bg-pink-400'].map((bg, i) => (
+            {['bg-purple-brand', 'bg-lime', 'bg-blue-500', 'bg-pink-500'].map((bg, i) => (
               <div key={i}
-                className={`w-8 h-8 rounded-full ${bg} border-2 border-white
-                            flex items-center justify-center text-xs font-bold text-white`}>
+                className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center text-xs font-bold text-black`}
+                style={{ border: '2px solid #0A0A0A' }}>
                 {['A','B','C','D'][i]}
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span className="bg-lime-light text-lime text-xs font-bold px-2 py-0.5 rounded-full border border-lime/30">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(168,230,61,0.12)', color: '#A8E63D', border: '1px solid rgba(168,230,61,0.3)' }}>
               2K+
             </span>
             <span className="text-ink-muted text-sm">CS students learning together</span>
@@ -175,8 +194,8 @@ export default function HeroSection() {
         transition={{ delay: 1.8, duration: 0.5 }}
         className="relative z-10 w-full max-w-3xl mx-auto mt-16 px-4"
       >
-        <div className="bg-white border border-surface-border rounded-2xl shadow-card
-                        px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="rounded-2xl px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6"
+             style={{ background: '#111111', border: '1px solid #2A2A2A', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
           {statsData.map(s => <StatItem key={s.label} {...s} />)}
         </div>
       </motion.div>
@@ -191,7 +210,7 @@ export default function HeroSection() {
         <span className="text-xs tracking-widest uppercase">Scroll</span>
         <motion.div
           animate={{ y: [0, 5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+          transition={{ repeat: Infinity, duration: 1.4 }}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

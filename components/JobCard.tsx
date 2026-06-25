@@ -43,7 +43,7 @@ function Countdown({ deadline }: { deadline: string | Date }) {
   const isUrgent = new Date(deadline).getTime() - Date.now() < 3 * 24 * 3600 * 1000;
 
   return (
-    <p className={`text-xs font-mono mt-2 ${isUrgent ? 'text-red-500' : 'text-ink-faint'}`}>
+    <p className={`text-xs font-mono mt-2 ${isUrgent ? 'text-red-400' : 'text-ink-faint'}`}>
       {timeLeft}
     </p>
   );
@@ -60,16 +60,28 @@ export default function JobCard({
   return (
     <Link href={`/jobs/${_id}`} className="block h-full">
       <article
-        className="group relative bg-white border border-surface-border rounded-2xl p-5
-                   h-full flex flex-col shadow-card
-                   hover:border-lime/40 hover:shadow-card-hover hover:-translate-y-1
-                   transition-all duration-300 cursor-pointer"
+        className="group relative rounded-2xl p-5 h-full flex flex-col cursor-pointer
+                   transition-all duration-300 hover:-translate-y-1"
+        style={{
+          background: '#111111',
+          border: '1px solid #2A2A2A',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,230,61,0.5)';
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(168,230,61,0.12)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = '#2A2A2A';
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)';
+        }}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-surface-tertiary border border-surface-border
-                          flex items-center justify-center text-lime font-bold text-sm font-poppins
-                          flex-shrink-0 group-hover:bg-lime-light transition-colors">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center
+                          text-lime font-bold text-sm font-poppins flex-shrink-0
+                          group-hover:scale-105 transition-transform"
+               style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.2)' }}>
             {company.slice(0, 2).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
@@ -79,19 +91,25 @@ export default function JobCard({
             </h3>
             <p className="text-ink-muted text-xs mt-0.5 truncate">{company}</p>
           </div>
-          {jobIsNew
-            ? <span className="badge-new flex-shrink-0">NEW</span>
-            : is_featured
-              ? <span className="badge-featured flex-shrink-0">TOP</span>
-              : null
-          }
+          {jobIsNew ? (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide flex-shrink-0"
+                  style={{ background: '#A8E63D', color: '#000' }}>NEW</span>
+          ) : is_featured ? (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide flex-shrink-0"
+                  style={{ background: '#A8E63D', color: '#000' }}>TOP</span>
+          ) : null}
         </div>
 
         {/* Badges */}
         <div className="flex flex-wrap gap-2 mb-3">
           <span className="tag-lime">{type}</span>
           {location.toLowerCase().includes('remote') && <span className="tag-lime">Remote</span>}
-          {salary && <span className="tag-purple">{salary}</span>}
+          {salary && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ background: 'rgba(155,127,232,0.15)', color: '#B49EF0', border: '1px solid rgba(155,127,232,0.3)' }}>
+              {salary}
+            </span>
+          )}
         </div>
 
         {/* Location + batch */}
@@ -108,11 +126,12 @@ export default function JobCard({
 
         {/* Skill tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-auto pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap gap-1.5 mt-auto pt-3"
+               style={{ borderTop: '1px solid #2A2A2A' }}>
             {tags.slice(0, 4).map(tag => (
               <span key={tag}
-                className="text-xs text-ink-muted bg-surface-tertiary px-2 py-0.5 rounded-md
-                           hover:bg-lime-light hover:text-lime transition-colors cursor-default">
+                className="text-xs text-ink-faint px-2 py-0.5 rounded-md transition-colors hover:text-lime"
+                style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
                 {tag}
               </span>
             ))}

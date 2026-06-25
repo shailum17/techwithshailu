@@ -12,7 +12,7 @@ interface Props {
 }
 
 function DonutChart({ pct }: { pct: number }) {
-  const r  = 44;
+  const r  = 42;
   const cx = 56;
   const cy = 56;
   const circumference = 2 * Math.PI * r;
@@ -21,22 +21,24 @@ function DonutChart({ pct }: { pct: number }) {
   return (
     <div className="flex flex-col items-center">
       <svg width="112" height="112" viewBox="0 0 112 112">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E5E7EB" strokeWidth="10" />
+        {/* Track */}
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#2A2A2A" strokeWidth="8" />
+        {/* Active arc */}
         <circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke="#5C9E00"
-          strokeWidth="10"
+          stroke="#A8E63D"
+          strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${circumference}`}
           strokeDashoffset={circumference * 0.25}
-          style={{ transition: 'stroke-dasharray 0.8s ease' }}
+          style={{ transition: 'stroke-dasharray 0.8s ease', filter: 'drop-shadow(0 0 6px rgba(168,230,61,0.5))' }}
         />
-        <text x={cx} y={cy - 6} textAnchor="middle" fill="#111827"
-          fontSize="18" fontWeight="700" fontFamily="Poppins, sans-serif">
+        <text x={cx} y={cy - 5} textAnchor="middle" fill="#F0F0F0"
+          fontSize="20" fontWeight="800" fontFamily="Poppins, sans-serif">
           {pct}%
         </text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fill="#9CA3AF" fontSize="10">
+        <text x={cx} y={cy + 14} textAnchor="middle" fill="#606060" fontSize="10" fontFamily="Poppins, sans-serif">
           Progress
         </text>
       </svg>
@@ -51,20 +53,24 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
   const activeDays = [0, 1, 2, 3, 4];
 
   return (
-    <div className="glass-card p-5 sticky top-24 space-y-6">
+    <div className="rounded-2xl p-5 sticky top-24 space-y-6"
+         style={{ background: '#111111', border: '1px solid #2A2A2A', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
       <DonutChart pct={pct} />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-lime-light border border-lime/20 rounded-xl py-2">
-          <p className="font-poppins font-bold text-lime text-base">{totalCompleted || 24}</p>
+        <div className="rounded-xl py-2"
+             style={{ background: 'rgba(168,230,61,0.08)', border: '1px solid rgba(168,230,61,0.2)' }}>
+          <p className="font-poppins font-bold text-base text-lime">{totalCompleted || 24}</p>
           <p className="text-ink-muted text-xs mt-0.5">Done</p>
         </div>
-        <div className="bg-purple-tint border border-purple-brand/20 rounded-xl py-2">
+        <div className="rounded-xl py-2"
+             style={{ background: 'rgba(155,127,232,0.08)', border: '1px solid rgba(155,127,232,0.2)' }}>
           <p className="font-poppins font-bold text-purple-brand text-base">{inProgress || 8}</p>
           <p className="text-ink-muted text-xs mt-0.5">Active</p>
         </div>
-        <div className="bg-surface-tertiary border border-surface-border rounded-xl py-2">
+        <div className="rounded-xl py-2"
+             style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
           <p className="font-poppins font-bold text-ink text-base">{remaining || 12}</p>
           <p className="text-ink-muted text-xs mt-0.5">Left</p>
         </div>
@@ -72,7 +78,7 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
 
       {/* Roadmap nav */}
       <div>
-        <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">
+        <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">
           Roadmap Paths
         </p>
         {roadmaps.map(({ id, title }) => {
@@ -81,9 +87,10 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
             <Link key={id} href={`/resources/${id}`}
               className={`flex items-center gap-2 py-1.5 px-2 rounded-lg text-sm transition-colors ${
                 isActive
-                  ? 'text-lime bg-lime-light font-medium'
+                  ? 'text-lime font-medium'
                   : 'text-ink-muted hover:text-ink hover:bg-surface-hover'
-              }`}>
+              }`}
+              style={isActive ? { background: 'rgba(168,230,61,0.08)' } : {}}>
               <span className="truncate">{title}</span>
               {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-lime flex-shrink-0" />}
             </Link>
@@ -91,20 +98,22 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
         })}
       </div>
 
-      {/* Streak widget */}
-      <div className="bg-surface-tertiary border border-surface-border rounded-xl p-4">
+      {/* Streak */}
+      <div className="rounded-xl p-4"
+           style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
         <div className="mb-3">
-          <p className="text-ink font-semibold text-sm font-poppins">7 Day Streak</p>
+          <p className="text-ink font-semibold text-sm font-poppins">7 Day Streak 🔥</p>
           <p className="text-ink-muted text-xs">Keep it up!</p>
         </div>
         <div className="flex gap-1.5 justify-between">
           {weekDays.map((d, i) => (
             <div key={i} className="flex flex-col items-center gap-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                activeDays.includes(i)
-                  ? 'bg-lime text-white'
-                  : 'bg-surface-border text-ink-faint'
-              }`}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                   style={
+                     activeDays.includes(i)
+                       ? { background: '#A8E63D', color: '#000' }
+                       : { background: '#2A2A2A', color: '#606060' }
+                   }>
                 {activeDays.includes(i) ? '✓' : ''}
               </div>
               <span className="text-ink-faint text-xs">{d}</span>

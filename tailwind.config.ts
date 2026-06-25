@@ -8,32 +8,32 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand — kept same hues, adapted for light theme
+        // Brand — lime stays vivid on dark
         lime: {
-          DEFAULT: '#5C9E00',  // darker for readable text on white
-          bright:  '#6BBF00',
-          light:   '#EEF9D9',  // light tint for backgrounds
-          tag:     '#E8F5D0',
+          DEFAULT: '#A8E63D',   // bright lime for dark bg
+          bright:  '#BFFF4F',
+          light:   '#1A2A00',   // dark tint for backgrounds / tags
+          tag:     '#1E3000',
         },
         purple: {
-          brand: '#6A4CC3',
-          light: '#8B6FD9',
-          dark:  '#4E38A0',
-          tint:  '#F0ECFB',    // light tint for backgrounds
+          brand: '#9B7FE8',
+          light: '#B49EF0',
+          dark:  '#7A5FD0',
+          tint:  '#1E1540',    // dark tint
         },
-        // Light theme surfaces
+        // Dark theme surfaces
         surface: {
-          DEFAULT: '#FFFFFF',
-          secondary: '#F8F9FA',
-          tertiary:  '#F1F3F5',
-          border:    '#E5E7EB',
-          hover:     '#F3F4F6',
+          DEFAULT:   '#111111',
+          secondary: '#0A0A0A',
+          tertiary:  '#1A1A1A',
+          border:    '#2A2A2A',
+          hover:     '#222222',
         },
-        // Text
+        // Text on dark
         ink: {
-          DEFAULT: '#111827',  // near-black
-          muted:   '#6B7280',
-          faint:   '#9CA3AF',
+          DEFAULT: '#F0F0F0',
+          muted:   '#A0A0A0',
+          faint:   '#606060',
         },
       },
       fontFamily: {
@@ -42,14 +42,14 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(92,158,0,0.08), transparent)',
+        'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(168,230,61,0.12), transparent)',
       },
       boxShadow: {
-        'lime-glow':   '0 0 20px rgba(92, 158, 0, 0.2)',
-        'purple-glow': '0 0 20px rgba(106, 76, 195, 0.2)',
-        'card':        '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-        'card-hover':  '0 4px 16px rgba(0,0,0,0.10)',
-        'glass':       '0 1px 3px rgba(0,0,0,0.08)',
+        'lime-glow':   '0 0 24px rgba(168,230,61,0.35)',
+        'purple-glow': '0 0 24px rgba(155,127,232,0.35)',
+        'card':        '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
+        'card-hover':  '0 4px 20px rgba(0,0,0,0.6)',
+        'glass':       '0 1px 3px rgba(0,0,0,0.5)',
       },
     },
   },

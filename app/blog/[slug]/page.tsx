@@ -50,7 +50,7 @@ const posts: Record<string, {
     category: 'Roadmap', date: 'June 15, 2026', readTime: '8 min read',
     content: `
       <h2>Why DSA Matters for Placements</h2>
-      <p>Almost every product company — Google, Amazon, Flipkart, Razorpay — tests DSA in their first round. Without strong fundamentals, you will not make it to the interview stage.</p>
+      <p>Almost every product company tests DSA in their first round. Without strong fundamentals, you will not make it to the interview stage.</p>
       <h2>3-Month Plan</h2>
       <ul>
         <li><strong>Month 1:</strong> Arrays, Strings, Linked Lists, Stacks, Queues</li>
@@ -70,9 +70,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 const categoryColor: Record<string, string> = {
-  Jobs:     'text-lime bg-lime-light border-lime/30',
-  'AI Tools': 'text-blue-600 bg-blue-50 border-blue-200',
-  Roadmap:  'text-amber-600 bg-amber-50 border-amber-200',
+  Jobs:       'text-lime border-lime/30',
+  'AI Tools': 'text-blue-400 border-blue-400/30',
+  Roadmap:    'text-amber-400 border-amber-400/30',
+};
+const categoryBg: Record<string, string> = {
+  Jobs: 'rgba(168,230,61,0.08)', 'AI Tools': 'rgba(96,165,250,0.08)', Roadmap: 'rgba(251,191,36,0.08)',
 };
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -81,22 +84,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   return (
-    <div className="pt-20 pb-20 min-h-screen bg-surface-secondary">
+    <div className="pt-20 pb-20 min-h-screen" style={{ background: '#0A0A0A' }}>
       <ReadingProgress />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Breadcrumb */}
         <nav className="text-sm text-ink-muted mb-6 flex items-center gap-2">
           <Link href="/" className="hover:text-lime transition-colors">Home</Link>
-          <span>/</span>
+          <span className="text-ink-faint">/</span>
           <Link href="/blog" className="hover:text-lime transition-colors">Blog</Link>
-          <span>/</span>
+          <span className="text-ink-faint">/</span>
           <span className="text-ink truncate">{post.title}</span>
         </nav>
 
         {/* Post header */}
         <div className="mb-8">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border mb-3 inline-block ${categoryColor[post.category]}`}>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border mb-3 inline-block ${categoryColor[post.category]}`}
+                style={{ background: categoryBg[post.category] }}>
             {post.category}
           </span>
           <h1 className="font-poppins font-bold text-2xl md:text-3xl text-ink leading-tight mb-4">
@@ -107,24 +111,32 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <span>·</span>
             <span>{post.date}</span>
             <span>·</span>
-            <span>{post.readTime}</span>
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {post.readTime}
+            </span>
           </div>
         </div>
 
         {/* Content */}
         <div
-          className="bg-white border border-surface-border rounded-2xl p-6 md:p-8 shadow-card
-                     prose prose-sm max-w-none
+          className="rounded-2xl p-6 md:p-8 mb-8
+                     prose prose-sm max-w-none prose-invert
                      prose-headings:font-poppins prose-headings:text-ink
-                     prose-headings:border-b prose-headings:border-surface-border prose-headings:pb-2
+                     prose-headings:pb-2 prose-headings:mb-4
                      prose-p:text-ink-muted prose-li:text-ink-muted
                      prose-strong:text-ink prose-a:text-lime prose-a:no-underline
                      hover:prose-a:underline"
+          style={{ background: '#111111', border: '1px solid #2A2A2A' }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {/* CTA */}
-        <div className="bg-white border border-surface-border rounded-2xl p-6 text-center mt-8 shadow-card">
+        <div className="rounded-2xl p-6 text-center"
+             style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
           <p className="text-ink-muted text-sm mb-4">
             Want more articles like this? Join our Telegram channel for daily updates.
           </p>

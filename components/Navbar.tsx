@@ -5,18 +5,16 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-/* ── Resource dropdown items ────────────────────────────────── */
 const resourceLinks = [
   { href: '/resources',                label: 'All Roadmaps',      sub: 'View every learning path',          color: 'text-lime' },
-  { href: '/resources/frontend',       label: 'Frontend Roadmap',  sub: 'HTML → CSS → React → Next.js',      color: 'text-blue-600' },
-  { href: '/resources/dsa',            label: 'DSA Path',          sub: 'Arrays to DP — crack placements',    color: 'text-amber-600' },
-  { href: '/resources/backend',        label: 'Backend Roadmap',   sub: 'Node.js → APIs → MongoDB → Cloud',   color: 'text-green-600' },
+  { href: '/resources/frontend',       label: 'Frontend Roadmap',  sub: 'HTML → CSS → React → Next.js',      color: 'text-blue-400' },
+  { href: '/resources/dsa',            label: 'DSA Path',          sub: 'Arrays to DP — crack placements',    color: 'text-amber-400' },
+  { href: '/resources/backend',        label: 'Backend Roadmap',   sub: 'Node.js → APIs → MongoDB → Cloud',   color: 'text-green-400' },
   { href: '/resources/system-design',  label: 'System Design',     sub: 'Design scalable systems',            color: 'text-purple-brand' },
   { href: '/resources/aiml',           label: 'AI / ML Basics',    sub: 'Python → Scikit-learn → Deploy',     color: 'text-lime' },
-  { href: '/resources/devops',         label: 'DevOps Roadmap',    sub: 'Linux → Docker → Kubernetes',        color: 'text-orange-500' },
+  { href: '/resources/devops',         label: 'DevOps Roadmap',    sub: 'Linux → Docker → Kubernetes',        color: 'text-orange-400' },
 ];
 
-/* ── Top-level nav links ────────────────────────────────────── */
 const navLinks = [
   { href: '/',         label: 'Home' },
   { href: '/jobs',     label: 'Jobs' },
@@ -24,13 +22,11 @@ const navLinks = [
   { href: '/blog',     label: 'Blog' },
 ];
 
-/* ── Dropdown component ─────────────────────────────────────── */
 function ResourcesDropdown({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
   const ref  = useRef<HTMLLIElement>(null);
   const isActive = pathname.startsWith('/resources');
 
-  /* Close on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -39,7 +35,6 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  /* Close on route change */
   useEffect(() => { setOpen(false); }, [pathname]);
 
   return (
@@ -59,8 +54,6 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </motion.svg>
-
-        {/* Active underline */}
         {isActive && (
           <motion.span
             layoutId="navUnderline"
@@ -69,21 +62,25 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
         )}
       </button>
 
-      {/* Dropdown panel */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            transition={{ duration: 0.18 }}
             className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72
-                       bg-white border border-surface-border rounded-2xl shadow-card-hover
-                       overflow-hidden z-50"
+                       rounded-2xl overflow-hidden z-50"
+            style={{
+              background: '#161616',
+              border: '1px solid #2A2A2A',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            }}
           >
             {/* Arrow */}
             <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3
-                            bg-white border-l border-t border-surface-border rotate-45" />
+                            rotate-45"
+                 style={{ background: '#161616', borderLeft: '1px solid #2A2A2A', borderTop: '1px solid #2A2A2A' }} />
 
             <div className="py-2">
               {resourceLinks.map(({ href, label, sub, color }, i) => {
@@ -93,17 +90,22 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
                   <Link
                     key={href}
                     href={href}
-                    className={`flex items-start gap-3 px-4 py-2.5 transition-colors group
-                                ${isItemActive ? 'bg-lime-light' : 'hover:bg-surface-hover'}
-                                ${isFirst ? 'border-b border-surface-border mb-1' : ''}`}
+                    className={`flex items-start gap-3 px-4 py-2.5 transition-colors group ${
+                      isFirst ? 'mb-1' : ''
+                    }`}
+                    style={{
+                      background: isItemActive ? 'rgba(168,230,61,0.08)' : undefined,
+                      borderBottom: isFirst ? '1px solid #2A2A2A' : undefined,
+                    }}
+                    onMouseEnter={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = '#1E1E1E'; }}
+                    onMouseLeave={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = ''; }}
                   >
-                    {/* Colour dot */}
                     <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
                       isItemActive ? 'bg-lime' : `${color.replace('text-', 'bg-')} opacity-70`
                     }`} />
                     <div>
                       <p className={`text-sm font-medium transition-colors ${
-                        isItemActive ? 'text-lime' : `group-hover:${color} text-ink`
+                        isItemActive ? 'text-lime' : 'text-ink group-hover:text-lime'
                       }`}>
                         {label}
                       </p>
@@ -120,7 +122,6 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
   );
 }
 
-/* ── Main Navbar ────────────────────────────────────────────── */
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen,  setMenuOpen]  = useState(false);
@@ -136,11 +137,18 @@ export default function Navbar() {
   useEffect(() => { setMenuOpen(false); setMobileResourcesOpen(false); }, [pathname]);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled
-        ? 'bg-white/95 backdrop-blur-md border-b border-surface-border shadow-card py-3'
-        : 'bg-white/80 backdrop-blur-sm border-b border-surface-border py-4'
-    }`}>
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'py-3' : 'py-4'
+      }`}
+      style={{
+        background: scrolled ? 'rgba(10,10,10,0.96)' : 'rgba(10,10,10,0.80)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid #2A2A2A',
+        boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.5)' : 'none',
+      }}
+    >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
 
         {/* Logo */}
@@ -170,8 +178,6 @@ export default function Navbar() {
               </li>
             );
           })}
-
-          {/* Resources dropdown */}
           <ResourcesDropdown pathname={pathname} />
         </ul>
 
@@ -179,8 +185,11 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           <Link href="/jobs"
             className="flex items-center gap-1.5 text-ink-muted hover:text-ink text-sm
-                       bg-surface-tertiary border border-surface-border rounded-lg px-3 py-1.5
-                       transition-colors hover:border-ink-faint">
+                       rounded-lg px-3 py-1.5 transition-colors"
+            style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#3A3A3A'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#2A2A2A'}
+          >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z" />
@@ -207,7 +216,7 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* ── Mobile menu ── */}
+      {/* Mobile menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -215,12 +224,11 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="md:hidden overflow-hidden bg-white border-b border-surface-border px-4 pb-4"
+            transition={{ duration: 0.22 }}
+            className="md:hidden overflow-hidden px-4 pb-4"
+            style={{ background: '#0F0F0F', borderBottom: '1px solid #2A2A2A' }}
           >
             <ul className="flex flex-col gap-1 pt-3">
-
-              {/* Regular links */}
               {navLinks.map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href}
@@ -234,7 +242,6 @@ export default function Navbar() {
                 </li>
               ))}
 
-              {/* Mobile Resources accordion */}
               <li>
                 <button
                   onClick={() => setMobileResourcesOpen(!mobileResourcesOpen)}
@@ -263,7 +270,8 @@ export default function Navbar() {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.18 }}
-                      className="overflow-hidden ml-3 mt-1 border-l-2 border-surface-border pl-3 space-y-0.5"
+                      className="overflow-hidden ml-3 mt-1 pl-3 space-y-0.5"
+                      style={{ borderLeft: '2px solid #2A2A2A' }}
                     >
                       {resourceLinks.map(({ href, label, color }) => (
                         <li key={href}>

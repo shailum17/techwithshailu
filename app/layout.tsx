@@ -42,8 +42,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${poppins.variable} ${outfit.variable}`}>
-      <body className="bg-surface-secondary text-ink font-outfit antialiased">
+    <html lang="en" className={`${poppins.variable} ${outfit.variable}`} suppressHydrationWarning>
+      <body className="bg-surface-secondary text-ink font-outfit antialiased min-h-screen">
         <CursorGlow />
         <Navbar />
         <main>{children}</main>

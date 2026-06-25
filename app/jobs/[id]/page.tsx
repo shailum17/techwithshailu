@@ -4,18 +4,9 @@ import { notFound } from 'next/navigation';
 import CopyLinkButton from '@/components/CopyLinkButton';
 
 interface JobDetail {
-  _id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: string;
-  salary?: string;
-  batch_year?: number;
-  deadline?: string;
-  description: string;
-  apply_link: string;
-  tags?: string[];
-  createdAt?: string;
+  _id: string; title: string; company: string; location: string; type: string;
+  salary?: string; batch_year?: number; deadline?: string; description: string;
+  apply_link: string; tags?: string[]; createdAt?: string;
 }
 
 const placeholderJobs: JobDetail[] = [
@@ -26,7 +17,7 @@ const placeholderJobs: JobDetail[] = [
     tags: ['Python','ML','GCP'],
     description: `
       <h2>About the Company</h2>
-      <p>Google LLC is a global technology company specialising in search, online advertising, cloud computing, AI, and consumer electronics. Working at Google means building for billions of users worldwide.</p>
+      <p>Google LLC is a global technology company specialising in search, online advertising, cloud computing, AI, and consumer electronics.</p>
       <h2>Responsibilities</h2>
       <ul>
         <li>Work on live projects that impact millions of users globally.</li>
@@ -50,7 +41,7 @@ const placeholderJobs: JobDetail[] = [
     tags: ['Node.js','GraphQL','AWS'],
     description: `
       <h2>About the Company</h2>
-      <p>Razorpay is India's leading payment solutions company, powering transactions for 8 million businesses. We are on a mission to revolutionise money movement for businesses of all sizes.</p>
+      <p>Razorpay is India's leading payment solutions company, powering transactions for 8 million businesses.</p>
       <h2>Responsibilities</h2>
       <ul>
         <li>Build and maintain high-performance backend APIs serving millions of transactions.</li>
@@ -99,34 +90,38 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const job     = await getJob(id);
   if (!job) notFound();
 
-  const deadline     = job.deadline ? new Date(job.deadline) : null;
+  const deadline      = job.deadline ? new Date(job.deadline) : null;
   const postedDaysAgo = job.createdAt
     ? Math.floor((Date.now() - new Date(job.createdAt).getTime()) / 86_400_000)
     : 2;
 
   return (
-    <div className="pt-20 min-h-screen pb-20 bg-surface-secondary">
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
 
       {/* Company banner */}
-      <div className="w-full h-48 md:h-60 bg-gradient-to-br from-surface-tertiary to-white
-                      border-b border-surface-border relative overflow-hidden">
+      <div className="w-full h-48 md:h-60 relative overflow-hidden"
+           style={{ background: 'linear-gradient(135deg, #111111 0%, #1A1A1A 100%)', borderBottom: '1px solid #2A2A2A' }}>
         {/* Decorative lines */}
-        <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 opacity-30">
           <div className="absolute top-1/3 left-1/4 w-80 h-px bg-lime rotate-6" />
           <div className="absolute top-1/2 right-1/3 w-60 h-px bg-purple-brand -rotate-3" />
         </div>
+        {/* Subtle glow */}
+        <div className="absolute inset-0 pointer-events-none"
+             style={{ background: 'radial-gradient(ellipse 60% 80% at 30% 50%, rgba(168,230,61,0.05), transparent)' }} />
 
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-5 flex items-end gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-surface-border shadow-card
-                          flex items-center justify-center text-lime font-bold text-lg font-poppins flex-shrink-0">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center
+                          text-lime font-bold text-lg font-poppins flex-shrink-0"
+               style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.25)' }}>
             {job.company.slice(0, 2).toUpperCase()}
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <p className="text-ink font-poppins font-semibold text-base">{job.company}</p>
-              <span className="text-xs bg-amber-50 text-amber-600 border border-amber-200
-                               px-2 py-0.5 rounded-full font-medium">
-                4.6 Rating
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium text-amber-400 border border-amber-400/30"
+                    style={{ background: 'rgba(251,191,36,0.1)' }}>
+                4.6 ★
               </span>
             </div>
             <h1 className="font-poppins font-bold text-xl md:text-3xl text-ink">{job.title}</h1>
@@ -139,9 +134,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         {/* Breadcrumb */}
         <nav className="text-sm text-ink-muted mb-5 flex items-center gap-2 flex-wrap">
           <Link href="/" className="hover:text-lime transition-colors">Home</Link>
-          <span>/</span>
+          <span className="text-ink-faint">/</span>
           <Link href="/jobs" className="hover:text-lime transition-colors">Jobs</Link>
-          <span>/</span>
+          <span className="text-ink-faint">/</span>
           <span className="text-ink truncate">{job.title}</span>
         </nav>
 
@@ -156,8 +151,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           </span>
           <span className="tag-lime">{job.type}</span>
           {job.location.toLowerCase().includes('remote') && <span className="tag-lime">Remote</span>}
-          <span className="text-xs bg-purple-tint text-purple-brand border border-purple-brand/30
-                           px-2.5 py-1 rounded-full">
+          <span className="text-xs px-2.5 py-1 rounded-full text-purple-brand border border-purple-brand/30"
+                style={{ background: 'rgba(155,127,232,0.1)' }}>
             Posted {postedDaysAgo} day{postedDaysAgo !== 1 ? 's' : ''} ago
           </span>
           {deadline && (
@@ -175,19 +170,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
           {/* Left panel */}
           <div className="flex-1 min-w-0">
-            <div className="bg-white border border-surface-border rounded-2xl p-6 md:p-8 shadow-card">
+            <div className="rounded-2xl p-6 md:p-8"
+                 style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
               <div
-                className="prose prose-sm max-w-none
+                className="prose prose-sm max-w-none prose-invert
                            prose-headings:font-poppins prose-headings:text-ink prose-headings:mt-6
-                           prose-headings:border-b prose-headings:border-purple-brand/15 prose-headings:pb-2
+                           prose-headings:pb-2 prose-headings:mb-4
                            prose-p:text-ink-muted prose-li:text-ink-muted prose-strong:text-ink
-                           prose-a:text-lime"
+                           prose-a:text-lime prose-a:no-underline hover:prose-a:underline"
                 dangerouslySetInnerHTML={{ __html: job.description }}
               />
 
               {/* Tags */}
               {job.tags && job.tags.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-surface-border">
+                <div className="mt-8 pt-6" style={{ borderTop: '1px solid #2A2A2A' }}>
                   <p className="text-sm font-semibold text-ink mb-3 font-poppins">Skills Required</p>
                   <div className="flex flex-wrap gap-2">
                     {job.tags.map(tag => <span key={tag} className="tag-lime">{tag}</span>)}
@@ -196,14 +192,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               )}
 
               {/* Share */}
-              <div className="mt-6 pt-6 border-t border-surface-border">
+              <div className="mt-6 pt-6" style={{ borderTop: '1px solid #2A2A2A' }}>
                 <p className="text-sm font-medium text-ink-muted mb-3">Share this job</p>
                 <div className="flex gap-2 flex-wrap">
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(`${job.title} at ${job.company} — ${process.env.NEXT_PUBLIC_APP_URL || 'https://techwithshailu.in'}/jobs/${job._id}`)}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-xs bg-green-50 border border-green-200
-                               text-green-600 hover:bg-green-100 px-3 py-2 rounded-lg transition-colors">
+                    className="flex items-center gap-2 text-xs text-green-400 hover:bg-green-400/10
+                               px-3 py-2 rounded-lg transition-colors"
+                    style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)' }}>
                     WhatsApp
                   </a>
                   <CopyLinkButton />
@@ -234,37 +231,43 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               </button>
 
               {/* Job Overview */}
-              <div className="bg-white border border-surface-border rounded-2xl p-5 shadow-card space-y-3">
+              <div className="rounded-2xl p-5 space-y-3"
+                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
                 <p className="font-poppins font-semibold text-ink text-sm">Job Overview</p>
-                <div className="border-t border-surface-border" />
+                <div style={{ borderTop: '1px solid #2A2A2A' }} />
                 {[
                   { label: 'Role',       value: job.title },
                   { label: 'Company',    value: job.company },
                   { label: 'Type',       value: job.type },
                   { label: 'Location',   value: job.location },
-                  ...(job.batch_year ? [{ label: 'Batch',    value: `${job.batch_year} & beyond` }] : []),
+                  ...(job.batch_year ? [{ label: 'Batch',   value: `${job.batch_year} & beyond`, highlight: false }] : []),
                   { label: 'Duration',   value: '3–6 Months' },
-                  ...(job.salary ? [{ label: 'Stipend',  value: job.salary, highlight: true }] : []),
+                  ...(job.salary ? [{ label: 'Stipend', value: job.salary, highlight: true }] : []),
                   { label: 'Start Date', value: 'Immediate / Flexible' },
                 ].map(({ label, value, highlight }) => (
                   <div key={label} className="flex items-start justify-between gap-2 text-sm">
                     <span className="text-ink-muted flex-shrink-0">{label}</span>
-                    <span className={`text-right font-medium ${
-                      highlight ? 'text-purple-brand bg-purple-tint border border-purple-brand/20 px-2 py-0.5 rounded-lg text-xs' : 'text-ink'
-                    }`}>
-                      {value}
-                    </span>
+                    {highlight ? (
+                      <span className="text-xs font-semibold text-purple-brand px-2 py-0.5 rounded-lg"
+                            style={{ background: 'rgba(155,127,232,0.12)', border: '1px solid rgba(155,127,232,0.25)' }}>
+                        {value}
+                      </span>
+                    ) : (
+                      <span className="text-right font-medium text-ink">{value}</span>
+                    )}
                   </div>
                 ))}
               </div>
 
               {/* Perks */}
-              <div className="bg-white border border-surface-border rounded-2xl p-5 shadow-card">
+              <div className="rounded-2xl p-5"
+                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
                 <p className="font-poppins font-semibold text-ink text-sm mb-4">Perks & Benefits</p>
                 <div className="grid grid-cols-2 gap-3">
                   {perks.map(({ label }) => (
                     <div key={label}
-                      className="flex items-center gap-2 p-3 bg-surface-tertiary rounded-xl">
+                      className="flex items-center gap-2 p-3 rounded-xl"
+                      style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
                       <span className="w-2 h-2 rounded-full bg-lime flex-shrink-0" />
                       <span className="text-xs text-ink-muted leading-snug">{label}</span>
                     </div>
@@ -273,10 +276,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               </div>
 
               {/* How to apply */}
-              <div className="bg-white border border-surface-border rounded-2xl p-5 shadow-card">
+              <div className="rounded-2xl p-5"
+                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
                 <p className="font-poppins font-semibold text-ink text-sm mb-2">How to Apply</p>
                 <p className="text-ink-muted text-xs leading-relaxed">
-                  Click "Apply Now" to visit the official company careers page. Ensure
+                  Click &ldquo;Apply Now&rdquo; to visit the official company careers page. Ensure
                   your resume is updated and tailored to this role before applying.
                 </p>
               </div>

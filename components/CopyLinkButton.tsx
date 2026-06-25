@@ -16,11 +16,11 @@ export default function CopyLinkButton() {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-2 text-xs bg-surface-tertiary border border-surface-border
-                 text-ink-muted hover:text-ink hover:border-ink-faint px-3 py-2 rounded-lg
+      className="flex items-center gap-2 text-xs text-ink-muted hover:text-lime px-3 py-2 rounded-lg
                  transition-colors"
+      style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}
     >
-      {copied ? 'Copied!' : 'Copy Link'}
+      {copied ? '✓ Copied!' : 'Copy Link'}
     </button>
   );
 }

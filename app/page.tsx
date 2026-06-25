@@ -3,6 +3,8 @@ import JobCardsGrid from '@/components/JobCardsGrid';
 import ToolCard from '@/components/ToolCard';
 import HeroSection from '@/components/HeroSection';
 import FadeUp from '@/components/FadeUp';
+import RoadmapCard from '@/components/RoadmapCard';
+import BlogCard from '@/components/BlogCard';
 
 async function getFeaturedJobs() {
   try {
@@ -50,12 +52,6 @@ const placeholderTools = [
   { name: 'Notion AI',      description: 'Writing assistant built into Notion workspace.',       category: 'Productivity', url: 'https://notion.so',          is_free: true,  is_featured: false, votes: 6500  },
 ];
 
-const categoryBadgeColor: Record<string, string> = {
-  Jobs:     'bg-lime-light text-lime border border-lime/30',
-  'AI Tools': 'bg-blue-50 text-blue-600 border border-blue-200',
-  Roadmap:  'bg-amber-50 text-amber-600 border border-amber-200',
-};
-
 export default async function HomePage() {
   const [featuredJobs, featuredTools] = await Promise.all([getFeaturedJobs(), getFeaturedTools()]);
   const jobs  = featuredJobs.length  > 0 ? featuredJobs  : placeholderJobs;
@@ -65,7 +61,7 @@ export default async function HomePage() {
     <>
       <HeroSection />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24 pb-24 pt-8">
 
         {/* Latest Jobs */}
         <section>
@@ -124,24 +120,22 @@ export default async function HomePage() {
             </div>
           </FadeUp>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {roadmaps.map(({ id, title, level, modules, time, color }, i) => (
-              <FadeUp key={id} delay={i * 0.07}>
-                <Link href={`/resources/${id}`}>
-                  <div className="bg-white border border-surface-border rounded-2xl p-5
-                                  shadow-card hover:border-lime/40 hover:shadow-card-hover
-                                  hover:-translate-y-1 transition-all duration-300 cursor-pointer h-full flex flex-col">
-                    <h3 className="font-poppins font-semibold text-ink text-sm mb-1">{title}</h3>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-surface-tertiary w-fit mb-3 ${color}`}>
-                      {level}
-                    </span>
-                    <div className="flex items-center gap-3 text-ink-faint text-xs mt-auto pt-3 border-t border-surface-border">
-                      <span>{modules} modules</span>
-                      <span>{time}</span>
-                    </div>
-                  </div>
-                </Link>
-              </FadeUp>
-            ))}
+            {roadmaps.map(({ id, title, level, modules, time, color }, i) => {
+              const completionPct = id === 'frontend' ? 67 : id === 'dsa' ? 40 : 0;
+              return (
+                <FadeUp key={id} delay={i * 0.07}>
+                  <RoadmapCard
+                    id={id}
+                    title={title}
+                    level={level}
+                    modules={modules}
+                    time={time}
+                    color={color}
+                    completionPct={completionPct}
+                  />
+                </FadeUp>
+              );
+            })}
           </div>
         </section>
 
@@ -161,27 +155,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {blogPreviews.map(({ slug, title, category, date }, i) => (
               <FadeUp key={slug} delay={i * 0.09}>
-                <Link href={`/blog/${slug}`}>
-                  <article className="bg-white border border-surface-border rounded-2xl p-5
-                                      flex flex-col gap-3 h-full shadow-card
-                                      hover:border-purple-brand/40 hover:shadow-card-hover
-                                      hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-                    <div className="w-full h-28 rounded-xl bg-surface-tertiary border border-surface-border
-                                    flex items-center justify-center">
-                      <span className="text-2xl font-poppins font-bold text-ink-faint">
-                        {category.slice(0, 2).toUpperCase()}
-                      </span>
-                    </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full w-fit ${categoryBadgeColor[category]}`}>
-                      {category}
-                    </span>
-                    <h3 className="font-poppins font-semibold text-ink text-sm leading-snug
-                                   hover:text-lime transition-colors">
-                      {title}
-                    </h3>
-                    <p className="text-ink-faint text-xs mt-auto">{date} · techwithshailu</p>
-                  </article>
-                </Link>
+                <BlogCard slug={slug} title={title} category={category} date={date} />
               </FadeUp>
             ))}
           </div>
@@ -189,15 +163,16 @@ export default async function HomePage() {
 
         {/* Community CTA */}
         <FadeUp>
-          <div className="bg-white border border-surface-border rounded-2xl p-8 md:p-12
-                          text-center shadow-card relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-lime-light via-white to-purple-tint
-                            pointer-events-none opacity-60" />
+          <div className="rounded-2xl p-8 md:p-12 text-center relative overflow-hidden"
+               style={{ backgroundColor: '#0D1A00', border: '1px solid #A8E63D55' }}>
+            {/* Subtle radial glow */}
+            <div className="absolute inset-0 pointer-events-none"
+                 style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(168,230,61,0.07), transparent)' }} />
             <div className="relative z-10">
-              <h2 className="font-poppins font-bold text-2xl md:text-3xl text-ink mb-3">
+              <h2 className="font-poppins font-bold text-2xl md:text-3xl text-white mb-3">
                 Join the Community
               </h2>
-              <p className="text-ink-muted max-w-xl mx-auto mb-6 text-sm leading-relaxed">
+              <p className="text-white/60 max-w-xl mx-auto mb-6 text-sm leading-relaxed">
                 Get daily job updates, interview tips, and AI tool recommendations directly on
                 Telegram and WhatsApp. Over 1,000 students already in the group.
               </p>
@@ -207,7 +182,7 @@ export default async function HomePage() {
                   Join Telegram
                 </a>
                 <a href="https://instagram.com/techwithshailu" target="_blank" rel="noopener noreferrer"
-                   className="btn-purple-outline px-8 py-3">
+                   className="btn-purple-outline px-8 py-3 border-white/30 text-white hover:bg-white/10">
                   Follow on Instagram
                 </a>
               </div>
