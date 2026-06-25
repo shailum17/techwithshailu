@@ -20,6 +20,7 @@ const ALL_TOOLS = [
   { name: 'Consensus',      desc: 'AI search for scientific papers with instant summaries.',        cat: 'Research',     url: 'https://consensus.app',      free: true,  votes: 2100  },
   { name: 'Leonardo AI',    desc: 'AI image generation for art, design and game assets.',           cat: 'Image',        url: 'https://leonardo.ai',        free: true,  votes: 1900  },
   { name: 'Otter.ai',       desc: 'AI meeting recorder and transcription tool for online classes.', cat: 'Productivity', url: 'https://otter.ai',           free: true,  votes: 1700  },
+  { name: 'Remio',          desc: 'Local-first AI memory and knowledge base for files, webpages, recordings, emails, messages, images, and notes.', cat: 'Productivity', url: 'https://remio.ai/', free: true, votes: 1600 },
 ];
 
 const CATEGORIES = ['Writing', 'Image', 'Coding', 'Productivity', 'Research'] as const;
