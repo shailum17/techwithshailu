@@ -101,10 +101,15 @@ export default function ToolCard({ name, description, category, url, icon_url, i
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${colorClass}`}>
               {category}
             </span>
-            {is_free && (
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full border text-lime border-lime/30"
-                    style={{ background: 'rgba(168,230,61,0.1)' }}>
+            {is_free ? (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                    style={{ color: '#A8E63D', background: 'rgba(168,230,61,0.12)', border: '1px solid rgba(168,230,61,0.35)' }}>
                 Free
+              </span>
+            ) : (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                    style={{ color: '#FCD34D', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.4)' }}>
+                Paid
               </span>
             )}
             {is_featured && (
