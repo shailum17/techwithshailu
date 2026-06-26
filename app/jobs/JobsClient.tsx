@@ -18,18 +18,6 @@ interface Job {
   createdAt?: string;
 }
 
-const PLACEHOLDER_JOBS: Job[] = [
-  { _id: 'j1', title: 'Software Engineering Intern', company: 'Google',        location: 'Remote',    type: 'Internship', salary: '₹50K–₹80K/mo', tags: ['Python','ML','GCP'],       is_featured: true,  batch_year: 2026 },
-  { _id: 'j2', title: 'Software Developer Intern',   company: 'Microsoft',     location: 'Hyderabad', type: 'Internship', salary: '₹60K–₹90K/mo', tags: ['C#','Azure','.NET'],        is_featured: true,  batch_year: 2026 },
-  { _id: 'j3', title: 'SDE Intern',                  company: 'Amazon',        location: 'Bengaluru', type: 'Internship', salary: '₹45K–₹70K/mo', tags: ['Java','AWS','DSA'],         is_featured: false, batch_year: 2025 },
-  { _id: 'j4', title: 'Ninja Intern',                company: 'TCS',           location: 'Pune',      type: 'Internship', salary: '₹30K–₹50K/mo', tags: ['Java','SQL','Spring'],      is_featured: false, batch_year: 2025 },
-  { _id: 'j5', title: 'Backend Developer Intern',    company: 'LinkedIn',      location: 'Remote',    type: 'Internship', salary: '₹60K–₹90K/mo', tags: ['Node.js','GraphQL','AWS'],  is_featured: true,  batch_year: 2026 },
-  { _id: 'j6', title: 'Software Engineering Intern', company: 'JPMorgan',      location: 'Mumbai',    type: 'Internship', salary: '₹55K–₹85K/mo', tags: ['Java','Spring','DSA'],      is_featured: false, batch_year: 2026 },
-  { _id: 'j7', title: 'Data Analyst Intern',         company: 'ZS Associates', location: 'Pune',      type: 'Internship', salary: '₹40K–₹60K/mo', tags: ['Python','SQL','Excel'],     is_featured: false, batch_year: 2025 },
-  { _id: 'j8', title: 'Software Intern',             company: 'Paytm',         location: 'Noida',     type: 'Internship', salary: '₹35K–₹55K/mo', tags: ['Java','Android','SQL'],     is_featured: false, batch_year: 2025 },
-  { _id: 'j9', title: 'SWE Intern',                  company: 'Ola',           location: 'Bengaluru', type: 'Internship', salary: '₹40K–₹60K/mo', tags: ['React','Node.js','AWS'],    is_featured: false, batch_year: 2026 },
-];
-
 const LOCATIONS   = ['Remote', 'Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Noida', 'Delhi'];
 const BATCH_YEARS = ['2025', '2026', '2027', '2028+'];
 const JOB_TYPES   = ['Job', 'Internship', 'Full-time'];
@@ -344,7 +332,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
   initialJobs: Job[];
   initialParams: { q?: string; type?: string; location?: string; batch_year?: string; sort?: string };
 }) {
-  const base = initialJobs.length > 0 ? initialJobs : PLACEHOLDER_JOBS;
+  const base = initialJobs;
 
   const [q,          setQ]          = useState(initialParams.q || '');
   const [locations,  setLocations]  = useState<string[]>(initialParams.location ? [initialParams.location] : []);

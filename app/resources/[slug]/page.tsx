@@ -23,91 +23,8 @@ interface RoadmapData {
   nodes: RoadmapNode[];
 }
 
-const roadmapData: Record<string, RoadmapData> = {
-  frontend: {
-    title: 'Frontend Roadmap',
-    subtitle: 'Step-by-step guide to becoming a modern frontend developer.',
-    level: 'Beginner', duration: '3–4 months', totalTime: '24h 30m',
-    modules: 12, completedModules: 8,
-    nodes: [
-      { title: 'HTML & CSS',   status: 'completed',   resources: [{ label: 'HTML Full Course – freeCodeCamp',   url: 'https://youtube.com',    type: 'video'   }, { label: 'MDN Web Docs HTML',  url: 'https://developer.mozilla.org/en-US/docs/Web/HTML', type: 'article' }] },
-      { title: 'CSS',          status: 'completed',   resources: [{ label: 'CSS Crash Course – Traversy Media', url: 'https://youtube.com',    type: 'video'   }, { label: 'CSS Tricks',         url: 'https://css-tricks.com', type: 'article' }] },
-      { title: 'JavaScript',   status: 'completed',   resources: [{ label: 'Namaste JavaScript – Akshay Saini', url: 'https://youtube.com',    type: 'video'   }, { label: 'javascript.info',    url: 'https://javascript.info', type: 'article' }] },
-      { title: 'DOM & BOM',    status: 'in-progress', resources: [{ label: 'DOM Manipulation – Fireship',       url: 'https://youtube.com',    type: 'video'   }, { label: 'MDN – DOM',          url: 'https://developer.mozilla.org', type: 'article' }] },
-      { title: 'ES6+',         status: 'locked',      resources: [{ label: 'ES6 Full Course',                   url: 'https://youtube.com',    type: 'video'   }] },
-      { title: 'Git & GitHub', status: 'locked',      resources: [{ label: 'Git Tutorial – Kunal Kushwaha',     url: 'https://youtube.com',    type: 'video'   }, { label: 'GitHub Docs', url: 'https://docs.github.com', type: 'article' }] },
-    ],
-  },
-  dsa: {
-    title: 'DSA Path',
-    subtitle: 'Complete DSA roadmap to crack top tech companies in placements.',
-    level: 'Intermediate', duration: '3 months', totalTime: '30h',
-    modules: 10, completedModules: 4,
-    nodes: [
-      { title: 'Arrays & Strings',    status: 'completed',   resources: [{ label: 'Striver A2Z DSA Sheet', url: 'https://takeuforward.org', type: 'article' }, { label: 'Arrays – Love Babbar', url: 'https://youtube.com', type: 'video' }] },
-      { title: 'Linked Lists',        status: 'completed',   resources: [{ label: 'Linked Lists – Striver',  url: 'https://youtube.com', type: 'video' }] },
-      { title: 'Stacks & Queues',     status: 'completed',   resources: [{ label: 'Stacks – Apna College',   url: 'https://youtube.com', type: 'video' }] },
-      { title: 'Trees',               status: 'in-progress', resources: [{ label: 'Binary Trees – Striver',  url: 'https://youtube.com', type: 'video' }] },
-      { title: 'Graphs',              status: 'locked',      resources: [{ label: 'Graph Series – William Fiset', url: 'https://youtube.com', type: 'video' }] },
-      { title: 'Dynamic Programming', status: 'locked',      resources: [{ label: 'DP Series – Aditya Verma', url: 'https://youtube.com', type: 'video' }, { label: 'NeetCode DP Patterns', url: 'https://neetcode.io', type: 'article' }] },
-    ],
-  },
-  backend: {
-    title: 'Backend Roadmap',
-    subtitle: 'Build scalable APIs and full-stack applications from scratch.',
-    level: 'Intermediate', duration: '3–4 months', totalTime: '28h',
-    modules: 11, completedModules: 0,
-    nodes: [
-      { title: 'Node.js Basics',  status: 'in-progress', resources: [{ label: 'Node.js Crash Course',           url: 'https://youtube.com',       type: 'video'   }] },
-      { title: 'Express.js',      status: 'locked',      resources: [{ label: 'Express Official Docs',          url: 'https://expressjs.com',      type: 'article' }] },
-      { title: 'MongoDB',         status: 'locked',      resources: [{ label: 'MongoDB University (Free)',       url: 'https://university.mongodb.com', type: 'course' }] },
-      { title: 'REST API Design', status: 'locked',      resources: [{ label: 'REST API Best Practices',        url: 'https://restfulapi.net',     type: 'article' }] },
-      { title: 'Auth (JWT)',      status: 'locked',      resources: [{ label: 'JWT Auth Tutorial',              url: 'https://youtube.com',       type: 'video'   }] },
-      { title: 'Deployment',      status: 'locked',      resources: [{ label: 'Deploy to Railway / Render',     url: 'https://railway.app',       type: 'article' }] },
-    ],
-  },
-  'system-design': {
-    title: 'System Design',
-    subtitle: 'Learn to design scalable, fault-tolerant systems for senior interviews.',
-    level: 'Advanced', duration: '2 months', totalTime: '20h',
-    modules: 8, completedModules: 0,
-    nodes: [
-      { title: 'Scalability',    status: 'in-progress', resources: [{ label: 'System Design Primer – GitHub', url: 'https://github.com/donnemartin/system-design-primer', type: 'article' }] },
-      { title: 'Databases',      status: 'locked',      resources: [{ label: 'Database Design – Fireship',    url: 'https://youtube.com', type: 'video'   }] },
-      { title: 'Caching (Redis)',status: 'locked',      resources: [{ label: 'Redis Crash Course',            url: 'https://youtube.com', type: 'video'   }] },
-      { title: 'Microservices',  status: 'locked',      resources: [{ label: 'Microservices Guide',           url: 'https://microservices.io', type: 'article' }] },
-      { title: 'Real Systems',   status: 'locked',      resources: [{ label: 'Design Instagram, Netflix – Gaurav Sen', url: 'https://youtube.com', type: 'video' }] },
-    ],
-  },
-  aiml: {
-    title: 'AI / ML Basics',
-    subtitle: 'Start your AI journey from Python basics to deploying ML models.',
-    level: 'Beginner', duration: '4 months', totalTime: '22h',
-    modules: 9, completedModules: 0,
-    nodes: [
-      { title: 'Python for ML',    status: 'in-progress', resources: [{ label: 'Python – freeCodeCamp',             url: 'https://youtube.com',             type: 'video'  }] },
-      { title: 'NumPy & Pandas',   status: 'locked',      resources: [{ label: 'Pandas – Corey Schafer',            url: 'https://youtube.com',             type: 'video'  }] },
-      { title: 'Scikit-learn',     status: 'locked',      resources: [{ label: 'ML Course – Andrew Ng (Coursera)',  url: 'https://coursera.org',            type: 'course' }] },
-      { title: 'Neural Networks',  status: 'locked',      resources: [{ label: 'Neural Nets – 3Blue1Brown',         url: 'https://youtube.com',             type: 'video'  }] },
-      { title: 'NLP & LLMs',       status: 'locked',      resources: [{ label: 'HuggingFace NLP Course (Free)',     url: 'https://huggingface.co/course',   type: 'course' }] },
-      { title: 'Model Deployment', status: 'locked',      resources: [{ label: 'Deploy ML Model with Flask',        url: 'https://youtube.com',             type: 'video'  }] },
-    ],
-  },
-  devops: {
-    title: 'DevOps Roadmap',
-    subtitle: 'From Linux basics to full-scale Kubernetes deployments.',
-    level: 'Advanced', duration: '4 months', totalTime: '35h',
-    modules: 10, completedModules: 0,
-    nodes: [
-      { title: 'Linux Basics',    status: 'in-progress', resources: [{ label: 'Linux Crash Course – NetworkChuck', url: 'https://youtube.com',                     type: 'video'   }] },
-      { title: 'Docker',          status: 'locked',      resources: [{ label: 'Docker Full Course – TechWorld',    url: 'https://youtube.com',                     type: 'video'   }] },
-      { title: 'CI/CD Pipelines', status: 'locked',      resources: [{ label: 'GitHub Actions Guide',             url: 'https://docs.github.com/en/actions',      type: 'article' }] },
-      { title: 'Kubernetes',      status: 'locked',      resources: [{ label: 'Kubernetes Crash Course',          url: 'https://youtube.com',                     type: 'video'   }] },
-      { title: 'Terraform',       status: 'locked',      resources: [{ label: 'Terraform in 100 Seconds',         url: 'https://youtube.com',                     type: 'video'   }] },
-      { title: 'Cloud (AWS/GCP)', status: 'locked',      resources: [{ label: 'AWS Free Tier + Docs',             url: 'https://aws.amazon.com/free',             type: 'article' }] },
-    ],
-  },
-};
+// Add roadmaps here as objects in this map keyed by their slug.
+const roadmapData: Record<string, RoadmapData> = {};
 
 const allRoadmapsForNav = Object.entries(roadmapData).map(([id, d]) => ({ id, title: d.title }));
 
@@ -224,7 +141,14 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
             )}
 
             {/* Roadmap track */}
-            <RoadmapTrack nodes={data.nodes} />
+            {data.nodes.length > 0 ? (
+              <RoadmapTrack nodes={data.nodes} />
+            ) : (
+              <div className="rounded-2xl p-10 text-center"
+                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+                <p className="text-ink-muted text-sm">Modules coming soon.</p>
+              </div>
+            )}
 
             {/* Community CTA */}
             <div className="rounded-2xl p-6 text-center mt-8"

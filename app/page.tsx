@@ -22,40 +22,17 @@ async function getFeaturedTools() {
   } catch { return []; }
 }
 
-const roadmaps = [
-  { id: 'frontend',      title: 'Frontend Roadmap',  level: 'Beginner',     modules: 12, time: '24h 30m', color: 'text-blue-600' },
-  { id: 'dsa',           title: 'DSA Path',           level: 'Intermediate', modules: 10, time: '30h',     color: 'text-amber-600' },
-  { id: 'backend',       title: 'Backend Roadmap',    level: 'Intermediate', modules: 11, time: '28h',     color: 'text-green-600' },
-  { id: 'system-design', title: 'System Design',      level: 'Advanced',     modules: 8,  time: '20h',     color: 'text-purple-brand' },
-  { id: 'aiml',          title: 'AI / ML Basics',     level: 'Beginner',     modules: 9,  time: '22h',     color: 'text-lime' },
-];
+const roadmaps: {
+  id: string; title: string; level: string;
+  modules: number; time: string; color: string;
+}[] = [];
 
-const blogPreviews = [
-  { slug: 'goldman-sachs-off-campus-2026',   title: 'Goldman Sachs Off-Campus Drive 2026',       category: 'Jobs',     date: 'Jun 20' },
-  { slug: 'best-ai-tools-for-students-2026', title: '15 Best AI Tools for CS Students in 2026',  category: 'AI Tools', date: 'Jun 18' },
-  { slug: 'dsa-roadmap-placements-2026',     title: 'DSA Roadmap for Placements 2026',           category: 'Roadmap',  date: 'Jun 15' },
-];
-
-const placeholderJobs = [
-  { _id: 'p1', title: 'Software Engineering Intern', company: 'Google',    location: 'Remote',    type: 'Internship' as const, salary: '₹50K–₹80K/mo', tags: ['Python','GCP','ML'],       is_featured: true },
-  { _id: 'p2', title: 'Software Developer Intern',   company: 'Microsoft', location: 'Hyderabad', type: 'Internship' as const, salary: '₹60K–₹90K/mo', tags: ['C#','Azure','.NET'],       is_featured: true },
-  { _id: 'p3', title: 'SDE Intern',                  company: 'Amazon',    location: 'Bengaluru', type: 'Internship' as const, salary: '₹45K–₹70K/mo', tags: ['Java','AWS','DSA'],        is_featured: true },
-  { _id: 'p4', title: 'Backend Developer Intern',    company: 'LinkedIn',  location: 'Remote',    type: 'Internship' as const, salary: '₹60K–₹90K/mo', tags: ['Node.js','GraphQL'],       is_featured: true },
-  { _id: 'p5', title: 'SWE Intern',                  company: 'Ola',       location: 'Bengaluru', type: 'Internship' as const, salary: '₹40K–₹60K/mo', tags: ['React','TypeScript'],      is_featured: false },
-  { _id: 'p6', title: 'Software Intern',             company: 'Paytm',     location: 'Noida',     type: 'Internship' as const, salary: '₹35K–₹55K/mo', tags: ['Java','Spring','SQL'],     is_featured: false },
-];
-
-const placeholderTools = [
-  { name: 'ChatGPT',        description: 'Conversational AI for writing, coding, and research.', category: 'Writing',      url: 'https://chat.openai.com',    is_free: true,  is_featured: true,  votes: 12400 },
-  { name: 'Midjourney',     description: 'Generate professional images from text prompts.',      category: 'Image',        url: 'https://midjourney.com',     is_free: false, is_featured: true,  votes: 9800  },
-  { name: 'GitHub Copilot', description: 'AI pair programmer that writes code as you type.',     category: 'Coding',       url: 'https://copilot.github.com', is_free: false, is_featured: true,  votes: 8600  },
-  { name: 'Notion AI',      description: 'Writing assistant built into Notion workspace.',       category: 'Productivity', url: 'https://notion.so',          is_free: true,  is_featured: false, votes: 6500  },
-];
+const blogPreviews: { slug: string; title: string; category: string; date: string }[] = [];
 
 export default async function HomePage() {
   const [featuredJobs, featuredTools] = await Promise.all([getFeaturedJobs(), getFeaturedTools()]);
-  const jobs  = featuredJobs.length  > 0 ? featuredJobs  : placeholderJobs;
-  const tools = featuredTools.length > 0 ? featuredTools : placeholderTools;
+  const jobs  = featuredJobs  as Parameters<typeof JobCardsGrid>[0]['jobs'];
+  const tools = featuredTools as (Parameters<typeof ToolCard>[0] & { _id?: string })[];
 
   return (
     <>
@@ -70,7 +47,7 @@ export default async function HomePage() {
               <div>
                 <h2 className="section-title">Latest Jobs & Internships</h2>
                 <p className="text-ink-muted mt-1 text-sm">
-                  <span className="text-lime font-semibold">128 openings</span> for CS students and freshers
+                  Opportunities for CS students and freshers
                 </p>
               </div>
               <Link href="/jobs" className="text-lime hover:text-lime-bright text-sm font-medium transition-colors hidden sm:block">
@@ -79,6 +56,9 @@ export default async function HomePage() {
             </div>
           </FadeUp>
           <JobCardsGrid jobs={jobs} />
+          {jobs.length === 0 && (
+            <p className="text-center text-ink-muted text-sm py-8">No jobs posted yet. Check back soon.</p>
+          )}
           <div className="text-center mt-6 sm:hidden">
             <Link href="/jobs" className="btn-lime">View all jobs</Link>
           </div>
@@ -93,17 +73,20 @@ export default async function HomePage() {
                 <p className="text-ink-muted mt-1 text-sm">Hand-picked tools every CS student should know</p>
               </div>
               <Link href="/ai-tools" className="text-lime hover:text-lime-bright text-sm font-medium transition-colors hidden sm:block">
-                View all 124 tools
+                View all tools
               </Link>
             </div>
           </FadeUp>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {tools.slice(0, 4).map((tool: Parameters<typeof ToolCard>[0] & { _id?: string }, i: number) => (
+            {tools.slice(0, 4).map((tool, i: number) => (
               <FadeUp key={tool._id || tool.name} delay={i * 0.09}>
                 <ToolCard {...tool} />
               </FadeUp>
             ))}
           </div>
+          {tools.length === 0 && (
+            <p className="text-center text-ink-muted text-sm py-8">No tools added yet. Check back soon.</p>
+          )}
         </section>
 
         {/* Study Roadmaps */}
@@ -119,24 +102,17 @@ export default async function HomePage() {
               </Link>
             </div>
           </FadeUp>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {roadmaps.map(({ id, title, level, modules, time, color }, i) => {
-              const completionPct = id === 'frontend' ? 67 : id === 'dsa' ? 40 : 0;
-              return (
+          {roadmaps.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {roadmaps.map(({ id, title, level, modules, time, color }, i) => (
                 <FadeUp key={id} delay={i * 0.07}>
-                  <RoadmapCard
-                    id={id}
-                    title={title}
-                    level={level}
-                    modules={modules}
-                    time={time}
-                    color={color}
-                    completionPct={completionPct}
-                  />
+                  <RoadmapCard id={id} title={title} level={level} modules={modules} time={time} color={color} />
                 </FadeUp>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-ink-muted text-sm py-8">No roadmaps yet. Check back soon.</p>
+          )}
         </section>
 
         {/* Latest Blog Posts */}
@@ -159,6 +135,9 @@ export default async function HomePage() {
               </FadeUp>
             ))}
           </div>
+          {blogPreviews.length === 0 && (
+            <p className="text-center text-ink-muted text-sm py-8">No articles yet. Check back soon.</p>
+          )}
         </section>
 
         {/* Community CTA */}

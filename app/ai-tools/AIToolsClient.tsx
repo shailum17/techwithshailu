@@ -3,24 +3,7 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-const ALL_TOOLS = [
-  { name: 'ChatGPT',        desc: 'Conversational AI for writing, coding, research and more.',      cat: 'Writing',      url: 'https://chat.openai.com',    free: true,  votes: 12400 },
-  { name: 'Midjourney',     desc: 'Generate professional-quality images from text prompts.',        cat: 'Image',        url: 'https://midjourney.com',     free: false, votes: 9800  },
-  { name: 'GitHub Copilot', desc: 'AI pair programmer that writes code as you type in your IDE.',   cat: 'Coding',       url: 'https://copilot.github.com', free: false, votes: 8600  },
-  { name: 'Notion AI',      desc: 'Smart writing assistant built into your Notion workspace.',      cat: 'Productivity', url: 'https://notion.so',          free: true,  votes: 6500  },
-  { name: 'Jasper',         desc: 'AI content writer for blog posts, ads, and social media.',       cat: 'Writing',      url: 'https://jasper.ai',          free: false, votes: 5400  },
-  { name: 'Canva AI',       desc: 'Design anything with AI-powered templates and tools.',           cat: 'Image',        url: 'https://canva.com',          free: true,  votes: 4800  },
-  { name: 'Tabnine',        desc: 'AI code completion for all major IDEs and 30+ languages.',      cat: 'Coding',       url: 'https://tabnine.com',        free: true,  votes: 4200  },
-  { name: 'Grammarly',      desc: 'AI grammar checker and writing assistant.',                     cat: 'Writing',      url: 'https://grammarly.com',      free: true,  votes: 3900  },
-  { name: 'Perplexity AI',  desc: 'AI-powered search engine with cited, real-time answers.',       cat: 'Research',     url: 'https://perplexity.ai',      free: true,  votes: 3600  },
-  { name: 'Suno',           desc: 'Generate full songs with AI — melody, lyrics, and vocals.',     cat: 'Productivity', url: 'https://suno.ai',            free: true,  votes: 3200  },
-  { name: 'Claude',         desc: "Anthropic's AI assistant — safe, helpful, and honest.",          cat: 'Writing',      url: 'https://claude.ai',          free: true,  votes: 2900  },
-  { name: 'Replit',         desc: 'Code, collaborate, and deploy applications in the browser.',    cat: 'Coding',       url: 'https://replit.com',         free: true,  votes: 2600  },
-  { name: 'Codeium',        desc: 'Free AI code completion — Copilot alternative for 70+ languages.', cat: 'Coding',    url: 'https://codeium.com',        free: true,  votes: 2300  },
-  { name: 'Consensus',      desc: 'AI search for scientific papers with instant summaries.',        cat: 'Research',     url: 'https://consensus.app',      free: true,  votes: 2100  },
-  { name: 'Leonardo AI',    desc: 'AI image generation for art, design and game assets.',           cat: 'Image',        url: 'https://leonardo.ai',        free: true,  votes: 1900  },
-  { name: 'Otter.ai',       desc: 'AI meeting recorder and transcription tool for online classes.', cat: 'Productivity', url: 'https://otter.ai',           free: true,  votes: 1700  },
-];
+const ALL_TOOLS: { name: string; desc: string; cat: string; url: string; free: boolean; votes: number }[] = [];
 
 const CATEGORIES = ['Writing', 'Image', 'Coding', 'Productivity', 'Research'] as const;
 type Cat = typeof CATEGORIES[number];
@@ -173,9 +156,8 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                 <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">Quick Filters</p>
                 {[
                   { label: 'All Tools',    count: ALL_TOOLS.length },
-                  { label: 'Trending',     count: 12 },
-                  { label: 'New Tools',    count: 8 },
-                  { label: 'Most Upvoted', count: 24 },
+                  { label: 'Free',         count: ALL_TOOLS.filter(t => t.free).length },
+                  { label: 'Paid',         count: ALL_TOOLS.filter(t => !t.free).length },
                 ].map(({ label, count }) => (
                   <button key={label}
                     className="w-full flex items-center justify-between text-sm py-1.5 px-2 rounded-lg
@@ -211,9 +193,8 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
               <div>
                 <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">Pricing</p>
                 {[
-                  { label: 'Free',     count: ALL_TOOLS.filter(t => t.free).length },
-                  { label: 'Freemium', count: 34 },
-                  { label: 'Paid',     count: ALL_TOOLS.filter(t => !t.free).length },
+                  { label: 'Free', count: ALL_TOOLS.filter(t => t.free).length },
+                  { label: 'Paid', count: ALL_TOOLS.filter(t => !t.free).length },
                 ].map(({ label, count }) => (
                   <label key={label} className="flex items-center justify-between py-1.5 px-2 cursor-pointer group">
                     <div className="flex items-center gap-2">

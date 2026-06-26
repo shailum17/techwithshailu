@@ -47,10 +47,8 @@ function DonutChart({ pct }: { pct: number }) {
 }
 
 export default function RoadmapProgress({ totalCompleted, totalModules, inProgress, remaining, roadmaps }: Props) {
-  const pct      = Math.round((totalCompleted / totalModules) * 100) || 68;
+  const pct      = totalModules > 0 ? Math.round((totalCompleted / totalModules) * 100) : 0;
   const pathname = usePathname();
-  const weekDays  = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const activeDays = [0, 1, 2, 3, 4];
 
   return (
     <div className="rounded-2xl p-5 sticky top-24 space-y-6"
@@ -61,66 +59,44 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl py-2"
              style={{ background: 'rgba(168,230,61,0.08)', border: '1px solid rgba(168,230,61,0.2)' }}>
-          <p className="font-poppins font-bold text-base text-lime">{totalCompleted || 24}</p>
+          <p className="font-poppins font-bold text-base text-lime">{totalCompleted}</p>
           <p className="text-ink-muted text-xs mt-0.5">Done</p>
         </div>
         <div className="rounded-xl py-2"
              style={{ background: 'rgba(155,127,232,0.08)', border: '1px solid rgba(155,127,232,0.2)' }}>
-          <p className="font-poppins font-bold text-purple-brand text-base">{inProgress || 8}</p>
+          <p className="font-poppins font-bold text-purple-brand text-base">{inProgress}</p>
           <p className="text-ink-muted text-xs mt-0.5">Active</p>
         </div>
         <div className="rounded-xl py-2"
              style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
-          <p className="font-poppins font-bold text-ink text-base">{remaining || 12}</p>
+          <p className="font-poppins font-bold text-ink text-base">{remaining}</p>
           <p className="text-ink-muted text-xs mt-0.5">Left</p>
         </div>
       </div>
 
       {/* Roadmap nav */}
-      <div>
-        <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">
-          Roadmap Paths
-        </p>
-        {roadmaps.map(({ id, title }) => {
-          const isActive = pathname === `/resources/${id}`;
-          return (
-            <Link key={id} href={`/resources/${id}`}
-              className={`flex items-center gap-2 py-1.5 px-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'text-lime font-medium'
-                  : 'text-ink-muted hover:text-ink hover:bg-surface-hover'
-              }`}
-              style={isActive ? { background: 'rgba(168,230,61,0.08)' } : {}}>
-              <span className="truncate">{title}</span>
-              {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-lime flex-shrink-0" />}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Streak */}
-      <div className="rounded-xl p-4"
-           style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
-        <div className="mb-3">
-          <p className="text-ink font-semibold text-sm font-poppins">7 Day Streak 🔥</p>
-          <p className="text-ink-muted text-xs">Keep it up!</p>
+      {roadmaps.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-ink-faint uppercase tracking-wider mb-2">
+            Roadmap Paths
+          </p>
+          {roadmaps.map(({ id, title }) => {
+            const isActive = pathname === `/resources/${id}`;
+            return (
+              <Link key={id} href={`/resources/${id}`}
+                className={`flex items-center gap-2 py-1.5 px-2 rounded-lg text-sm transition-colors ${
+                  isActive
+                    ? 'text-lime font-medium'
+                    : 'text-ink-muted hover:text-ink hover:bg-surface-hover'
+                }`}
+                style={isActive ? { background: 'rgba(168,230,61,0.08)' } : {}}>
+                <span className="truncate">{title}</span>
+                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-lime flex-shrink-0" />}
+              </Link>
+            );
+          })}
         </div>
-        <div className="flex gap-1.5 justify-between">
-          {weekDays.map((d, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-                   style={
-                     activeDays.includes(i)
-                       ? { background: '#A8E63D', color: '#000' }
-                       : { background: '#2A2A2A', color: '#606060' }
-                   }>
-                {activeDays.includes(i) ? '✓' : ''}
-              </div>
-              <span className="text-ink-faint text-xs">{d}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -15,7 +15,6 @@ const platformLinks = [
   { href: '/jobs',      label: 'Job Listings' },
   { href: '/ai-tools',  label: 'AI Tools Directory' },
   { href: '/blog',      label: 'Blog & Articles' },
-  { href: '/admin',     label: 'Admin Panel' },
 ];
 
 const socialLinks = [

@@ -6,61 +6,7 @@ import ReadingProgress from '@/components/ReadingProgress';
 const posts: Record<string, {
   title: string; excerpt: string; category: string;
   date: string; readTime: string; content: string;
-}> = {
-  'goldman-sachs-off-campus-2026': {
-    title: 'Goldman Sachs Off-Campus Drive 2026 — Apply Now',
-    excerpt: 'Goldman Sachs is hiring 2025–2026 batch freshers for their Technology Analyst Program.',
-    category: 'Jobs', date: 'June 20, 2026', readTime: '4 min read',
-    content: `
-      <h2>About the Role</h2>
-      <p>Goldman Sachs is conducting an off-campus drive for the <strong>Technology Analyst (2026 Batch)</strong> program. This is a full-time role based in Bengaluru and Hyderabad.</p>
-      <h2>Eligibility</h2>
-      <ul>
-        <li>B.Tech / B.E. / MCA in Computer Science or related field</li>
-        <li>2025–2026 graduation batch</li>
-        <li>CGPA 7.0 or above preferred</li>
-        <li>Strong DSA and problem-solving skills</li>
-      </ul>
-      <h2>How to Apply</h2>
-      <p>Apply through the official Goldman Sachs careers portal. The hiring process includes an online assessment followed by 2–3 rounds of technical interviews.</p>
-      <p><strong>Deadline:</strong> July 15, 2026</p>
-    `,
-  },
-  'best-ai-tools-for-students-2026': {
-    title: '15 Best AI Tools for CS Students in 2026',
-    excerpt: 'From ChatGPT to GitHub Copilot — the AI tools that will save you hours every week.',
-    category: 'AI Tools', date: 'June 18, 2026', readTime: '6 min read',
-    content: `
-      <h2>Why CS Students Need AI Tools</h2>
-      <p>AI tools are no longer optional — they are a competitive advantage. Here are the top tools every CS student should have in their toolkit.</p>
-      <h2>Top Picks</h2>
-      <ul>
-        <li><strong>ChatGPT</strong> — Best all-rounder for writing, coding help, and concept explanations</li>
-        <li><strong>GitHub Copilot</strong> — AI code completion right inside VS Code</li>
-        <li><strong>Perplexity</strong> — AI search with cited sources, great for research</li>
-        <li><strong>Codeium</strong> — Free alternative to Copilot, works on 70+ languages</li>
-        <li><strong>Notion AI</strong> — Notes and AI in one place</li>
-      </ul>
-      <p>Check out our <a href="/ai-tools">full AI Tools directory</a> for more.</p>
-    `,
-  },
-  'dsa-roadmap-placements-2026': {
-    title: 'DSA Roadmap for Placements 2026 — Complete Guide',
-    excerpt: 'Week-by-week DSA preparation plan to crack product companies.',
-    category: 'Roadmap', date: 'June 15, 2026', readTime: '8 min read',
-    content: `
-      <h2>Why DSA Matters for Placements</h2>
-      <p>Almost every product company tests DSA in their first round. Without strong fundamentals, you will not make it to the interview stage.</p>
-      <h2>3-Month Plan</h2>
-      <ul>
-        <li><strong>Month 1:</strong> Arrays, Strings, Linked Lists, Stacks, Queues</li>
-        <li><strong>Month 2:</strong> Trees, Binary Search, Heaps, Graphs</li>
-        <li><strong>Month 3:</strong> Dynamic Programming, Greedy, Bit Manipulation and LeetCode practice</li>
-      </ul>
-      <p>Full roadmap with resources on our <a href="/resources/dsa">DSA Roadmap page</a>.</p>
-    `,
-  },
-};
+}> = {};
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
