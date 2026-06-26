@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['logo.clearbit.com', 'via.placeholder.com'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'www.google.com', pathname: '/s2/favicons**' },
+      { protocol: 'https', hostname: 'logo.clearbit.com' },
+    ],
   },
 };
 
