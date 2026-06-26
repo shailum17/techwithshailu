@@ -17,7 +17,7 @@ const resourceLinks = [
 
 const navLinks = [
   { href: '/',         label: 'Home' },
-  { href: '/jobs',     label: 'Jobs' },
+  { href: '/jobs',     label: 'Jobs / Internships' },
   { href: '/ai-tools', label: 'AI Tools' },
   { href: '/blog',     label: 'Blog' },
 ];
