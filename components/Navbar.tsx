@@ -6,13 +6,13 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const resourceLinks = [
-  { href: '/resources',                label: 'All Roadmaps',      sub: 'View every learning path',          color: 'text-lime' },
-  { href: '/resources/frontend',       label: 'Frontend Roadmap',  sub: 'HTML → CSS → React → Next.js',      color: 'text-blue-400' },
-  { href: '/resources/dsa',            label: 'DSA Path',          sub: 'Arrays to DP — crack placements',    color: 'text-amber-400' },
-  { href: '/resources/backend',        label: 'Backend Roadmap',   sub: 'Node.js → APIs → MongoDB → Cloud',   color: 'text-green-400' },
-  { href: '/resources/system-design',  label: 'System Design',     sub: 'Design scalable systems',            color: 'text-purple-brand' },
-  { href: '/resources/aiml',           label: 'AI / ML Basics',    sub: 'Python → Scikit-learn → Deploy',     color: 'text-lime' },
-  { href: '/resources/devops',         label: 'DevOps Roadmap',    sub: 'Linux → Docker → Kubernetes',        color: 'text-orange-400' },
+  { href: '/resources',                   label: 'Roadmaps',             sub: 'Step-by-step learning paths',           dotColor: '#a8e63d' },
+  { href: '/resources/resume-hub',        label: 'Resume Hub',           sub: 'Templates, tips & ATS tricks',          dotColor: '#60a5fa' },
+  { href: '/resources/interview-prep',    label: 'Interview Prep',       sub: 'Questions, patterns & mock rounds',      dotColor: '#fbbf24' },
+  { href: '/resources/cheat-sheets',      label: 'Coding Cheat Sheets',  sub: 'Quick references for every stack',       dotColor: '#4ade80' },
+  { href: '/resources/project-ideas',     label: 'Project Ideas',        sub: 'Build real projects for your portfolio', dotColor: '#a78bfa' },
+  { href: '/resources/free-courses',      label: 'Free Courses',         sub: 'Hand-picked free learning resources',    dotColor: '#f472b6' },
+  { href: '/resources/developer-tools',   label: 'Developer Tools',      sub: 'Tools that boost your productivity',     dotColor: '#fb923c' },
 ];
 
 const navLinks = [
@@ -83,7 +83,7 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
                  style={{ background: '#161616', borderLeft: '1px solid #2A2A2A', borderTop: '1px solid #2A2A2A' }} />
 
             <div className="py-2">
-              {resourceLinks.map(({ href, label, sub, color }, i) => {
+              {resourceLinks.map(({ href, label, sub, dotColor }, i) => {
                 const isItemActive = pathname === href;
                 const isFirst = i === 0;
                 return (
@@ -100,9 +100,7 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
                     onMouseEnter={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = '#1E1E1E'; }}
                     onMouseLeave={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = ''; }}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
-                      isItemActive ? 'bg-lime' : `${color.replace('text-', 'bg-')} opacity-70`
-                    }`} />
+                    <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: dotColor }} />
                     <div>
                       <p className={`text-sm font-medium transition-colors ${
                         isItemActive ? 'text-lime' : 'text-ink group-hover:text-lime'
@@ -273,12 +271,12 @@ export default function Navbar() {
                       className="overflow-hidden ml-3 mt-1 pl-3 space-y-0.5"
                       style={{ borderLeft: '2px solid #2A2A2A' }}
                     >
-                      {resourceLinks.map(({ href, label, color }) => (
+                      {resourceLinks.map(({ href, label }) => (
                         <li key={href}>
                           <Link href={href}
                             className={`block text-sm py-1.5 px-2 rounded-lg transition-colors ${
                               pathname === href
-                                ? `${color} bg-lime-light font-medium`
+                                ? 'text-lime bg-lime-light font-medium'
                                 : 'text-ink-muted hover:text-ink hover:bg-surface-hover'
                             }`}>
                             {label}
