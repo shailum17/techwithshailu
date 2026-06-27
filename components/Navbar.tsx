@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const resourceLinks = [
-  { href: '/resources',                   label: 'Roadmaps',             sub: 'Step-by-step learning paths',           dotColor: '#a8e63d' },
+  { href: '/resources/roadmaps',             label: 'Roadmaps',             sub: 'Step-by-step learning paths',           dotColor: '#a8e63d' },
   { href: '/resources/resume-hub',        label: 'Resume Hub',           sub: 'Templates, tips & ATS tricks',          dotColor: '#60a5fa' },
   { href: '/resources/interview-prep',    label: 'Interview Prep',       sub: 'Questions, patterns & mock rounds',      dotColor: '#fbbf24' },
   { href: '/resources/cheat-sheets',      label: 'Coding Cheat Sheets',  sub: 'Quick references for every stack',       dotColor: '#4ade80' },

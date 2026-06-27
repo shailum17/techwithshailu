@@ -1,130 +1,103 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import RoadmapProgress from '@/components/RoadmapProgress';
 
 export const metadata: Metadata = {
-  title: 'Study Roadmaps — Frontend, DSA, Backend, System Design & AI/ML',
-  description: 'Step-by-step study roadmaps for CS students in India. Frontend, DSA for placements, backend, system design and AI/ML basics.',
+  title: 'Resources — Roadmaps, Resume Hub, Interview Prep & More',
+  description:
+    'Free resources for CS students and developers — learning roadmaps, resume builders, interview prep, cheat sheets, project ideas, free courses and developer tools.',
 };
 
-const roadmaps: {
-  id: string; title: string; description: string;
-  level: string; duration: string; modules: number; completed: number;
-  topics: string[]; levelColor: string;
-}[] = [];
-
-const totalModules   = roadmaps.reduce((s, r) => s + r.modules, 0);
-const totalCompleted = roadmaps.reduce((s, r) => s + r.completed, 0);
-const inProgress     = roadmaps.filter(r => r.completed > 0 && r.completed < r.modules).length;
+const categories = [
+  {
+    href: '/resources/roadmaps',
+    label: 'Roadmaps',
+    description: 'Step-by-step learning paths for frontend, backend, DSA, system design and more.',
+    dotColor: '#a8e63d',
+  },
+  {
+    href: '/resources/resume-hub',
+    label: 'Resume Hub',
+    description: 'Best ATS-friendly resume builders, templates and tips to get you noticed.',
+    dotColor: '#60a5fa',
+  },
+  {
+    href: '/resources/interview-prep',
+    label: 'Interview Prep',
+    description: 'Top questions, patterns and mock round resources to crack your next interview.',
+    dotColor: '#fbbf24',
+  },
+  {
+    href: '/resources/cheat-sheets',
+    label: 'Coding Cheat Sheets',
+    description: 'Quick references for every stack — never forget syntax again.',
+    dotColor: '#4ade80',
+  },
+  {
+    href: '/resources/project-ideas',
+    label: 'Project Ideas',
+    description: 'Build real projects that stand out in your portfolio and impress recruiters.',
+    dotColor: '#a78bfa',
+  },
+  {
+    href: '/resources/free-courses',
+    label: 'Free Courses',
+    description: 'Hand-picked free courses from the best platforms — no paywalls.',
+    dotColor: '#f472b6',
+  },
+  {
+    href: '/resources/developer-tools',
+    label: 'Developer Tools',
+    description: 'Tools that boost your productivity and make development smoother.',
+    dotColor: '#fb923c',
+  },
+];
 
 export default function ResourcesPage() {
   return (
     <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-7">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
-          {/* Progress sidebar */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
-            <div className="lg:pr-7" style={{ borderRight: '1px solid #2A2A2A' }}>
-              <RoadmapProgress
-                totalCompleted={totalCompleted}
-                totalModules={totalModules}
-                inProgress={inProgress}
-                remaining={totalModules - totalCompleted}
-                roadmaps={roadmaps}
-              />
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <div className="flex-1">
-            <div className="mb-8">
-              <h1 className="font-poppins font-bold text-3xl text-ink">Study Roadmaps</h1>
-              <p className="text-ink-muted mt-1">
-                Step-by-step guides to master tech skills and land your dream job.
-              </p>
-            </div>
-
-            {roadmaps.length === 0 ? (
-              <div className="rounded-2xl p-12 text-center"
-                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
-                <p className="font-poppins font-semibold text-ink text-lg mb-2">No roadmaps yet</p>
-                <p className="text-ink-muted text-sm">Check back soon — roadmaps are being added.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {roadmaps.map(({ id, title, description, level, duration, modules, completed, topics, levelColor }) => {
-                  const pct = Math.round((completed / modules) * 100);
-                  const leftBorder =
-                    level === 'Beginner'     ? '#A8E63D' :
-                    level === 'Intermediate' ? '#F59E0B' : '#EF4444';
-                  const levelBg =
-                    level === 'Beginner'     ? 'rgba(168,230,61,0.1)'  :
-                    level === 'Intermediate' ? 'rgba(245,158,11,0.1)'  : 'rgba(239,68,68,0.1)';
-
-                  return (
-                    <Link key={id} href={`/resources/${id}`}>
-                      <div className="rounded-2xl p-6 cursor-pointer h-full flex flex-col
-                                       hover:-translate-y-1 transition-all duration-300"
-                           style={{
-                             background: '#111111',
-                             border: '1px solid #2A2A2A',
-                             borderLeftWidth: '4px',
-                             borderLeftColor: leftBorder,
-                             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-                           }}>
-                        <div className="flex items-start justify-between mb-4">
-                          <h2 className="font-poppins font-bold text-ink text-base">{title}</h2>
-                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ml-2 ${levelColor}`}
-                                style={{ background: levelBg }}>
-                            {level}
-                          </span>
-                        </div>
-
-                        <p className="text-ink-muted text-sm leading-relaxed mb-4 flex-1">{description}</p>
-
-                        {/* Progress bar */}
-                        <div className="mb-3">
-                          <div className="flex justify-between text-xs text-ink-faint mb-1">
-                            <span>{completed}/{modules} modules</span>
-                            <span className="text-lime font-medium">{pct}%</span>
-                          </div>
-                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#2A2A2A' }}>
-                            <div
-                              className="h-full bg-lime rounded-full transition-all duration-700 ease-out"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-ink-faint mb-4">
-                          <span>{duration}</span>
-                          <span>{modules} modules</span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5 pt-4" style={{ borderTop: '1px solid #2A2A2A' }}>
-                          {topics.slice(0, 3).map(t => (
-                            <span key={t} className="text-xs text-ink-muted px-2 py-0.5 rounded-md"
-                                  style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
-                              {t}
-                            </span>
-                          ))}
-                          {topics.length > 3 && (
-                            <span className="text-xs text-ink-faint">+{topics.length - 3}</span>
-                          )}
-                        </div>
-
-                        <p className="text-lime text-sm font-bold mt-4">
-                          {completed > 0 ? 'Continue →' : 'Start Learning →'}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="font-poppins font-bold text-3xl md:text-4xl text-ink mb-3">
+            Resources
+          </h1>
+          <p className="text-ink-muted text-base max-w-xl mx-auto">
+            Everything you need to land your dream tech job — all in one place.
+          </p>
         </div>
+
+        {/* Category grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {categories.map(({ href, label, description, dotColor }) => (
+            <Link
+              key={href}
+              href={href}
+              className="group flex items-start gap-4 rounded-2xl p-6 transition-all duration-200"
+              style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: dotColor }}
+                  />
+                  <span className="font-poppins font-semibold text-ink group-hover:text-lime transition-colors">
+                    {label}
+                  </span>
+                </div>
+                <p className="text-ink-muted text-sm leading-relaxed">{description}</p>
+              </div>
+              <svg
+                className="w-4 h-4 text-ink-faint group-hover:text-lime transition-colors flex-shrink-0 mt-1"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          ))}
+        </div>
+
       </div>
     </div>
   );
