@@ -160,9 +160,9 @@ export default async function HomePage() {
                    className="btn-lime px-8 py-3">
                   Join Telegram
                 </a>
-                <a href="https://instagram.com/techwithshailu" target="_blank" rel="noopener noreferrer"
+                <a href="https://chat.whatsapp.com/KnzRYRlTS5jA86Ozo71vlr" target="_blank" rel="noopener noreferrer"
                    className="btn-purple-outline px-8 py-3 border-white/30 text-white hover:bg-white/10">
-                  Follow on Instagram
+                  Join WhatsApp
                 </a>
               </div>
             </div>
