@@ -83,7 +83,7 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
                  style={{ background: '#161616', borderLeft: '1px solid #2A2A2A', borderTop: '1px solid #2A2A2A' }} />
 
             <div className="py-2">
-              {resourceLinks.map(({ href, label, sub, dotColor }, i) => {
+              {resourceLinks.slice(0, 5).map(({ href, label, sub, dotColor }, i) => {
                 const isItemActive = pathname === href;
                 const isFirst = i === 0;
                 return (
@@ -112,6 +112,19 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
                   </Link>
                 );
               })}
+
+              {/* See all */}
+              <div style={{ borderTop: '1px solid #2A2A2A' }} className="mt-1 pt-1 px-4 pb-1">
+                <Link
+                  href="/resources"
+                  className="flex items-center justify-between w-full py-2 text-xs font-medium text-ink-muted hover:text-lime transition-colors group"
+                >
+                  <span>See all resources</span>
+                  <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
