@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import AnimatedBg from '@/components/AnimatedBg';
 
 // Animated kanban-style board with cards sliding between columns
 function ProjectIdeasAnimation() {
@@ -71,13 +72,8 @@ function ProjectIdeasAnimation() {
 
       {/* Lightbulb header */}
       <div className="flex justify-center mb-6">
-        <div id="bulb-glow" className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(167,139,250,0.15)', border: '2px solid rgba(167,139,250,0.4)' }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-            <path d="M9 21h6M12 3a7 7 0 0 1 4 12.7V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-1.3A7 7 0 0 1 12 3Z"
-              stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <div id="bulb-glow" className="w-14 h-14 rounded-full"
+          style={{ background: 'rgba(167,139,250,0.15)', border: '2px solid rgba(167,139,250,0.4)' }} />
       </div>
 
       {/* Idea cards grid */}
@@ -98,8 +94,9 @@ function ProjectIdeasAnimation() {
 
 export default function ProjectIdeasPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+      <AnimatedBg variant="waves" color="#a78bfa" opacity={0.45} />
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">
           <Link href="/" className="hover:text-lime transition-colors">Home</Link>
           <span className="text-ink-faint">/</span>
@@ -124,9 +121,8 @@ export default function ProjectIdeasPage() {
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.45 }} className="flex flex-col sm:flex-row gap-3 items-center">
             <a href="https://t.me/techwithshailu" target="_blank" rel="noopener noreferrer" className="btn-purple text-sm py-2.5 px-6">Get Notified</a>
-            <Link href="/resources" className="text-sm text-ink-muted hover:text-lime transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back to Resources
+            <Link href="/resources" className="text-sm text-ink-muted hover:text-lime transition-colors">
+              ← Back to Resources
             </Link>
           </motion.div>
         </div>

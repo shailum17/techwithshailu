@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import AnimatedBg from '@/components/AnimatedBg';
 
 // Animated Q&A cards floating with a question/answer reveal loop
 function InterviewAnimation() {
@@ -107,12 +108,8 @@ function InterviewAnimation() {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col gap-2" style={{ minWidth: 200 }}>
         {['DSA Patterns', 'System Design', 'Behavioral Q&A', 'Mock Rounds'].map((item, i) => (
           <div key={i} className="check-item flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: `${color}20`, border: `1px solid ${color}60` }}>
-              <svg width="8" height="8" viewBox="0 0 8 8">
-                <path d="M1 4l2 2 4-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </svg>
-            </div>
+            <div className="w-4 h-4 rounded-full flex-shrink-0"
+              style={{ background: `${color}20`, border: `1px solid ${color}60` }} />
             <span className="text-xs text-ink-muted">{item}</span>
           </div>
         ))}
@@ -131,8 +128,9 @@ function InterviewAnimation() {
 
 export default function InterviewPrepPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+      <AnimatedBg variant="grid" color="#fbbf24" opacity={0.35} />
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">
           <Link href="/" className="hover:text-lime transition-colors">Home</Link>
           <span className="text-ink-faint">/</span>
@@ -157,9 +155,8 @@ export default function InterviewPrepPage() {
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.45 }} className="flex flex-col sm:flex-row gap-3 items-center">
             <a href="https://t.me/techwithshailu" target="_blank" rel="noopener noreferrer" className="btn-purple text-sm py-2.5 px-6">Get Notified</a>
-            <Link href="/resources" className="text-sm text-ink-muted hover:text-lime transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back to Resources
+            <Link href="/resources" className="text-sm text-ink-muted hover:text-lime transition-colors">
+              ← Back to Resources
             </Link>
           </motion.div>
         </div>
