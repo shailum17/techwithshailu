@@ -16,6 +16,7 @@ interface Job {
   tags?: string[];
   is_featured?: boolean;
   createdAt?: string;
+  logo_domain?: string;
 }
 
 const LOCATIONS   = ['Remote', 'Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Noida', 'Delhi'];
@@ -117,6 +118,35 @@ function LimeRadio({
   );
 }
 
+/* ─── Company logo avatar ──────────────────────────────────── */
+function CompanyAvatar({ domain, company }: { domain?: string; company: string }) {
+  const [failed, setFailed] = useState(false);
+  const initials = company.slice(0, 2).toUpperCase();
+
+  if (domain && !failed) {
+    return (
+      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+           style={{ background: '#1A1A1A', border: '1px solid rgba(168,230,61,0.2)' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://logo.clearbit.com/${domain}`}
+          alt={`${company} logo`}
+          className="w-full h-full object-contain"
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center
+                    text-lime font-bold text-sm font-poppins transition-colors"
+         style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.2)' }}>
+      {initials}
+    </div>
+  );
+}
+
 /* ─── #2 Job card with glow hover ──────────────────────────── */
 function JobCard({ job }: { job: Job }) {
   const [bookmarked, setBookmarked] = useState(false);
@@ -158,11 +188,7 @@ function JobCard({ job }: { job: Job }) {
 
         {/* Header */}
         <div className="flex items-start gap-3 pr-6">
-          <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center
-                          text-lime font-bold text-sm font-poppins transition-colors"
-               style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.2)' }}>
-            {job.company.slice(0, 2).toUpperCase()}
-          </div>
+          <CompanyAvatar domain={job.logo_domain} company={job.company} />
           <div className="min-w-0">
             <h3 className="font-poppins font-semibold text-white text-sm truncate
                            group-hover:text-lime transition-colors">
