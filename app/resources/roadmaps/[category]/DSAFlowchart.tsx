@@ -2,7 +2,8 @@
 
 /* ─── Canvas & Layout ─────────────────────────────────────────── */
 const W = 1000, CX = 500;
-const PC = ['#6366f1','#22c55e','#f59e0b','#ec4899','#8b5cf6','#ef4444'];
+// Alternating lime / purple — matches website brand palette
+const PC = ['#A8E63D','#9B7FE8','#A8E63D','#9B7FE8','#A8E63D','#9B7FE8'];
 const cx3 = [165, CX, 835];
 const cx4 = [128, 373, 627, 872];
 const PY = [90, 460, 830, 1210, 1580, 1990];
@@ -89,87 +90,64 @@ export default function DSAFlowchart() {
       viewBox={`0 0 ${W} ${H}`}
       style={{ display: 'block', width: '100%', height: '100%' }}
     >
-      <defs>
-        <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stopColor="#6366f1"/>
-          <stop offset="50%"  stopColor="#8b5cf6"/>
-          <stop offset="100%" stopColor="#ec4899"/>
-        </linearGradient>
-        {PC.map((c,i)=>(
-          <linearGradient key={i} id={`pg${i}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%"   stopColor={c} stopOpacity=".95"/>
-            <stop offset="100%" stopColor={c} stopOpacity=".75"/>
-          </linearGradient>
-        ))}
-      </defs>
-
-      <rect width={W} height={H} fill="#06090e"/>
-
-      {/* Phase bands */}
-      {PC.map((c,i)=>{
-        const ni = i===4 ? 5 : 4;
-        const y0 = PY[i]-20;
-        const y1 = IY[i] + (ni-1)*IG + 28 + 36;
-        return (
-          <g key={i}>
-            <rect x={0} y={y0} width={W} height={y1-y0} fill={c} fillOpacity={0.022}/>
-            <line x1={0} y1={y0} x2={W} y2={y0} stroke={c} strokeOpacity={0.08} strokeWidth={0.5}/>
-          </g>
-        );
-      })}
+      {/* No background — transparent */}
 
       {/* Spine */}
-      <line x1={CX} y1={62} x2={CX} y2={H-90} stroke="#1a2d44" strokeWidth={1} strokeDasharray="4 8"/>
+      <line x1={CX} y1={62} x2={CX} y2={H - 90} stroke="#2A2A2A" strokeWidth={1} strokeDasharray="4 8"/>
 
       {/* Edges */}
-      {EDGES.map(([f,t],i)=>{
-        const d = mkPath(f,t);
-        if(!d) return null;
+      {EDGES.map(([f, t], i) => {
+        const d = mkPath(f, t);
+        if (!d) return null;
         const a = nMap[f];
         const spine = (a?.t === 'root' || a?.t === 'phase') && (nMap[t]?.t === 'root' || nMap[t]?.t === 'phase');
         return (
-          <path key={i} d={d} stroke={a?.c||'#6366f1'}
-            strokeWidth={spine ? 2 : 1.2}
-            strokeOpacity={spine ? 0.42 : 0.25}
+          <path key={i} d={d} stroke={a?.c || '#A8E63D'}
+            strokeWidth={spine ? 2 : 1.5}
+            strokeOpacity={spine ? 0.7 : 0.4}
             fill="none" strokeLinecap="round"/>
         );
       })}
 
       {/* Nodes */}
-      {(NODES as Node[]).map(n=>{
-        const lx = n.x - n.w/2;
-        if(n.t==='root') return (
+      {(NODES as Node[]).map(n => {
+        const lx = n.x - n.w / 2;
+
+        if (n.t === 'root') return (
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={14} fill="url(#rg)"/>
-            <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
-              fill="#fff" fontSize={17} fontWeight="800">{n.l}</text>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={14} fill="#A8E63D"/>
+            <text x={n.x} y={n.y + n.h / 2} textAnchor="middle" dominantBaseline="central"
+              fill="#000000" fontSize={17} fontWeight="800">{n.l}</text>
           </g>
         );
-        if(n.t==='phase') {
-          const pi = parseInt(n.id.slice(1))-1;
-          return (
-            <g key={n.id}>
-              <rect x={lx} y={n.y} width={n.w} height={n.h} rx={7} fill={`url(#pg${pi})`}/>
-              <rect x={lx+2} y={n.y+2} width={n.w-4} height={n.h/2-2} rx={5} fill="rgba(255,255,255,.08)"/>
-              <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
-                fill="#fff" fontSize={12} fontWeight="700">{n.l}</text>
-            </g>
-          );
-        }
-        if(n.t==='topic') return (
+
+        if (n.t === 'phase') return (
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={6} fill={n.c+'18'} stroke={n.c} strokeWidth={1.5}/>
-            <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={7} fill={n.c}/>
+            <text x={n.x} y={n.y + n.h / 2} textAnchor="middle" dominantBaseline="central"
+              fill="#000000" fontSize={12} fontWeight="700">{n.l}</text>
+          </g>
+        );
+
+        if (n.t === 'topic') return (
+          <g key={n.id}>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={6}
+              fill="#111111" stroke={n.c} strokeWidth={1.5}/>
+            <text x={n.x} y={n.y + n.h / 2} textAnchor="middle" dominantBaseline="central"
               fill={n.c} fontSize={11} fontWeight="600">{n.l}</text>
           </g>
         );
-        if(n.t==='item') return (
+
+        if (n.t === 'item') return (
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={4} fill="#0c1526" stroke={n.c+'35'} strokeWidth={0.8}/>
-            <rect x={lx} y={n.y} width={3} height={n.h} rx={1.5} fill={n.c+'95'}/>
-            <text x={lx+11} y={n.y+n.h/2} dominantBaseline="central" fill="#8ba0be" fontSize={10.5}>{n.l}</text>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={4}
+              fill="#111111" stroke="#2A2A2A" strokeWidth={0.8}/>
+            <rect x={lx} y={n.y} width={3} height={n.h} rx={1.5} fill={n.c}/>
+            <text x={lx + 11} y={n.y + n.h / 2} dominantBaseline="central"
+              fill="#A0A0A0" fontSize={10.5}>{n.l}</text>
           </g>
         );
+
         return null;
       })}
     </svg>
