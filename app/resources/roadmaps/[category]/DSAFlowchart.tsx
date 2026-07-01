@@ -88,7 +88,7 @@ export default function DSAFlowchart() {
       width={W}
       height={H}
       viewBox={`0 0 ${W} ${H}`}
-      style={{ display: 'block', width: '100%', height: '100%' }}
+      style={{ display: 'block', minWidth: W }}
     >
       {/* No background — transparent */}
 
