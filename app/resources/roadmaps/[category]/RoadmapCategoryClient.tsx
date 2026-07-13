@@ -96,11 +96,22 @@ function RoadmapFlowView({
       >
         {/* Legend */}
         <div className="flex items-center gap-3 flex-wrap">
-          <LegendItem color={dotColor} label="Phase / Section" />
-          <LegendItem color="#a78bfa"  label="Topic" />
-          <LegendItem color="#1e3a5f"  label="Sub-item" />
+          {!isFrontend && (
+            <>
+              <LegendItem color="#22D3EE" label="Fundamentals" />
+              <LegendItem color="#A8E63D" label="Core Phase" />
+              <LegendItem color="#9B7FE8" label="Trees & Graphs" />
+              <LegendItem color="#F59E0B" label="Advanced DS" />
+              <LegendItem color="#F87171" label="Complex DS" />
+            </>
+          )}
           {isFrontend && (
-            <LegendItem color="#F59E0B" label="Advanced Topics" />
+            <>
+              <LegendItem color={dotColor} label="Phase / Section" />
+              <LegendItem color="#a78bfa"  label="Topic" />
+              <LegendItem color="#1e3a5f"  label="Sub-item" />
+              <LegendItem color="#F59E0B" label="Advanced Topics" />
+            </>
           )}
         </div>
 
@@ -189,13 +200,14 @@ function RoadmapFlowView({
            scrolling horizontally.                          */}
       <div
         ref={scrollRef}
+        className="hide-scrollbar"
         style={{
           overflowX: 'auto',
           overflowY: 'auto',
           flex: 1,
           paddingTop: '24px',
           paddingBottom: '24px',
-          scrollBehavior: 'auto',   // we use el.scrollTo({behavior:'smooth'}) ourselves
+          scrollBehavior: 'auto',
         }}
       >
         <div

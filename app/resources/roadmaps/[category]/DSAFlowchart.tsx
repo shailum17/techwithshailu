@@ -1,153 +1,253 @@
 'use client';
 
-/* ─── Canvas & Layout ─────────────────────────────────────────── */
-const W = 1000, CX = 500;
-// Alternating lime / purple — matches website brand palette
-const PC = ['#A8E63D','#9B7FE8','#A8E63D','#9B7FE8','#A8E63D','#9B7FE8'];
-const cx3 = [165, CX, 835];
-const cx4 = [128, 373, 627, 872];
-const PY = [90, 460, 830, 1210, 1580, 1990];
-const TY = PY.map(y => y + 68);
-const IY = TY.map(y => y + 58);
-const IG = 36;
-const H  = 2340;
+import { useMemo } from 'react';
 
-/* ─── Node Builders ───────────────────────────────────────────── */
-const mP  = (i:number, l:string) => ({id:`p${i}`,x:CX,y:PY[i-1],w:232,h:40,t:'phase',c:PC[i-1],l});
-const mT3 = (pi:number,s:string,k:number,l:string) => ({id:`p${pi}-${s}`,x:cx3[k],y:TY[pi-1],w:158,h:32,t:'topic',c:PC[pi-1],l});
-const mT4 = (pi:number,s:string,k:number,l:string) => ({id:`p${pi}-${s}`,x:cx4[k],y:TY[pi-1],w:142,h:32,t:'topic',c:PC[pi-1],l});
-const mI3 = (pi:number,s:string,k:number,ls:string[]) => ls.map((l,i)=>({id:`p${pi}-${s}${i}`,x:cx3[k],y:IY[pi-1]+i*IG,w:150,h:28,t:'item',c:PC[pi-1],l}));
-const mI4 = (pi:number,s:string,k:number,ls:string[]) => ls.map((l,i)=>({id:`p${pi}-${s}${i}`,x:cx4[k],y:IY[pi-1]+i*IG,w:134,h:28,t:'item',c:PC[pi-1],l}));
-const te  = (pi:number,ss:string[]) => ss.map(s=>[`p${pi}`,`p${pi}-${s}`]);
-const ie  = (pi:number,s:string,n:number) => Array.from({length:n},(_,i)=>[`p${pi}-${s}`,`p${pi}-${s}${i}`]);
+const W=1600,CX=800;
+const LM='#A8E63D',PU='#9B7FE8',CY='#22D3EE',AM='#F59E0B',RD='#F87171';
+const PH=48,TH=38,IH=32,TG=14,IG=12,SG=80,LX=CX-540,RX=CX+540;
 
-/* ─── All Nodes ───────────────────────────────────────────────── */
-const NODES = [
-  {id:'root',x:CX,y:12,w:256,h:50,t:'root',c:'#818cf8',l:'DSA Roadmap'},
-  mP(1,'Phase 1 · Foundation'),
-  mT3(1,'cx',0,'Complexity Analysis'), mT3(1,'ar',1,'Arrays'), mT3(1,'st',2,'Strings'),
-  ...mI3(1,'cx',0,['Big O / Ω / Θ Notation','Best / Avg / Worst Case','Space Complexity','Amortized Analysis']),
-  ...mI3(1,'ar',1,['Two Pointers','Sliding Window','Prefix Sum',"Kadane's Algorithm"]),
-  ...mI3(1,'st',2,['Palindrome Check','Anagram Detection','KMP Algorithm','Rabin-Karp Hashing']),
-  mP(2,'Phase 2 · Linear DS'),
-  mT3(2,'ll',0,'Linked List'), mT3(2,'sq',1,'Stack & Queue'), mT3(2,'ha',2,'Hashing'),
-  ...mI3(2,'ll',0,['Singly & Doubly LL',"Floyd's Cycle Detection",'Slow & Fast Pointers','Merge & Reverse']),
-  ...mI3(2,'sq',1,['Stack (LIFO)','Queue (FIFO)','Monotonic Stack','Deque & Circular Q']),
-  ...mI3(2,'ha',2,['Hash Tables','Collision Handling','Open Addressing','Chaining Method']),
-  mP(3,'Phase 3 · Trees & Graphs'),
-  mT4(3,'bt',0,'Binary Trees'), mT4(3,'bst',1,'BST'), mT4(3,'hp',2,'Heaps & PQ'), mT4(3,'gr',3,'Graphs'),
-  ...mI4(3,'bt',0,['DFS (In/Pre/Post)','BFS Level Order','Height & Diameter','LCA']),
-  ...mI4(3,'bst',1,['Insert/Delete/Search','Inorder = Sorted','Validate BST','Balanced / AVL']),
-  ...mI4(3,'hp',2,['Min / Max Heap','Heapify O(n)','Top-K Pattern','K-Way Merge']),
-  ...mI4(3,'gr',3,['BFS & DFS','Adj List / Matrix','Topological Sort','Cycle Detection']),
-  mP(4,'Phase 4 · Algorithms'),
-  mT3(4,'so',0,'Sorting'), mT3(4,'bs',1,'Binary Search'), mT3(4,'bk',2,'Backtracking'),
-  ...mI3(4,'so',0,['Merge Sort O(n log n)','Quick Sort','Counting / Radix Sort','Heap Sort']),
-  ...mI3(4,'bs',1,['Standard Binary Search','Answer Space BS','Rotated Array BS','Lower / Upper Bound']),
-  ...mI3(4,'bk',2,['Recursion Tree','Backtrack Template','Permutations / Subsets','State Space Pruning']),
-  mP(5,'Phase 5 · Dynamic Prog.'),
-  mT3(5,'1d',0,'1D DP'), mT3(5,'td',1,'2D DP'), mT3(5,'pa',2,'DP Patterns'),
-  ...mI3(5,'1d',0,['Memoization (Top-Down)','Tabulation (Bottom-Up)','Fibonacci Pattern','House Robber','Longest Incr. Subseq.']),
-  ...mI3(5,'td',1,['Grid DP (Unique Paths)','0/1 Knapsack','LCS','Edit Distance','Matrix Chain DP']),
-  ...mI3(5,'pa',2,['Interval DP','Palindrome DP','Stock Problems','Greedy + DP','Partition DP']),
-  mP(6,'Phase 6 · Advanced'),
-  mT4(6,'ag',0,'Adv. Graphs'), mT4(6,'tr',1,'Tries'), mT4(6,'du',2,'Union Find'), mT4(6,'sg',3,'Segment Tree'),
-  ...mI4(6,'ag',0,["Dijkstra's Algorithm",'Bellman-Ford','Floyd-Warshall',"Kruskal's / Prim's MST"]),
-  ...mI4(6,'tr',1,['Insert / Search / Prefix','Autocomplete System','XOR Trie','Word Dictionary']),
-  ...mI4(6,'du',2,['Path Compression','Union by Rank','Connected Comp.','Cycle Detection']),
-  ...mI4(6,'sg',3,['Build / Query / Update','Lazy Propagation','Fenwick Tree (BIT)','Range Min/Max/Sum']),
-];
+interface N{id:string;x:number;y:number;w:number;h:number;t:'root'|'phase'|'topic'|'item';c:string;l:string;}
+const nd=(id:string,x:number,y:number,w:number,h:number,t:N['t'],c:string,l:string):N=>({id,x,y,w,h,t,c,l});
 
-const EDGES: string[][] = [
-  ['root','p1'],['p1','p2'],['p2','p3'],['p3','p4'],['p4','p5'],['p5','p6'],
-  ...te(1,['cx','ar','st']), ...ie(1,'cx',4), ...ie(1,'ar',4), ...ie(1,'st',4),
-  ...te(2,['ll','sq','ha']), ...ie(2,'ll',4), ...ie(2,'sq',4), ...ie(2,'ha',4),
-  ...te(3,['bt','bst','hp','gr']), ...ie(3,'bt',4), ...ie(3,'bst',4), ...ie(3,'hp',4), ...ie(3,'gr',4),
-  ...te(4,['so','bs','bk']), ...ie(4,'so',4), ...ie(4,'bs',4), ...ie(4,'bk',4),
-  ...te(5,['1d','td','pa']), ...ie(5,'1d',5), ...ie(5,'td',5), ...ie(5,'pa',5),
-  ...te(6,['ag','tr','du','sg']), ...ie(6,'ag',4), ...ie(6,'tr',4), ...ie(6,'du',4), ...ie(6,'sg',4),
-];
-
-interface Node { id:string; x:number; y:number; w:number; h:number; t:string; c:string; l:string }
-
-export default function DSAFlowchart() {
-  const nMap: Record<string, Node> = {};
-  (NODES as Node[]).forEach(n => (nMap[n.id] = n));
-
-  const mkPath = (fId: string, tId: string) => {
-    const a = nMap[fId], b = nMap[tId];
-    if (!a || !b) return null;
-    const x1 = a.x, y1 = a.y + a.h, x2 = b.x, y2 = b.y;
-    if (Math.abs(x1 - x2) < 6) return `M${x1} ${y1}L${x2} ${y2}`;
-    const mY = (y1 + y2) / 2;
-    return `M${x1} ${y1}C${x1} ${mY},${x2} ${mY},${x2} ${y2}`;
+function buildChart(){
+  const nodes:N[]=[],edges:[string,string][]=[];
+  let Y=24;
+  const a=(n:N)=>{nodes.push(n);return n;};
+  const e=(f:string,t:string)=>edges.push([f,t]);
+  const fan=(f:string,...ts:string[])=>ts.forEach(t=>e(f,t));
+  const sec=(h:number,g=SG)=>{const y=Y;Y+=h+g;return y;};
+  const stk=(ids:string[],x:number,y0:number,w:number,h:number,t:N['t'],c:string,ls:string[],g:number)=>{
+    ids.forEach((id,i)=>nodes.push(nd(id,x,y0+i*(h+g),w,h,t,c,ls[i])));
+    return y0+ids.length*(h+g);
+  };
+  const row=(ids:string[],cx:number,y:number,w:number,h:number,t:N['t'],c:string,ls:string[],g=12)=>{
+    const tot=ids.length*(w+g)-g;
+    ids.forEach((id,i)=>nodes.push(nd(id,cx-tot/2+i*(w+g)+w/2,y,w,h,t,c,ls[i])));
   };
 
-  return (
-    <svg
-      width={W}
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      style={{ display: 'block', minWidth: W }}
-    >
-      {/* No background — transparent */}
+  /* ROOT */
+  a(nd('root',CX,sec(54),340,54,'root',LM,'Data Structures & Algorithms'));
 
-      {/* Spine */}
-      <line x1={CX} y1={62} x2={CX} y2={H - 90} stroke="#2A2A2A" strokeWidth={1} strokeDasharray="4 8"/>
+  /* P1 — Getting Started */
+  {const phY=sec(PH,36);a(nd('p1',CX,phY,300,PH,'phase',CY,'Phase 1 · Getting Started'));e('root','p1');
+  const r1Y=phY+PH+36,r2Y=r1Y+TH+TG,lw=92,lg=10,lx=CX-420;
+  row(['l-js','l-java','l-go','l-cs'],lx,r1Y,lw,TH,'topic',CY,['JavaScript','Java','Go','C#'],lg);
+  row(['l-cpp','l-py','l-rs','l-rb'], lx,r2Y,lw,TH,'topic',CY,['C++','Python','Rust','Ruby'],lg);
+  const plX=CX+160,plY=r1Y+8;
+  a(nd('pl',plX,plY,220,PH,'phase',CY,'Pick a Language'));
+  ['l-js','l-java','l-go','l-cs','l-cpp','l-py','l-rs','l-rb'].forEach(id=>e(id,'pl'));e('p1','pl');
+  const pfY=plY+PH+TG+24;
+  a(nd('pf',plX,pfY,240,PH,'phase',CY,'Programming Fundamentals'));e('pl','pf');
+  const pfL=['Language Syntax','Control Structures','Functions','OOP Basics','Pseudo Code'];
+  stk(pfL.map((_,i)=>`pf-${i}`),RX,pfY,200,IH,'item',CY,pfL,IG);
+  pfL.forEach((_,i)=>e('pf',`pf-${i}`));
+  Y=Math.max(Y,r2Y+TH+SG,pfY+PH+pfL.length*(IH+IG)+SG);}
 
-      {/* Edges */}
-      {EDGES.map(([f, t], i) => {
-        const d = mkPath(f, t);
-        if (!d) return null;
-        const a = nMap[f];
-        const spine = (a?.t === 'root' || a?.t === 'phase') && (nMap[t]?.t === 'root' || nMap[t]?.t === 'phase');
-        return (
-          <path key={i} d={d} stroke={a?.c || '#A8E63D'}
-            strokeWidth={spine ? 2 : 1.5}
-            strokeOpacity={spine ? 0.7 : 0.4}
-            fill="none" strokeLinecap="round"/>
-        );
+  /* P2 — DS Intro */
+  {const phY=sec(PH,32);a(nd('p2',CX,phY,340,PH,'phase',LM,'Phase 2 · Data Structures Intro'));e('p1','p2');
+  const qY=phY+PH+32;
+  a(nd('wds',CX,qY,300,TH,'topic',LM,'What are Data Structures?'));
+  a(nd('wdsw',CX,qY+TH+TG,320,TH,'topic',LM,'Why are Data Structures Important?'));
+  fan('p2','wds','wdsw');
+  const bY=qY+TH+TG+TH+TG+28;
+  a(nd('bds',CX,bY,260,PH,'phase',LM,'Basic Data Structures'));e('wdsw','bds');
+  const bL=['Array','Linked Lists','Queues','Stacks','Hash Tables'];
+  row(bL.map((_,i)=>`bds-${i}`),CX,bY+PH+24,148,TH,'topic',LM,bL,12);
+  bL.forEach((_,i)=>e('bds',`bds-${i}`));
+  Y=Math.max(Y,bY+PH+24+TH+SG);}
+
+  /* P3 — Complexity */
+  {const phY=sec(PH,32);a(nd('p3',CX,phY,300,PH,'phase',PU,'Phase 3 · Algorithmic Complexity'));e('p2','p3');
+  const base=phY+PH+32;
+  const lItems=[{id:'ac-ts',w:220,h:TH,t:'topic' as N['t'],l:'Time vs Space Complexity'},
+    {id:'ac-how',w:240,h:TH,t:'topic' as N['t'],l:'How to Calculate Complexity?'},
+    {id:'ac-asym',w:200,h:TH,t:'topic' as N['t'],l:'Asymptotic Notation'},
+    {id:'ac-bigo',w:185,h:IH,t:'item' as N['t'],l:'Big-O Notation'},
+    {id:'ac-bigt',w:185,h:IH,t:'item' as N['t'],l:'Big-θ Notation'},
+    {id:'ac-bigw',w:185,h:IH,t:'item' as N['t'],l:'Big-Ω Notation'}];
+  let ly=base;
+  lItems.forEach(({id,w,h,t,l},i)=>{if(i>0)ly+=lItems[i-1].h+(i===3?6:TG);a(nd(id,LX,ly,w,h,t,PU,l));e('p3',id);});
+  e('ac-asym','ac-bigo');e('ac-asym','ac-bigt');e('ac-asym','ac-bigw');
+  a(nd('ac-rt',RX,base,180,TH,'topic',PU,'Common Runtimes'));e('p3','ac-rt');
+  ['Constant','Logarithmic','Linear','Polynomial','Exponential','Factorial'].forEach((l,i)=>{
+    const n=nd(`ac-rt${i}`,RX,base+TH+TG+i*(IH+IG),175,IH,'item',PU,l);a(n);e('ac-rt',n.id);});
+  Y=Math.max(Y,base+TH+TG+6*(IH+IG)+SG);}
+
+  /* P4 — Sorting & Searching */
+  {const phY=sec(PH,32);a(nd('p4',CX,phY,320,PH,'phase',LM,'Phase 4 · Sorting & Searching'));e('p3','p4');
+  const base=phY+PH+32;
+  a(nd('sort',LX,base,220,PH,'phase',LM,'Sorting Algorithms'));e('p4','sort');
+  const sL=['Bubble Sort','Insertion Sort','Selection Sort','Merge Sort','Quick Sort','Heap Sort'];
+  stk(sL.map((_,i)=>`s-${i}`),LX,base+PH+20,200,TH,'topic',LM,sL,TG);
+  sL.forEach((_,i)=>e('sort',`s-${i}`));
+  a(nd('srch',RX,base,220,PH,'phase',LM,'Search Algorithms'));e('p4','srch');
+  const srL=['Linear Search','Binary Search'];
+  stk(srL.map((_,i)=>`sr-${i}`),RX,base+PH+20,200,TH,'topic',LM,srL,TG);
+  srL.forEach((_,i)=>e('srch',`sr-${i}`));
+  Y=Math.max(Y,base+PH+20+sL.length*(TH+TG)+SG,base+PH+20+srL.length*(TH+TG)+SG);}
+
+  /* P5 — Trees & Graphs */
+  {const phY=sec(PH,32);a(nd('p5',CX,phY,340,PH,'phase',PU,'Phase 5 · Trees & Graphs'));e('p4','p5');
+  const base=phY+PH+32;
+  const TX=CX+300,TVX=CX+560,GX=CX-300,GX2=CX-560;
+
+  // Trees
+  a(nd('tree',TX,base,220,PH,'phase',PU,'Tree Data Structures'));e('p5','tree');
+  const trL=['Binary Trees','Binary Search Trees','AVL Trees','B-Trees','Heap'];
+  stk(trL.map((_,i)=>`tr-${i}`),TX,base+PH+20,210,TH,'topic',PU,trL,TG);
+  trL.forEach((_,i)=>e('tree',`tr-${i}`));
+  // Tree traversal
+  a(nd('trav',TVX,base,190,TH,'topic',PU,'Tree Traversal'));e('tree','trav');
+  const tvL=['Breadth First Search','Depth First Search','In-Order Traversal','Pre-Order Traversal','Post-Order Traversal'];
+  stk(tvL.map((_,i)=>`tv-${i}`),TVX,base+TH+TG,185,IH,'item',PU,tvL,IG);
+  tvL.forEach((_,i)=>e('trav',`tv-${i}`));
+  // Tree search
+  const tsB=base+TH+TG+tvL.length*(IH+IG)+TG+20;
+  a(nd('tsrch',TVX,tsB,190,TH,'topic',PU,'Search Algorithms'));e('tree','tsrch');
+  ['Breadth First Search','Depth First Search'].forEach((l,i)=>{
+    const n=nd(`ts-${i}`,TVX,tsB+TH+TG+i*(IH+IG),185,IH,'item',PU,l);a(n);e('tsrch',n.id);});
+
+  // Graphs
+  a(nd('graph',GX,base,220,PH,'phase',PU,'Graph Data Structures'));e('p5','graph');
+  ['Directed Graph','Undirected Graph'].forEach((l,i)=>{
+    const n=nd(`gr-${i}`,GX,base+PH+20+i*(TH+TG),200,TH,'topic',PU,l);a(n);e('graph',n.id);});
+  // Graph search
+  a(nd('gsrch',GX2,base,195,TH,'topic',PU,'Search Algorithms'));e('graph','gsrch');
+  ['Breadth First Search','Depth First Search'].forEach((l,i)=>{
+    const n=nd(`gs-${i}`,GX2,base+TH+TG+i*(IH+IG),190,IH,'item',PU,l);a(n);e('gsrch',n.id);});
+  // Shortest path
+  const spB=base+TH+TG+2*(IH+IG)+TG+24;
+  a(nd('sp',GX2,spB,210,TH,'topic',PU,'Shortest Path Algorithms'));e('graph','sp');
+  const spL=["Dijkstra's Algorithm",'Bellman-Ford Algorithm','A* Algorithm'];
+  stk(spL.map((_,i)=>`sp-${i}`),GX2,spB+TH+TG,205,IH,'item',PU,spL,IG);
+  spL.forEach((_,i)=>e('sp',`sp-${i}`));
+  // MST
+  const mstB=spB+TH+TG+spL.length*(IH+IG)+TG+24;
+  a(nd('mst',GX2,mstB,210,TH,'topic',PU,'Minimum Spanning Tree'));e('graph','mst');
+  ["Prim's Algorithm","Kruskal's Algorithm"].forEach((l,i)=>{
+    const n=nd(`mst-${i}`,GX2,mstB+TH+TG+i*(IH+IG),205,IH,'item',PU,l);a(n);e('mst',n.id);});
+
+  Y=Math.max(Y,
+    tsB+TH+TG+2*(IH+IG)+SG,
+    mstB+TH+TG+2*(IH+IG)+SG,
+    base+PH+20+trL.length*(TH+TG)+SG);}
+
+  /* P6 — Advanced DS */
+  {const phY=sec(PH,32);a(nd('p6',CX,phY,320,PH,'phase',AM,'Phase 6 · Advanced Data Structures'));e('p5','p6');
+  const adL=['Trie','Segment Trees','Fenwick Trees','Disjoint Set (Union-Find)','Suffix Trees and Arrays'];
+  stk(adL.map((_,i)=>`ad-${i}`),CX,phY+PH+28,280,TH,'topic',AM,adL,TG);
+  adL.forEach((_,i)=>e('p6',`ad-${i}`));
+  Y=Math.max(Y,phY+PH+28+adL.length*(TH+TG)+SG);}
+
+  /* P7 — Complex DS */
+  {const phY=sec(PH,32);a(nd('p7',CX,phY,320,PH,'phase',RD,'Phase 7 · Complex Data Structures'));e('p6','p7');
+  const base=phY+PH+32;
+  const cxL=['2-3 Trees','B/B+ Trees','Skip List','ISAM'];
+  stk(cxL.map((_,i)=>`cx-${i}`),LX,base,185,TH,'topic',RD,cxL,TG);
+  cxL.forEach((_,i)=>e('p7',`cx-${i}`));
+  a(nd('idx',RX,base,160,PH,'phase',RD,'Indexing'));e('p7','idx');
+  ['Linear','Tree-Based'].forEach((l,i)=>{
+    const n=nd(`idx-${i}`,RX,base+PH+20+i*(TH+TG),150,TH,'topic',RD,l);a(n);e('idx',n.id);});
+  Y=Math.max(Y,base+cxL.length*(TH+TG)+SG,base+PH+20+2*(TH+TG)+SG);}
+
+  /* P8 — Problem Solving */
+  {const phY=sec(PH,32);a(nd('p8',CX,phY,360,PH,'phase',LM,'Phase 8 · Problem Solving Techniques'));e('p7','p8');
+  const base=phY+PH+32;
+  const coreL=['Brute Force','Backtracking','Greedy Algorithms','Randomised Algorithms',
+               'Divide and Conquer','Recursion','Dynamic Programming','Two Pointer Technique',
+               'Sliding Window Technique'];
+  coreL.forEach((l,i)=>{
+    const n=nd(`ps-c${i}`,CX-110+(i%2)*240,base+Math.floor(i/2)*(TH+TG),225,TH,'topic',LM,l);
+    a(n);e('p8',n.id);});
+  const advL=['Fast and Slow Pointers','Cyclic Sort','Merge Intervals','Two Heaps',
+              'Kth Element','Multi-threaded','Island traversal','Heap','A* Algorithm'];
+  stk(advL.map((_,i)=>`ps-a${i}`),RX,base,205,IH,'item',LM,advL,IG+4);
+  advL.forEach((_,i)=>e('p8',`ps-a${i}`));
+  Y=Math.max(Y,
+    base+Math.ceil(coreL.length/2)*(TH+TG)+SG,
+    base+advL.length*(IH+IG+4)+SG);}
+
+  /* P9 — Platforms */
+  {const phY=sec(PH,28);a(nd('p9',CX,phY,280,PH,'phase',CY,'Platforms to Practice'));e('p8','p9');
+  const tot=2*(160+40)-40;
+  ['Leetcode','Edabit'].forEach((l,i)=>{
+    const n=nd(`pt-${i}`,CX-tot/2+i*(160+40)+80,phY+PH+28,160,TH,'topic',CY,l);
+    a(n);e('p9',n.id);});
+  Y=Math.max(Y,phY+PH+28+TH+60);}
+
+  return {nodes,edges,H:Y+60};
+}
+
+/* ── computed once at module load ──────────────────────────── */
+const CHART=buildChart();
+
+/* ── path builder ──────────────────────────────────────────── */
+function mkPath(a:N,b:N):string{
+  const x1=a.x,y1=a.y+a.h,x2=b.x,y2=b.y;
+  if(Math.abs(x1-x2)<6)return `M${x1} ${y1}L${x2} ${y2}`;
+  const mY=(y1+y2)/2;
+  return `M${x1} ${y1}C${x1} ${mY},${x2} ${mY},${x2} ${y2}`;
+}
+
+/* ── component ─────────────────────────────────────────────── */
+export default function DSAFlowchart(){
+  const {nodes,edges,H}=CHART;
+  const nMap=useMemo(()=>{
+    const m:Record<string,N>={};
+    nodes.forEach(n=>(m[n.id]=n));
+    return m;
+  },[nodes]);
+
+  return(
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}
+      style={{display:'block',minWidth:W}}
+      aria-label="Data Structures & Algorithms Roadmap">
+
+      <line x1={CX} y1={78} x2={CX} y2={H-70}
+        stroke="#2A2A2A" strokeWidth={1} strokeDasharray="5 10"/>
+
+      {edges.map(([f,t],i)=>{
+        const a=nMap[f],b=nMap[t];
+        if(!a||!b)return null;
+        const spine=(a.t==='root'||a.t==='phase')&&(b.t==='phase'||b.t==='root');
+        return <path key={i} d={mkPath(a,b)} stroke={a.c}
+          strokeWidth={spine?2:1.5} strokeOpacity={spine?0.8:0.45}
+          fill="none" strokeLinecap="round"/>;
       })}
 
-      {/* Nodes */}
-      {(NODES as Node[]).map(n => {
-        const lx = n.x - n.w / 2;
-
-        if (n.t === 'root') return (
+      {nodes.map(n=>{
+        const lx=n.x-n.w/2;
+        if(n.t==='root')return(
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={14} fill="#A8E63D"/>
-            <text x={n.x} y={n.y + n.h / 2} textAnchor="middle" dominantBaseline="central"
-              fill="#000000" fontSize={17} fontWeight="800">{n.l}</text>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={14} fill={LM}/>
+            <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
+              fill="#000" fontSize={18} fontWeight="800" fontFamily="system-ui,sans-serif">{n.l}</text>
           </g>
         );
-
-        if (n.t === 'phase') return (
+        if(n.t==='phase')return(
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={7} fill={n.c}/>
-            <text x={n.x} y={n.y + n.h / 2} textAnchor="middle" dominantBaseline="central"
-              fill="#000000" fontSize={12} fontWeight="700">{n.l}</text>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={9} fill={n.c}/>
+            <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
+              fill="#000" fontSize={12} fontWeight="700" fontFamily="system-ui,sans-serif">{n.l}</text>
           </g>
         );
-
-        if (n.t === 'topic') return (
+        if(n.t==='topic')return(
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={6}
-              fill="#111111" stroke={n.c} strokeWidth={1.5}/>
-            <text x={n.x} y={n.y + n.h / 2} textAnchor="middle" dominantBaseline="central"
-              fill={n.c} fontSize={11} fontWeight="600">{n.l}</text>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={7}
+              fill="#111" stroke={n.c} strokeWidth={1.5}/>
+            <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
+              fill={n.c} fontSize={11} fontWeight="600" fontFamily="system-ui,sans-serif">{n.l}</text>
           </g>
         );
-
-        if (n.t === 'item') return (
+        if(n.t==='item')return(
           <g key={n.id}>
-            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={4}
-              fill="#111111" stroke="#2A2A2A" strokeWidth={0.8}/>
-            <rect x={lx} y={n.y} width={3} height={n.h} rx={1.5} fill={n.c}/>
-            <text x={lx + 11} y={n.y + n.h / 2} dominantBaseline="central"
-              fill="#A0A0A0" fontSize={10.5}>{n.l}</text>
+            <rect x={lx} y={n.y} width={n.w} height={n.h} rx={5}
+              fill="#111" stroke="#2A2A2A" strokeWidth={0.8}/>
+            <rect x={lx} y={n.y} width={4} height={n.h} rx={2} fill={n.c}/>
+            <text x={lx+14} y={n.y+n.h/2} dominantBaseline="central"
+              fill="#B0B0B0" fontSize={10.5} fontFamily="system-ui,sans-serif">{n.l}</text>
           </g>
         );
-
         return null;
       })}
     </svg>
