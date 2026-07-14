@@ -7,7 +7,8 @@ import CopyLinkButton from '@/components/CopyLinkButton';
 interface JobDetail {
   _id: string; title: string; company: string; location: string; type: string;
   salary?: string; batch_year?: number; deadline?: string; description: string;
-  apply_link: string; tags?: string[]; createdAt?: string; logo_domain?: string;
+  apply_link: string; tags?: string[]; createdAt?: string;
+  logo_domain?: string; logo_url?: string;
 }
 
 const placeholderJobs: JobDetail[] = [
@@ -260,38 +261,39 @@ const placeholderJobs: JobDetail[] = [
   },
 ];
 
-/* ── Company logo: Clearbit → fallback initials ───────────── */
+/* ── Company logo: logo_url → Clearbit → fallback initials ─── */
 function CompanyLogo({
+  logoUrl,
   domain,
   company,
   size = 56,
   className = '',
 }: {
+  logoUrl?: string;
   domain?: string;
   company: string;
   size?: number;
   className?: string;
 }) {
   const initials = company.slice(0, 2).toUpperCase();
+  const imgSrc = logoUrl || (domain ? `https://logo.clearbit.com/${domain}` : null);
 
-  if (domain) {
+  if (imgSrc) {
     return (
       <div
         className={`flex-shrink-0 rounded-2xl overflow-hidden flex items-center justify-center ${className}`}
         style={{
-          width: size,
-          height: size,
+          width: size, height: size,
           background: '#1A1A1A',
           border: '1px solid rgba(168,230,61,0.25)',
         }}
       >
         <Image
-          src={`https://logo.clearbit.com/${domain}`}
+          src={imgSrc}
           alt={`${company} logo`}
           width={size}
           height={size}
           className="object-contain w-full h-full"
-          onError={undefined}
           unoptimized
         />
       </div>
@@ -302,8 +304,7 @@ function CompanyLogo({
     <div
       className={`flex-shrink-0 rounded-2xl flex items-center justify-center text-lime font-bold font-poppins ${className}`}
       style={{
-        width: size,
-        height: size,
+        width: size, height: size,
         fontSize: size * 0.32,
         background: 'rgba(168,230,61,0.1)',
         border: '1px solid rgba(168,230,61,0.25)',
@@ -365,7 +366,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
              style={{ background: 'radial-gradient(ellipse 60% 80% at 30% 50%, rgba(168,230,61,0.05), transparent)' }} />
 
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-5 flex items-end gap-4">
-          <CompanyLogo domain={job.logo_domain} company={job.company} size={56} />
+          <CompanyLogo logoUrl={job.logo_url} domain={job.logo_domain} company={job.company} size={56} />
           <div>
             <div className="flex items-center gap-2 mb-1">
               <p className="text-ink font-poppins font-semibold text-base">{job.company}</p>

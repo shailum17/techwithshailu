@@ -15,6 +15,7 @@ interface JobCardProps {
   tags?: string[];
   is_featured?: boolean;
   createdAt?: string | Date;
+  logo_url?: string;
 }
 
 function isNew(createdAt?: string | Date): boolean {
@@ -51,7 +52,7 @@ function Countdown({ deadline }: { deadline: string | Date }) {
 
 export default function JobCard({
   _id, title, company, location, type,
-  salary, batch_year, deadline, tags = [], is_featured, createdAt,
+  salary, batch_year, deadline, tags = [], is_featured, createdAt, logo_url,
 }: JobCardProps) {
   const jobIsNew = isNew(createdAt);
   const showCountdown = deadline &&
@@ -80,9 +81,13 @@ export default function JobCard({
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center
                           text-lime font-bold text-sm font-poppins flex-shrink-0
-                          group-hover:scale-105 transition-transform"
+                          group-hover:scale-105 transition-transform overflow-hidden"
                style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.2)' }}>
-            {company.slice(0, 2).toUpperCase()}
+            {logo_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={logo_url} alt={company} className="w-8 h-8 object-contain rounded-lg" />
+              : company.slice(0, 2).toUpperCase()
+            }
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-poppins font-semibold text-ink text-sm leading-tight truncate

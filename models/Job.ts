@@ -12,6 +12,7 @@ export interface IJob extends Document {
   description: string;
   is_featured: boolean;
   tags: string[];
+  logo_url?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,7 @@ const JobSchema = new Schema<IJob>(
     description: { type: String, required: true },
     is_featured: { type: Boolean, default: false },
     tags:        [{ type: String }],
+    logo_url:    { type: String },
   },
   { timestamps: true }
 );

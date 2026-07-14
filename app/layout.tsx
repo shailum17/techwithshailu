@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins, Outfit } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import CursorGlow from '@/components/CursorGlow';
-import BackToTop from '@/components/BackToTop';
+import RootShell from '@/components/RootShell';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -44,11 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${poppins.variable} ${outfit.variable}`} suppressHydrationWarning>
       <body className="bg-surface-secondary text-ink font-outfit antialiased min-h-screen">
-        <CursorGlow />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <BackToTop />
+        <RootShell>{children}</RootShell>
       </body>
     </html>
   );

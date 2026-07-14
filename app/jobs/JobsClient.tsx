@@ -17,6 +17,7 @@ interface Job {
   is_featured?: boolean;
   createdAt?: string;
   logo_domain?: string;
+  logo_url?: string;
 }
 
 const LOCATIONS   = ['Remote', 'Bengaluru', 'Hyderabad', 'Pune', 'Mumbai', 'Noida', 'Delhi'];
@@ -119,17 +120,18 @@ function LimeRadio({
 }
 
 /* ─── Company logo avatar ──────────────────────────────────── */
-function CompanyAvatar({ domain, company }: { domain?: string; company: string }) {
+function CompanyAvatar({ logoUrl, domain, company }: { logoUrl?: string; domain?: string; company: string }) {
   const [failed, setFailed] = useState(false);
   const initials = company.slice(0, 2).toUpperCase();
+  const src = logoUrl || (domain ? `https://logo.clearbit.com/${domain}` : null);
 
-  if (domain && !failed) {
+  if (src && !failed) {
     return (
       <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
            style={{ background: '#1A1A1A', border: '1px solid rgba(168,230,61,0.2)' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://logo.clearbit.com/${domain}`}
+          src={src}
           alt={`${company} logo`}
           className="w-full h-full object-contain"
           onError={() => setFailed(true)}
@@ -188,7 +190,7 @@ function JobCard({ job }: { job: Job }) {
 
         {/* Header */}
         <div className="flex items-start gap-3 pr-6">
-          <CompanyAvatar domain={job.logo_domain} company={job.company} />
+          <CompanyAvatar logoUrl={job.logo_url} domain={job.logo_domain} company={job.company} />
           <div className="min-w-0">
             <h3 className="font-poppins font-semibold text-white text-sm truncate
                            group-hover:text-lime transition-colors">

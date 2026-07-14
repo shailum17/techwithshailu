@@ -174,3 +174,8 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;                /* Chrome / Safari / Edge */
 }
+
+/* ── upload spinner ─────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
