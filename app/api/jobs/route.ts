@@ -1,44 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { checkAdminAuth } from '@/lib/adminAuth';
-import Job from '@/models/Job';
+/**
+ * app/api/jobs/route.ts
+ *
+ * GET  /api/jobs  — list jobs
+ *   ?type=        filter by type (Job | Internship | Full-time)
+ *   ?location=    ilike filter on location
+ *   ?batch_year=  exact match
+ *   ?featured=true  is_featured = true
+ *   ?q=           full-text search (title, company, description)
+ *   ?sort=newest|deadline
+ *
+ * POST /api/jobs  — create job (admin only)
+ */
 
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+import { checkAdminAuth } from '@/lib/adminAuth';
+
+/* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
   try {
-    await connectDB();
-  } catch {
+    const { searchParams } = new URL(req.url);
+
+    let query = supabaseAdmin.from('jobs').select('*');
+
+    const type     = searchParams.get('type');
+    const location = searchParams.get('location');
+    const batch    = searchParams.get('batch_year');
+    const featured = searchParams.get('featured');
+    const search   = searchParams.get('q');
+    const sort     = searchParams.get('sort') || 'newest';
+
+    if (type)               query = query.eq('type', type);
+    if (location)           query = query.ilike('location', `%${location}%`);
+    if (batch)              query = query.eq('batch_year', Number(batch));
+    if (featured === 'true') query = query.eq('is_featured', true);
+    if (search)             query = query.textSearch('fts', search, { type: 'websearch' });
+
+    query = sort === 'deadline'
+      ? query.order('deadline', { ascending: true })
+      : query.order('created_at', { ascending: false });
+
+    const limit = searchParams.get('limit');
+    if (limit) query = query.limit(Number(limit));
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return NextResponse.json(data ?? []);
+  } catch (err) {
+    console.error('[GET /api/jobs]', err);
     return NextResponse.json([]);
   }
-  const { searchParams } = new URL(req.url);
-
-  const filter: Record<string, unknown> = {};
-
-  const type      = searchParams.get('type');
-  const location  = searchParams.get('location');
-  const batch     = searchParams.get('batch_year');
-  const featured  = searchParams.get('featured');
-  const search    = searchParams.get('q');
-
-  if (type)     filter.type = type;
-  if (location) filter.location = new RegExp(location, 'i');
-  if (batch)    filter.batch_year = Number(batch);
-  if (featured === 'true') filter.is_featured = true;
-  if (search)   filter.$text = { $search: search };
-
-  const sort = searchParams.get('sort') || 'newest';
-  const sortObj: Record<string, 1 | -1> =
-    sort === 'deadline' ? { deadline: 1 } : { createdAt: -1 };
-
-  const jobs = await Job.find(filter).sort(sortObj).lean();
-  return NextResponse.json(jobs);
 }
 
+/* ── POST ─────────────────────────────────────────────────────── */
 export async function POST(req: NextRequest) {
   const authError = checkAdminAuth(req);
   if (authError) return authError;
 
-  await connectDB();
-  const body = await req.json();
-  const job = await Job.create(body);
-  return NextResponse.json(job, { status: 201 });
+  try {
+    const body = await req.json();
+    const { data, error } = await supabaseAdmin
+      .from('jobs')
+      .insert(body)
+      .select()
+      .single();
+    if (error) throw error;
+    return NextResponse.json(data, { status: 201 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Supabase errors have a 'code' and 'details' property
+    const detail = (err as Record<string, unknown>)?.details ?? (err as Record<string, unknown>)?.hint ?? msg;
+    console.error('[POST /api/jobs]', err);
+    return NextResponse.json({ error: 'Database error', detail: `${msg}${detail && detail !== msg ? ` — ${detail}` : ''}` }, { status: 503 });
+  }
 }
