@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${poppins.variable} ${outfit.variable}`} suppressHydrationWarning>
-      <body className="bg-surface-secondary text-ink font-outfit antialiased min-h-screen">
+      <body className="bg-[#080808] text-ink font-outfit antialiased min-h-screen">
         <RootShell>{children}</RootShell>
       </body>
     </html>
