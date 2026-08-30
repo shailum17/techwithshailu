@@ -114,7 +114,7 @@ function CheatSheetsAnimation() {
         const y = 160 + Math.sin(rad) * ry - 24;
         return (
           <div key={i} className="snippet-card absolute px-3 py-2 rounded-xl"
-            style={{ left: x, top: y, background: '#111', border: `1px solid ${s.color}35`, minWidth: 110 }}>
+            style={{ left: x, top: y, background: '#0E0E0E', border: `1px solid ${s.color}35`, minWidth: 110 }}>
             <p className="text-xs font-bold mb-0.5" style={{ color: s.color }}>{s.label}</p>
             <p className="text-xs font-mono text-ink-faint">{s.code}</p>
           </div>
@@ -127,7 +127,7 @@ function CheatSheetsAnimation() {
 
 export default function CheatSheetsPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#080808' }}>
       <AnimatedBg variant="particles" color="#4ade80" opacity={0.55} />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">

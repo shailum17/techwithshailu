@@ -54,7 +54,7 @@ const categories = [
 
 export default function ResourcesPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
         {/* Header */}
@@ -74,7 +74,7 @@ export default function ResourcesPage() {
               key={href}
               href={href}
               className="group flex items-start gap-4 rounded-2xl p-6 transition-all duration-200"
-              style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+              style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

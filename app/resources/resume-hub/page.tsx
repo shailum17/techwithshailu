@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function ResumeHubPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
 
         {/* Breadcrumb */}
@@ -39,7 +39,7 @@ export default function ResumeHubPage() {
               key={cat.id}
               href={`/resources/resume-hub/${cat.id}`}
               className="group flex flex-col gap-3 rounded-2xl p-6 transition-all duration-200"
-              style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+              style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               {/* Title row */}
               <div className="flex items-center justify-between">

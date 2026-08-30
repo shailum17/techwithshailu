@@ -354,7 +354,7 @@ export default function FrontendFlowchart({ onNodeClick }: { onNodeClick?: (id: 
         if(n.t==='topic') return (
           <g key={n.id} {...clickable(n.id)}>
             <rect x={lx} y={n.y} width={n.w} height={n.h} rx={6}
-              fill="#111111" stroke={n.c} strokeWidth={1.5}/>
+              fill="#0E0E0E" stroke={n.c} strokeWidth={1.5}/>
             <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
               fill={n.c} fontSize={11} fontWeight="600" fontFamily="system-ui,sans-serif">
               {n.l}
@@ -367,7 +367,7 @@ export default function FrontendFlowchart({ onNodeClick }: { onNodeClick?: (id: 
         if(n.t==='item') return (
           <g key={n.id}>
             <rect x={lx} y={n.y} width={n.w} height={n.h} rx={4}
-              fill="#111111" stroke="#2A2A2A" strokeWidth={0.8}/>
+              fill="#0E0E0E" stroke="#2A2A2A" strokeWidth={0.8}/>
             <rect x={lx} y={n.y} width={3} height={n.h} rx={1.5} fill={n.c}/>
             <text x={lx+11} y={n.y+n.h/2} dominantBaseline="central"
               fill="#A0A0A0" fontSize={10.5} fontFamily="system-ui,sans-serif">
@@ -382,7 +382,7 @@ export default function FrontendFlowchart({ onNodeClick }: { onNodeClick?: (id: 
               fill="#1A1100" stroke={DM} strokeWidth={1.5} strokeDasharray="5 3"/>
             <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
               fill={DM} fontSize={11} fontWeight="700" fontFamily="system-ui,sans-serif">
-              ⚡ Advanced Topics
+              Advanced Topics
             </text>
           </g>
         );
@@ -402,7 +402,7 @@ export default function FrontendFlowchart({ onNodeClick }: { onNodeClick?: (id: 
         if(n.t==='opt-topic') return (
           <g key={n.id} {...clickable(n.id)}>
             <rect x={lx} y={n.y} width={n.w} height={n.h} rx={5}
-              fill="#111111" stroke={DM} strokeWidth={1} strokeOpacity={0.6}/>
+              fill="#0E0E0E" stroke={DM} strokeWidth={1} strokeOpacity={0.6}/>
             <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
               fill={DM} fontSize={10} fontWeight="500" fontFamily="system-ui,sans-serif"
               fillOpacity={0.8}>
@@ -415,7 +415,7 @@ export default function FrontendFlowchart({ onNodeClick }: { onNodeClick?: (id: 
         if(n.t==='note') return (
           <g key={n.id}>
             <rect x={lx} y={n.y} width={n.w} height={n.h} rx={4}
-              fill="#111111" stroke="#2A2A2A" strokeDasharray="4 3" strokeWidth={1}/>
+              fill="#0E0E0E" stroke="#2A2A2A" strokeDasharray="4 3" strokeWidth={1}/>
             <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
               fill="#606060" fontSize={9.5} fontFamily="system-ui,sans-serif">
               {n.l}
@@ -429,7 +429,7 @@ export default function FrontendFlowchart({ onNodeClick }: { onNodeClick?: (id: 
       {/* Legend */}
       <g transform={`translate(${OX-185}, 1596)`}>
         <rect x={0} y={0} width={370} height={36} rx={6}
-          fill="#111111" stroke="#2A2A2A" strokeWidth={1}/>
+          fill="#0E0E0E" stroke="#2A2A2A" strokeWidth={1}/>
         <rect x={10} y={12} width={12} height={12} rx={2} fill={LM}/>
         <text x={26} y={22} fill="#A0A0A0" fontSize={10} fontFamily="system-ui,sans-serif">Core Path</text>
         <rect x={110} y={12} width={12} height={12} rx={2} fill="#1A1100" stroke={DM} strokeWidth={1.5}/>

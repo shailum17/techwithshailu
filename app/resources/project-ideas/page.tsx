@@ -80,7 +80,7 @@ function ProjectIdeasAnimation() {
       <div className="grid grid-cols-2 gap-3">
         {ideas.map((idea, i) => (
           <div key={i} className="idea-card rounded-xl p-3"
-            style={{ background: '#111', border: `1px solid ${idea.color}30` }}>
+            style={{ background: '#0E0E0E', border: `1px solid ${idea.color}30` }}>
             <div className="w-1.5 h-1.5 rounded-full mb-2" style={{ background: idea.color }} />
             <p className="text-xs font-semibold text-ink mb-1">{idea.title}</p>
             <p className="text-xs font-mono" style={{ color: idea.color, opacity: 0.7 }}>{idea.stack}</p>
@@ -94,7 +94,7 @@ function ProjectIdeasAnimation() {
 
 export default function ProjectIdeasPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#080808' }}>
       <AnimatedBg variant="waves" color="#a78bfa" opacity={0.45} />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">

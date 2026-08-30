@@ -125,7 +125,7 @@ function RoadmapFlowView({
               title={optVisible ? 'Back to core path' : 'Slide to see advanced topics'}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all select-none"
               style={{
-                background: optVisible ? '#2A1A00' : '#111',
+                background: optVisible ? '#2A1A00' : '#0E0E0E',
                 border: `1px solid ${optVisible ? '#F59E0B80' : '#2A2A2A'}`,
                 color: optVisible ? '#F59E0B' : '#888',
               }}
@@ -149,7 +149,7 @@ function RoadmapFlowView({
           <button
             onClick={() => setZoom(z => Math.max(0.4, +(z - 0.1).toFixed(1)))}
             className="w-7 h-7 rounded-lg text-white/60 hover:text-white flex items-center justify-center transition-colors text-sm"
-            style={{ background: '#111', border: '1px solid #2A2A2A' }}
+            style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
             aria-label="Zoom out"
           >−</button>
           <span className="text-xs text-white/40 w-10 text-center tabular-nums">
@@ -158,13 +158,13 @@ function RoadmapFlowView({
           <button
             onClick={() => setZoom(z => Math.min(2, +(z + 0.1).toFixed(1)))}
             className="w-7 h-7 rounded-lg text-white/60 hover:text-white flex items-center justify-center transition-colors text-sm"
-            style={{ background: '#111', border: '1px solid #2A2A2A' }}
+            style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
             aria-label="Zoom in"
           >+</button>
           <button
             onClick={() => setZoom(1)}
             className="text-xs px-2 py-1 rounded-lg text-white/40 hover:text-lime transition-colors"
-            style={{ background: '#111', border: '1px solid #2A2A2A' }}
+            style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
           >Reset</button>
         </div>
       </div>
@@ -247,7 +247,7 @@ export default function RoadmapCategoryClient({ category: cat }: { category: Roa
       : <DSAFlowchart />;
 
     return (
-      <div className="pt-20 min-h-screen" style={{ background: '#0A0A0A', position: 'relative' }}>
+      <div className="pt-20 min-h-screen" style={{ background: '#080808', position: 'relative' }}>
         {/* Breadcrumb */}
         <nav className="text-sm text-ink-muted px-6 pt-6 pb-3 flex items-center gap-2 flex-wrap">
           <Link href="/" className="hover:text-lime transition-colors">Home</Link>
@@ -274,7 +274,7 @@ export default function RoadmapCategoryClient({ category: cat }: { category: Roa
 
   /* ── Coming soon for other categories ─────────────────── */
   return (
-    <div className="pt-20 min-h-screen" style={{ background: '#0A0A0A', position: 'relative', overflow: 'hidden' }}>
+    <div className="pt-20 min-h-screen" style={{ background: '#080808', position: 'relative', overflow: 'hidden' }}>
 
       {/* ── Blurred flowchart background ── */}
       <div style={{

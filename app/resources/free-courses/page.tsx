@@ -73,9 +73,9 @@ function FreeCoursesAnimation() {
       {/* Top ring stat */}
       <div className="flex justify-center mb-2">
         <div id="progress-ring" className="relative w-20 h-20 rounded-full flex items-center justify-center"
-          style={{ background: 'conic-gradient(#f472b6 0% 63%, #1e1e1e 63%)', padding: 3 }}>
+          style={{ background: 'conic-gradient(#f472b6 0% 63%, rgba(255,255,255,0.06) 63%)', padding: 3 }}>
           <div className="w-full h-full rounded-full flex flex-col items-center justify-center"
-            style={{ background: '#0a0a0a' }}>
+            style={{ background: '#080808' }}>
             <span className="font-poppins font-bold text-lg" style={{ color: '#f472b6' }}>{avg}%</span>
             <span className="text-xs text-ink-faint">curated</span>
           </div>
@@ -92,7 +92,7 @@ function FreeCoursesAnimation() {
             </div>
             <span className="text-xs font-bold" style={{ color: c.color }}>{c.pct}%</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#1a1a1a' }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <div className="fill-bar h-full rounded-full" data-pct={c.pct}
               style={{ background: c.color, width: 0 }} />
           </div>
@@ -105,7 +105,7 @@ function FreeCoursesAnimation() {
 
 export default function FreeCoursesPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#080808' }}>
       <AnimatedBg variant="matrix" color="#f472b6" opacity={0.4} />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">

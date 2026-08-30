@@ -5,7 +5,7 @@ import type { ResumeCategory } from '../data';
 
 export default function ResumeCategoryClient({ category: cat }: { category: ResumeCategory }) {
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
 
         {/* Breadcrumb */}
@@ -40,20 +40,20 @@ export default function ResumeCategoryClient({ category: cat }: { category: Resu
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-start gap-4 rounded-2xl p-5 transition-all duration-200"
-                style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+                style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = '#3A3A3A';
-                  (e.currentTarget as HTMLElement).style.background = '#161616';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)';
+                  (e.currentTarget as HTMLElement).style.background = '#0E0E0E';
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = '#2A2A2A';
-                  (e.currentTarget as HTMLElement).style.background = '#111111';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                  (e.currentTarget as HTMLElement).style.background = '#0E0E0E';
                 }}
               >
                 {/* Number */}
                 <span
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-                  style={{ background: '#1A1A1A', border: '1px solid #2A2A2A', color: '#888' }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#888' }}
                 >
                   {i + 1}
                 </span>

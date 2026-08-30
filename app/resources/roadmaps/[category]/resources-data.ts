@@ -683,7 +683,7 @@ Object.assign(RESOURCES, {
 
   // ── Bonus platforms ───────────────────────────────────────────
   bonus: {
-    title: '📌 All-in-One Free Platforms',
+    title: 'All-in-One Free Platforms',
     yt: [],
     web: [
       { label: 'freeCodeCamp.org — full curriculum & certifications', url: 'https://www.freecodecamp.org' },

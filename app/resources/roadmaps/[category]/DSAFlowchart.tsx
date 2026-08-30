@@ -234,7 +234,7 @@ export default function DSAFlowchart(){
         if(n.t==='topic')return(
           <g key={n.id}>
             <rect x={lx} y={n.y} width={n.w} height={n.h} rx={7}
-              fill="#111" stroke={n.c} strokeWidth={1.5}/>
+              fill="#0E0E0E" stroke={n.c} strokeWidth={1.5}/>
             <text x={n.x} y={n.y+n.h/2} textAnchor="middle" dominantBaseline="central"
               fill={n.c} fontSize={11} fontWeight="600" fontFamily="system-ui,sans-serif">{n.l}</text>
           </g>
@@ -242,7 +242,7 @@ export default function DSAFlowchart(){
         if(n.t==='item')return(
           <g key={n.id}>
             <rect x={lx} y={n.y} width={n.w} height={n.h} rx={5}
-              fill="#111" stroke="#2A2A2A" strokeWidth={0.8}/>
+              fill="#0E0E0E" stroke="#2A2A2A" strokeWidth={0.8}/>
             <rect x={lx} y={n.y} width={4} height={n.h} rx={2} fill={n.c}/>
             <text x={lx+14} y={n.y+n.h/2} dominantBaseline="central"
               fill="#B0B0B0" fontSize={10.5} fontFamily="system-ui,sans-serif">{n.l}</text>

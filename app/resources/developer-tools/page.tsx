@@ -25,7 +25,7 @@ function DevToolsAnimation() {
     { text: '  "Docker",',       color: '#fb923c' },
     { text: '  // + many more',  color: '#4a5568' },
     { text: '];',                color: '#e2e8f0' },
-    { text: '// Coming soon ✨', color: '#4ade80' },
+    { text: '// Coming soon', color: '#4ade80' },
   ];
 
   useEffect(() => {
@@ -141,7 +141,7 @@ function DevToolsAnimation() {
 
 export default function DeveloperToolsPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#080808' }}>
       <AnimatedBg variant="circuit" color="#fb923c" opacity={0.45} />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">

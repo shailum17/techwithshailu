@@ -86,16 +86,16 @@ function InterviewAnimation() {
 
       {/* Answer card left */}
       <div className="qa-card absolute left-0 top-36 px-4 py-3 rounded-xl"
-        style={{ background: '#111', border: '1.5px solid #2a2a2a', maxWidth: 148 }}>
+        style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.1)', maxWidth: 148 }}>
         <p className="text-xs font-mono mb-1 text-ink-faint">Time complexity</p>
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#1e1e1e' }}>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
           <div id="prog-bar" className="h-full rounded-full" style={{ background: color, width: '0%' }} />
         </div>
       </div>
 
       {/* Answer card right */}
       <div className="qa-card absolute right-0 top-32 px-4 py-3 rounded-xl"
-        style={{ background: '#111', border: '1.5px solid #2a2a2a', maxWidth: 148 }}>
+        style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.1)', maxWidth: 148 }}>
         <p className="text-xs font-mono mb-2 text-ink-faint">Complexity</p>
         <div className="flex gap-1.5 items-end">
           {[3, 5, 4, 7, 6, 8, 5].map((h, i) => (
@@ -128,7 +128,7 @@ function InterviewAnimation() {
 
 export default function InterviewPrepPage() {
   return (
-    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20 relative" style={{ background: '#080808' }}>
       <AnimatedBg variant="grid" color="#fbbf24" opacity={0.35} />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10">
         <nav className="text-sm text-ink-muted mb-10 flex items-center gap-2 flex-wrap">

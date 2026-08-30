@@ -59,7 +59,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
   const next = data.nodes.find(n => n.status === 'in-progress');
 
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-7">
 
@@ -88,7 +88,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
 
             {/* Header card */}
             <div className="rounded-2xl p-6 md:p-8 mb-6"
-                 style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+                 style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
                 <div>
                   <h1 className="font-poppins font-bold text-2xl md:text-3xl text-ink">{data.title}</h1>
@@ -117,7 +117,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
                     <span>{data.completedModules} of {data.modules} modules completed</span>
                     <span className="text-lime font-medium">{pct}%</span>
                   </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: '#2A2A2A' }}>
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                     <div className="h-full bg-lime rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -145,14 +145,14 @@ export default async function RoadmapPage({ params }: { params: Promise<{ slug: 
               <RoadmapTrack nodes={data.nodes} />
             ) : (
               <div className="rounded-2xl p-10 text-center"
-                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+                   style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <p className="text-ink-muted text-sm">Modules coming soon.</p>
               </div>
             )}
 
             {/* Community CTA */}
             <div className="rounded-2xl p-6 text-center mt-8"
-                 style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+                 style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
               <p className="text-ink-muted text-sm mb-4">
                 Following this roadmap? Join our Telegram for daily tips and curated resources.
               </p>
