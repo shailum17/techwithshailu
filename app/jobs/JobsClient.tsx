@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 interface Job {
-  _id: string;
+  id: string;
   title: string;
   company: string;
   location: string;
@@ -27,7 +27,7 @@ const JOB_TYPES   = ['Job', 'Internship', 'Full-time'];
 /* ─── #5 Card skeleton ─────────────────────────────────────── */
 function JobCardSkeleton() {
   return (
-    <div className="bg-[#111111] border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
+    <div className="bg-[#0E0E0E] border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
       <div className="flex items-start gap-3">
         <div className="skeleton-dark w-10 h-10 rounded-xl flex-shrink-0" />
         <div className="flex-1 space-y-2">
@@ -128,7 +128,7 @@ function CompanyAvatar({ logoUrl, domain, company }: { logoUrl?: string; domain?
   if (src && !failed) {
     return (
       <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-           style={{ background: '#1A1A1A', border: '1px solid rgba(168,230,61,0.2)' }}>
+           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(168,230,61,0.2)' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -157,12 +157,12 @@ function JobCard({ job }: { job: Job }) {
     : false;
 
   return (
-    <Link href={`/jobs/${job._id}`} className="block h-full">
+    <Link href={`/jobs/${job.id}`} className="block h-full">
       <div
         className="group relative rounded-2xl p-5 flex flex-col gap-3 h-full cursor-pointer
                    transition-all duration-300 hover:-translate-y-1"
         style={{
-          background: '#111111',
+      background: '#0E0E0E',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
         }}
@@ -276,7 +276,7 @@ function FiltersPanel({
   const visibleLocs = showMore ? LOCATIONS : LOCATIONS.slice(0, 5);
   return (
     <div className="rounded-2xl p-5 space-y-6"
-         style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
+         style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
       <div className="flex items-center justify-between">
         <p className="font-poppins font-semibold text-white">Filters</p>
         <button onClick={clearAll}
@@ -422,7 +422,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
     + (q ? 1 : 0);
 
   return (
-    <div className="pt-20 min-h-screen" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen" style={{ background: '#080808' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Breadcrumb */}
@@ -484,7 +484,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
                 value={sort}
                 onChange={e => setSort(e.target.value)}
                 className="rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none cursor-pointer"
-                style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 <option value="newest">Most Recent</option>
                 <option value="deadline">Deadline Soon</option>
@@ -512,7 +512,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
                   className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
                 >
                   {jobs.map(job => (
-                    <motion.div key={job._id} variants={cardVariants}>
+                    <motion.div key={job.id} variants={cardVariants}>
                       <JobCard job={job} />
                     </motion.div>
                   ))}
@@ -522,7 +522,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
                   key="empty"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="rounded-2xl p-12 text-center"
-                  style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)' }}
+                  style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   <p className="font-poppins font-semibold text-white text-lg mb-2">
                     No jobs found
@@ -558,7 +558,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
               className="fixed bottom-0 left-0 right-0 z-50 lg:hidden rounded-t-3xl max-h-[85vh] overflow-y-auto"
-              style={{ background: '#111111', boxShadow: '0 -4px 30px rgba(0,0,0,0.5)' }}
+              style={{ background: '#0E0E0E', boxShadow: '0 -4px 30px rgba(0,0,0,0.5)' }}
             >
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
@@ -581,7 +581,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
                 <FiltersPanel {...filterProps} />
               </div>
               <div className="sticky bottom-0 px-5 py-4"
-                   style={{ background: '#111111', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                   style={{ background: '#0E0E0E', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <button
                   onClick={() => setDrawerOpen(false)}
                   className="btn-lime w-full py-3 text-sm"
