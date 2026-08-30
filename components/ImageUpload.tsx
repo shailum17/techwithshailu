@@ -62,7 +62,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
   }, [handleFile]);
 
   const IS: React.CSSProperties = {
-    width: '100%', background: '#111', border: '1px solid #2A2A2A',
+    width: '100%', background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: 8, padding: '8px 10px', color: '#F0F0F0',
     fontSize: 12, outline: 'none',
   };
@@ -76,18 +76,18 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
           {hint && <span style={{ color: '#444', fontSize: 11, marginLeft: 6 }}>{hint}</span>}
         </div>
         {/* Toggle tabs */}
-        <div style={{ display: 'flex', gap: 4, background: '#0d0d0d', borderRadius: 8,
-                      border: '1px solid #2A2A2A', padding: 3 }}>
+        <div style={{ display: 'flex', gap: 4, background: '#080808', borderRadius: 8,
+                      border: '1px solid rgba(255,255,255,0.08)', padding: 3 }}>
           {(['file','url'] as const).map(m => (
             <button key={m} type="button" onClick={() => { setMode(m); setError(''); }}
               style={{
-                background: mode === m ? '#1a1a1a' : 'none',
-                border: mode === m ? '1px solid #2A2A2A' : '1px solid transparent',
+                background: mode === m ? 'rgba(255,255,255,0.05)' : 'none',
+                border: mode === m ? '1px solid rgba(255,255,255,0.08)' : '1px solid transparent',
                 color: mode === m ? '#F0F0F0' : '#555',
                 borderRadius: 6, padding: '3px 10px', fontSize: 11,
                 cursor: 'pointer', fontWeight: mode === m ? 600 : 400,
               }}>
-              {m === 'file' ? '⬆ Upload' : '🔗 URL'}
+              {m === 'file' ? 'Upload' : 'URL'}
             </button>
           ))}
         </div>
@@ -108,7 +108,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
                 border: `1.5px dashed ${dragging ? '#A8E63D' : '#2A2A2A'}`,
                 borderRadius: 10, padding: '16px 12px', textAlign: 'center',
                 cursor: uploading ? 'not-allowed' : 'pointer',
-                background: dragging ? 'rgba(168,230,61,0.04)' : '#0d0d0d',
+                background: dragging ? 'rgba(168,230,61,0.04)' : '#080808',
                 transition: 'all 0.15s ease',
               }}>
               <input
@@ -151,7 +151,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
         {/* Preview thumbnail */}
         <div style={{
           width: size, height: size, borderRadius: 10, flexShrink: 0,
-          background: '#1a1a1a', border: `1px solid ${value && !imgErr ? '#A8E63D40' : '#2A2A2A'}`,
+          background: 'rgba(255,255,255,0.05)', border: `1px solid ${value && !imgErr ? '#A8E63D40' : '#2A2A2A'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           overflow: 'hidden', position: 'relative',
         }}>
@@ -165,7 +165,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
           ) : (
             <span style={{ color: '#333', fontSize: 11, textAlign: 'center',
                            lineHeight: 1.3, padding: '4px' }}>
-              {imgErr ? '⚠ broken' : 'preview'}
+              {imgErr ? 'broken' : 'preview'}
             </span>
           )}
           {/* Clear button */}
@@ -181,7 +181,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
                 fontSize: 9, lineHeight: 1,
               }}
               title="Remove image"
-            >✕</button>
+            >×</button>
           )}
         </div>
       </div>

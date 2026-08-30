@@ -23,8 +23,8 @@ const sortOptions = [
 
 const darkInputStyle: React.CSSProperties = {
   width: '100%',
-  background: '#1A1A1A',
-  border: '1px solid #2A2A2A',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: '8px',
   padding: '8px 12px',
   color: '#F0F0F0',
@@ -60,7 +60,7 @@ export default function JobFilters({ current }: JobFiltersProps) {
 
   return (
     <div className="rounded-2xl p-5 space-y-5 sticky top-20"
-         style={{ background: '#111111', border: '1px solid #2A2A2A', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
+         style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
 
       <div className="flex items-center justify-between">
         <p className="font-poppins font-semibold text-ink text-sm">Filters</p>
@@ -81,7 +81,7 @@ export default function JobFilters({ current }: JobFiltersProps) {
           placeholder="Job title, company..."
           style={darkInputStyle}
           onFocus={e => (e.currentTarget.style.borderColor = 'rgba(168,230,61,0.5)')}
-          onBlur={e => (e.currentTarget.style.borderColor = '#2A2A2A')}
+          onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
         />
       </div>
 
@@ -97,7 +97,7 @@ export default function JobFilters({ current }: JobFiltersProps) {
               style={
                 type === t
                   ? { background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.35)', color: '#A8E63D', fontWeight: 500 }
-                  : { background: 'transparent', border: '1px solid #2A2A2A', color: '#A0A0A0' }
+                  : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#A0A0A0' }
               }
             >
               {t}
@@ -131,7 +131,7 @@ export default function JobFilters({ current }: JobFiltersProps) {
               style={
                 batch === y
                   ? { background: 'rgba(155,127,232,0.12)', border: '1px solid rgba(155,127,232,0.35)', color: '#B49EF0', fontWeight: 500 }
-                  : { background: 'transparent', border: '1px solid #2A2A2A', color: '#A0A0A0' }
+                  : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#A0A0A0' }
               }
             >
               {y}

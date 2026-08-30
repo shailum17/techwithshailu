@@ -127,7 +127,7 @@ export default function ComingSoonVector({ color = '#a8e63d' }: Props) {
   };
 
   const c   = color;
-  const dim = '#0A0A0A';
+  const dim = '#080808';
 
   return (
     <div ref={containerRef} className="w-full max-w-sm mx-auto select-none" aria-hidden="true">
@@ -160,7 +160,7 @@ export default function ComingSoonVector({ color = '#a8e63d' }: Props) {
           {/* Lamp body gradient */}
           <linearGradient id="lampGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%"   stopColor="#2a2a2a"/>
-            <stop offset="100%" stopColor="#111111"/>
+            <stop offset="100%" stopColor="#0E0E0E"/>
           </linearGradient>
 
           {/* Drop shadow filter */}

@@ -52,7 +52,7 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer style={{ background: '#0D0D0D', borderTop: '1px solid #2A2A2A' }} className="mt-20">
+    <footer style={{ background: '#080808', borderTop: '1px solid rgba(255,255,255,0.07)' }} className="mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
 
         {/* 4-column grid */}
@@ -76,7 +76,7 @@ export default function Footer() {
                    aria-label={label}
                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-ink-faint
                                border transition-all duration-200 ${hoverColor}`}
-                   style={{ background: '#1A1A1A', borderColor: '#2A2A2A' }}>
+                   style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.08)' }}>
                   {icon}
                 </a>
               ))}
@@ -131,9 +131,9 @@ export default function Footer() {
                 placeholder="your@email.com"
                 className="w-full rounded-xl px-3 py-2.5 text-sm text-ink placeholder-ink-faint
                            focus:outline-none transition-colors"
-                style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                 onFocus={e => (e.currentTarget.style.borderColor = 'rgba(168,230,61,0.5)')}
-                onBlur={e => (e.currentTarget.style.borderColor = '#2A2A2A')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
               />
               <button
                 type="submit"
@@ -166,7 +166,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3"
-             style={{ borderTop: '1px solid #2A2A2A' }}>
+             style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <p className="text-ink-faint text-sm">
             © {new Date().getFullYear()} techwithshailu. All rights reserved.
           </p>

@@ -43,7 +43,7 @@ export default function CategoryTabs({ categories, active }: CategoryTabsProps) 
             )}
             {!isActive && (
               <span className="absolute inset-0 rounded-full -z-10 transition-colors"
-                    style={{ border: '1px solid #2A2A2A' }} />
+                    style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
             )}
             <span className={isActive ? 'text-black font-semibold' : 'text-ink-muted hover:text-ink'}>
               {cat}

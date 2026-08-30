@@ -26,7 +26,7 @@ export default function JobCardsGrid({ jobs }: JobCardsGridProps) {
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
     >
       {jobs.slice(0, 8).map(job => (
-        <motion.div key={job._id} variants={cardVariants}>
+        <motion.div key={job.id} variants={cardVariants}>
           <JobCard {...job} />
         </motion.div>
       ))}

@@ -45,7 +45,7 @@ export default function ResourceDrawer({ data, onClose }: Props) {
           top: 0, right: 0, bottom: 0,
           width: 'min(420px, 92vw)',
           zIndex: 50,
-          background: '#111',
+          background: '#0E0E0E',
           borderLeft: '1px solid #222',
           display: 'flex',
           flexDirection: 'column',
@@ -61,7 +61,7 @@ export default function ResourceDrawer({ data, onClose }: Props) {
               padding: '20px 20px 14px',
               borderBottom: '1px solid #1f2937',
               display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
-              position: 'sticky', top: 0, background: '#111', zIndex: 1,
+              position: 'sticky', top: 0, background: '#0E0E0E', zIndex: 1,
             }}>
               <div>
                 <p style={{ fontSize: 10, color: '#A8E63D', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -71,7 +71,7 @@ export default function ResourceDrawer({ data, onClose }: Props) {
               </div>
               <button
                 onClick={onClose}
-                style={{ flexShrink: 0, marginTop: 2, background: '#1a1a1a', border: '1px solid #2A2A2A', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#666' }}
+                style={{ flexShrink: 0, marginTop: 2, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#666' }}
                 aria-label="Close resources"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -103,7 +103,7 @@ export default function ResourceDrawer({ data, onClose }: Props) {
                           style={{
                             display: 'flex', alignItems: 'flex-start', gap: 8,
                             padding: '8px 10px', borderRadius: 7,
-                            background: '#1a1a1a', border: '1px solid #222',
+                            background: 'rgba(255,255,255,0.05)', border: '1px solid #222',
                             color: '#ccc', fontSize: 12.5, lineHeight: 1.4,
                             textDecoration: 'none',
                             transition: 'border-color 0.15s, color 0.15s',
@@ -142,7 +142,7 @@ export default function ResourceDrawer({ data, onClose }: Props) {
                           style={{
                             display: 'flex', alignItems: 'flex-start', gap: 8,
                             padding: '8px 10px', borderRadius: 7,
-                            background: '#1a1a1a', border: '1px solid #222',
+                            background: 'rgba(255,255,255,0.05)', border: '1px solid #222',
                             color: '#ccc', fontSize: 12.5, lineHeight: 1.4,
                             textDecoration: 'none',
                             transition: 'border-color 0.15s, color 0.15s',

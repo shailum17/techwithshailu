@@ -34,19 +34,19 @@ export default function RoadmapTrack({ nodes }: { nodes: Node[] }) {
           ? { background: '#9B7FE8', border: '2px solid #9B7FE8', color: '#fff' }
           : isInProgress
             ? { background: '#A8E63D', border: '2px solid #A8E63D', color: '#000' }
-            : { background: '#1A1A1A', border: '2px solid #2A2A2A', color: '#606060' };
+            : { background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.08)', color: '#606060' };
 
         const cardStyle = isCompleted
           ? { background: 'rgba(155,127,232,0.08)', border: '1px solid rgba(155,127,232,0.2)' }
           : isInProgress
             ? { background: 'rgba(168,230,61,0.06)', border: '1px solid rgba(168,230,61,0.25)' }
-            : { background: '#111111', border: '1px solid #2A2A2A', opacity: 0.6 };
+            : { background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)', opacity: 0.6 };
 
         const badgeStyle = isCompleted
           ? { background: 'rgba(155,127,232,0.12)', color: '#B49EF0', border: '1px solid rgba(155,127,232,0.3)' }
           : isInProgress
             ? { background: 'rgba(168,230,61,0.1)', color: '#A8E63D', border: '1px solid rgba(168,230,61,0.3)' }
-            : { background: '#1A1A1A', color: '#606060', border: '1px solid #2A2A2A' };
+            : { background: 'rgba(255,255,255,0.05)', color: '#606060', border: '1px solid rgba(255,255,255,0.08)' };
 
         const lineColor = isCompleted ? '#9B7FE8' : isInProgress ? 'rgba(168,230,61,0.4)' : '#2A2A2A';
 
@@ -64,7 +64,7 @@ export default function RoadmapTrack({ nodes }: { nodes: Node[] }) {
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold z-10 flex-shrink-0"
                    style={dotStyle}>
                 {isCompleted
-                  ? '✓'
+                  ? '+'
                   : isInProgress
                     ? <span className="text-xs font-bold">●</span>
                     : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,7 +97,7 @@ export default function RoadmapTrack({ nodes }: { nodes: Node[] }) {
                     <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
                        className="flex items-center gap-2 text-sm text-ink-muted hover:text-lime transition-colors group">
                       <span className="text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0"
-                            style={{ background: '#1A1A1A', border: '1px solid #2A2A2A', color: '#A0A0A0' }}>
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#A0A0A0' }}>
                         {typeLabel[r.type]}
                       </span>
                       <span className="group-hover:underline">{r.label}</span>

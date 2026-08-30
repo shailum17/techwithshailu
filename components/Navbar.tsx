@@ -72,15 +72,15 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
             className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72
                        rounded-2xl overflow-hidden z-50"
             style={{
-              background: '#161616',
-              border: '1px solid #2A2A2A',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+              background: '#0E0E0E',
+              border: '1px solid rgba(255,255,255,0.09)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
             }}
           >
             {/* Arrow */}
             <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3
                             rotate-45"
-                 style={{ background: '#161616', borderLeft: '1px solid #2A2A2A', borderTop: '1px solid #2A2A2A' }} />
+            style={{ background: '#0E0E0E', borderLeft: '1px solid rgba(255,255,255,0.06)', borderTop: '1px solid rgba(255,255,255,0.06)' }} />
 
             <div className="py-2">
               {resourceLinks.slice(0, 5).map(({ href, label, sub, dotColor }, i) => {
@@ -95,9 +95,9 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
                     }`}
                     style={{
                       background: isItemActive ? 'rgba(168,230,61,0.08)' : undefined,
-                      borderBottom: isFirst ? '1px solid #2A2A2A' : undefined,
+                      borderBottom: isFirst ? '1px solid rgba(255,255,255,0.08)' : undefined,
                     }}
-                    onMouseEnter={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = '#1E1E1E'; }}
+                    onMouseEnter={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
                     onMouseLeave={e => { if (!isItemActive) (e.currentTarget as HTMLElement).style.background = ''; }}
                   >
                     <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: dotColor }} />
@@ -114,7 +114,7 @@ function ResourcesDropdown({ pathname }: { pathname: string }) {
               })}
 
               {/* See all */}
-              <div style={{ borderTop: '1px solid #2A2A2A' }} className="mt-1 pt-1 px-4 pb-1">
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} className="mt-1 pt-1 px-4 pb-1">
                 <Link
                   href="/resources"
                   className="flex items-center justify-between w-full py-2 text-xs font-medium text-ink-muted hover:text-lime transition-colors group"
@@ -153,11 +153,11 @@ export default function Navbar() {
         scrolled ? 'py-3' : 'py-4'
       }`}
       style={{
-        background: scrolled ? 'rgba(10,10,10,0.96)' : 'rgba(10,10,10,0.80)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid #2A2A2A',
-        boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.5)' : 'none',
+        background: scrolled ? 'rgba(8,8,8,0.97)' : 'rgba(8,8,8,0.75)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: scrolled ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.04)',
+        boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.6)' : 'none',
       }}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -197,9 +197,9 @@ export default function Navbar() {
           <Link href="/jobs"
             className="flex items-center gap-1.5 text-ink-muted hover:text-ink text-sm
                        rounded-lg px-3 py-1.5 transition-colors"
-            style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#3A3A3A'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#2A2A2A'}
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -237,7 +237,7 @@ export default function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.22 }}
             className="md:hidden overflow-hidden px-4 pb-4"
-            style={{ background: '#0F0F0F', borderBottom: '1px solid #2A2A2A' }}
+            style={{ background: '#0F0F0F', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
           >
             <ul className="flex flex-col gap-1 pt-3">
               {navLinks.map(({ href, label }) => (
@@ -282,7 +282,7 @@ export default function Navbar() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.18 }}
                       className="overflow-hidden ml-3 mt-1 pl-3 space-y-0.5"
-                      style={{ borderLeft: '2px solid #2A2A2A' }}
+                      style={{ borderLeft: '2px solid rgba(255,255,255,0.08)' }}
                     >
                       {resourceLinks.map(({ href, label }) => (
                         <li key={href}>

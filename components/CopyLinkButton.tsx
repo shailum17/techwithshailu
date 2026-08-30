@@ -18,9 +18,9 @@ export default function CopyLinkButton() {
       onClick={handleCopy}
       className="flex items-center gap-2 text-xs text-ink-muted hover:text-lime px-3 py-2 rounded-lg
                  transition-colors"
-      style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}
+      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      {copied ? '✓ Copied!' : 'Copy Link'}
+      {copied ? 'Copied!' : 'Copy Link'}
     </button>
   );
 }

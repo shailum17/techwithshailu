@@ -36,7 +36,7 @@ export default function ToolCard({ name, description, category, url, icon_url, i
   const [localVotes, setLocalVotes] = useState(votes ?? 0);
 
   const colorClass = categoryColors[category] || 'text-ink-muted bg-surface-tertiary border-surface-border';
-  const avatar = categoryAvatarBg[category] || { bg: '#1A1A1A', color: '#A0A0A0' };
+  const avatar = categoryAvatarBg[category] || { bg: 'rgba(255,255,255,0.05)', color: '#A0A0A0' };
 
   const handleTilt = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = cardRef.current;
@@ -49,7 +49,7 @@ export default function ToolCard({ name, description, category, url, icon_url, i
   const resetTilt = () => {
     if (cardRef.current) {
       cardRef.current.style.transform = '';
-      cardRef.current.style.borderColor = '#2A2A2A';
+      cardRef.current.style.borderColor = 'rgba(255,255,255,0.08)';
       cardRef.current.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)';
     }
   };
@@ -67,18 +67,21 @@ export default function ToolCard({ name, description, category, url, icon_url, i
       onMouseMove={handleTilt}
       onMouseLeave={resetTilt}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,230,61,0.45)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 28px rgba(168,230,61,0.12)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,230,61,0.35)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(168,230,61,0.1), 0 0 0 1px rgba(168,230,61,0.08)';
       }}
       style={{
         transition: 'transform 0.15s ease, box-shadow 0.25s ease, border-color 0.25s ease',
         transformStyle: 'preserve-3d',
-        background: '#111111',
-        border: '1px solid #2A2A2A',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+        background: '#0E0E0E',
+        border: '1px solid rgba(255,255,255,0.07)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
       }}
-      className="group flex flex-col gap-3 p-4 rounded-2xl cursor-pointer"
+      className="group flex flex-col gap-3 p-4 rounded-2xl cursor-pointer relative overflow-hidden"
     >
+      {/* Top accent line */}
+      <div className="absolute top-0 left-4 right-4 h-px rounded-b-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(168,230,61,0.5), transparent)' }} />
       {/* Icon + title */}
       <div className="flex items-center gap-3">
         <div

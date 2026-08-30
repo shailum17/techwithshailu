@@ -52,7 +52,7 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
 
   return (
     <div className="rounded-2xl p-5 sticky top-24 space-y-6"
-         style={{ background: '#111111', border: '1px solid #2A2A2A', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
+         style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
       <DonutChart pct={pct} />
 
       {/* Stats */}
@@ -68,7 +68,7 @@ export default function RoadmapProgress({ totalCompleted, totalModules, inProgre
           <p className="text-ink-muted text-xs mt-0.5">Active</p>
         </div>
         <div className="rounded-xl py-2"
-             style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
+             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <p className="font-poppins font-bold text-ink text-base">{remaining}</p>
           <p className="text-ink-muted text-xs mt-0.5">Left</p>
         </div>
