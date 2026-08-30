@@ -30,7 +30,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   return (
-    <div className="pt-20 pb-20 min-h-screen" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 pb-20 min-h-screen" style={{ background: '#080808' }}>
       <ReadingProgress />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -76,13 +76,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                      prose-p:text-ink-muted prose-li:text-ink-muted
                      prose-strong:text-ink prose-a:text-lime prose-a:no-underline
                      hover:prose-a:underline"
-          style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+          style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {/* CTA */}
         <div className="rounded-2xl p-6 text-center"
-             style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+             style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
           <p className="text-ink-muted text-sm mb-4">
             Want more articles like this? Join our Telegram channel for daily updates.
           </p>

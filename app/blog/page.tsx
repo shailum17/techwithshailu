@@ -38,7 +38,7 @@ export default function BlogPage() {
   const featured = posts[0];
 
   return (
-    <div className="pt-20 min-h-screen pb-20" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Header */}
@@ -54,7 +54,7 @@ export default function BlogPage() {
 
         {posts.length === 0 ? (
           <div className="rounded-2xl p-12 text-center"
-               style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+               style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
             <p className="font-poppins font-semibold text-ink text-lg mb-2">No articles yet</p>
             <p className="text-ink-muted text-sm">Check back soon — new content is on the way.</p>
           </div>
@@ -63,8 +63,8 @@ export default function BlogPage() {
             {/* Featured post */}
             {featured && (
               <Link href={`/blog/${featured.slug}`}>
-                <div className="rounded-2xl p-6 md:p-8 mb-8 cursor-pointer transition-all duration-300 hover:-translate-y-1 border border-[#2A2A2A] hover:border-lime/40"
-                     style={{ background: '#111111', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+                <div className="rounded-2xl p-6 md:p-8 mb-8 cursor-pointer transition-all duration-300 hover:-translate-y-1 border border-white/10 hover:border-lime/40"
+                     style={{ background: '#0E0E0E', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-3">
@@ -115,8 +115,8 @@ export default function BlogPage() {
                   <Link key={slug} href={`/blog/${slug}`}>
                     <article className="rounded-2xl p-5 flex flex-col h-full cursor-pointer
                                          hover:-translate-y-1 transition-all duration-300 overflow-hidden group
-                                         border border-[#2A2A2A] hover:border-purple-brand/40"
-                             style={{ background: '#111111' }}>
+                                         border border-white/10 hover:border-purple-brand/40"
+                             style={{ background: '#0E0E0E' }}>
                       {/* Gradient thumbnail with zoom on hover */}
                       <div className={`w-full h-32 rounded-xl mb-4 flex items-center justify-center overflow-hidden
                                        bg-gradient-to-br ${thumbGradient[category]}`}>
@@ -135,7 +135,7 @@ export default function BlogPage() {
                       </h3>
                       <p className="text-ink-muted text-sm line-clamp-2 mb-3">{excerpt}</p>
                       <div className="flex items-center gap-3 text-xs text-ink-faint mt-auto pt-3"
-                           style={{ borderTop: '1px solid #2A2A2A' }}>
+                           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                         <span>techwithshailu</span>
                         <span>·</span>
                         <span>{date}</span>
