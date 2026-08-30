@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import AIToolsClient from './AIToolsClient';
 
 export const metadata: Metadata = {
-  title: 'AI Tools Directory — 124+ Best AI Tools for Students 2026',
+  title: 'AI Tools Directory — Best AI Tools for Students 2026',
   description: 'Curated collection of the best AI tools for writing, coding, image generation, productivity and research. Updated for 2026.',
 };
 
@@ -13,7 +13,7 @@ export default function AIToolsPage({
   searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   return (
-    <Suspense fallback={<div className="min-h-screen" style={{ background: '#0A0A0A' }} />}>
+    <Suspense fallback={<div className="min-h-screen" style={{ background: '#080808' }} />}>
       <AIToolsContent searchParams={searchParams} />
     </Suspense>
   );

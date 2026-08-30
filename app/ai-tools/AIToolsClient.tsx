@@ -224,7 +224,7 @@ function ToolLogo({ name, url, logo, avatarClass }: { name: string; url: string;
         width={36}
         height={36}
         className="w-9 h-9 rounded-xl object-contain group-hover:scale-110 transition-transform flex-shrink-0"
-        style={{ background: '#1A1A1A', padding: '4px' }}
+        style={{ background: 'rgba(255,255,255,0.05)', padding: '4px' }}
         onError={() => setErrored(true)}
       />
     );
@@ -348,14 +348,14 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
   };
 
   return (
-    <div className="pt-20 min-h-screen" style={{ background: '#0A0A0A' }}>
+    <div className="pt-20 min-h-screen" style={{ background: '#080808' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-7">
 
           {/* Sidebar */}
           <aside className="w-full lg:w-60 flex-shrink-0">
             <div className="rounded-2xl p-5 sticky top-24 space-y-6"
-                 style={{ background: '#111111', border: '1px solid #2A2A2A', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
+                 style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
               <div>
                 <h1 className="font-poppins font-bold text-ink text-base">Discover</h1>
                 <p className="text-ink-muted text-xs mt-1 leading-snug">
@@ -466,7 +466,7 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                   style={
                     activeCategory === cat
                       ? { borderColor: 'rgba(168,230,61,0.5)', background: 'rgba(168,230,61,0.08)' }
-                      : { borderColor: '#2A2A2A', background: 'transparent' }
+                      : { borderColor: 'rgba(255,255,255,0.08)', background: 'transparent' }
                   }>
                   {cat}
                 </button>
@@ -485,19 +485,19 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
                   placeholder="Search AI tools..."
                   className="w-full rounded-xl px-4 py-2.5 pl-10 pr-16
                              text-ink placeholder-ink-faint text-sm focus:outline-none"
-                  style={{ background: '#111111', border: '1px solid #2A2A2A' }}
+                  style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
                   onFocus={e => (e.currentTarget.style.borderColor = 'rgba(168,230,61,0.5)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = '#2A2A2A')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint
                                   rounded px-1.5 py-0.5 font-mono"
-                      style={{ background: '#1A1A1A', border: '1px solid #2A2A2A' }}>
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                   ⌘K
                 </span>
               </div>
               <select value={sort} onChange={e => setSort(e.target.value as typeof sort)}
                 className="rounded-xl px-4 py-2.5 text-ink text-sm focus:outline-none cursor-pointer"
-                style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+                style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <option value="popular">Most Popular</option>
                 <option value="newest">Newest</option>
                 <option value="az">A–Z</option>
@@ -525,7 +525,7 @@ export default function AIToolsClient({ initialCategory, initialQ }: { initialCa
               </motion.div>
             ) : (
               <div className="rounded-2xl p-12 text-center"
-                   style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
+                   style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <p className="font-poppins font-semibold text-ink">No tools found</p>
                 <p className="text-ink-muted text-sm mt-1">Try a different search or category</p>
               </div>
