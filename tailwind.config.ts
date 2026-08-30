@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import typography from '@tailwindcss/typography';
 
 const config: Config = {
   content: [
@@ -23,9 +24,9 @@ const config: Config = {
         },
         // Dark theme surfaces
         surface: {
-          DEFAULT:   '#111111',
-          secondary: '#0A0A0A',
-          tertiary:  '#1A1A1A',
+          DEFAULT:   '#0E0E0E',
+          secondary: '#080808',
+          tertiary:  'rgba(255,255,255,0.05)',
           border:    '#2A2A2A',
           hover:     '#222222',
         },
@@ -53,7 +54,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [typography],
 };
 
 export default config;

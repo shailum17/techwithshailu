@@ -37,3 +37,10 @@ yarn-error.log*
 next-env.d.ts
 
 /.env.local
+
+# local planning & automation docs
+AUTOMATION_SETUP.md
+AUTOMATION-SETUP.md
+FEATURES-COMPLETED.md
+TODO.md
+supabase
