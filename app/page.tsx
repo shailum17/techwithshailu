@@ -8,6 +8,7 @@ import BlogCard from '@/components/BlogCard';
 import SectionReveal from '@/components/SectionReveal';
 import CommunityCTA from '@/components/CommunityCTA';
 import WhatIsInsideBento from '@/components/WhatIsInsideBento';
+import { getRoadmapCategories } from '@/lib/roadmaps';
 
 async function getFeaturedJobs() {
   try {
@@ -41,7 +42,24 @@ async function getFeaturedTools() {
   } catch { return []; }
 }
 
-const roadmaps: { id: string; title: string; level: string; modules: number; time: string; color: string }[] = [];
+/* ── Level derived from slug ───────────────────────────────── */
+const LEVEL_MAP: Record<string, string> = {
+  frontend:      'Beginner',
+  dsa:           'Intermediate',
+  backend:       'Intermediate',
+  'system-design': 'Advanced',
+  aiml:          'Intermediate',
+  devops:        'Advanced',
+};
+
+const TIME_MAP: Record<string, string> = {
+  frontend:      '3–4 months',
+  dsa:           '2–3 months',
+  backend:       '3–4 months',
+  'system-design': '1–2 months',
+  aiml:          '2–3 months',
+  devops:        '2–3 months',
+};
 const blogPreviews: { slug: string; title: string; category: string; date: string }[] = [];
 
 /* ─── What we offer ──────────────────────────────────────────── */
@@ -118,9 +136,23 @@ const FEATURES = [
 ];
 
 export default async function HomePage() {
-  const [featuredJobs, featuredTools] = await Promise.all([getFeaturedJobs(), getFeaturedTools()]);
+  const [featuredJobs, featuredTools, dbRoadmaps] = await Promise.all([
+    getFeaturedJobs(),
+    getFeaturedTools(),
+    getRoadmapCategories(),
+  ]);
   const jobs  = featuredJobs  as Parameters<typeof JobCardsGrid>[0]['jobs'];
   const tools = featuredTools as (Parameters<typeof ToolCard>[0] & { id?: string })[];
+
+  // Map DB categories → RoadmapCard props
+  const roadmaps = dbRoadmaps.map(cat => ({
+    id:      `roadmaps/${cat.id}`,   // → /resources/roadmaps/<slug>
+    title:   cat.title,
+    level:   LEVEL_MAP[cat.id]  ?? 'Beginner',
+    modules: cat.tags?.length   ?? 6,
+    time:    TIME_MAP[cat.id]   ?? '2–3 months',
+    color:   cat.dotColor,
+  }));
 
   return (
     <>

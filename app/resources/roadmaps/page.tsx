@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { roadmapCategories } from './data';
+import { getRoadmapCategories } from '@/lib/roadmaps';
 
 export const metadata: Metadata = {
   title: 'Roadmaps — Frontend, DSA, Backend, System Design, AI/ML & DevOps',
@@ -8,7 +8,12 @@ export const metadata: Metadata = {
     'Step-by-step learning roadmaps for CS students and developers. Frontend, DSA for placements, backend, system design, AI/ML and DevOps.',
 };
 
-export default function RoadmapsPage() {
+// Revalidate every 60 seconds so edits in Supabase show up quickly
+export const revalidate = 60;
+
+export default async function RoadmapsPage() {
+  const categories = await getRoadmapCategories();
+
   return (
     <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
@@ -34,7 +39,7 @@ export default function RoadmapsPage() {
 
         {/* Category cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {roadmapCategories.map(cat => (
+          {categories.map(cat => (
             <Link
               key={cat.id}
               href={`/resources/roadmaps/${cat.id}`}
@@ -70,8 +75,7 @@ export default function RoadmapsPage() {
               >
                 {cat.resources.length === 0
                   ? 'Coming soon'
-                  : `${cat.resources.length} ${cat.resources.length === 1 ? 'resource' : 'resources'}`
-                }
+                  : `${cat.resources.length} ${cat.resources.length === 1 ? 'resource' : 'resources'}`}
               </span>
             </Link>
           ))}

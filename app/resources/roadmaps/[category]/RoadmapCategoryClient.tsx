@@ -234,10 +234,13 @@ function RoadmapFlowView({
 export default function RoadmapCategoryClient({ category: cat }: { category: RoadmapCategory }) {
   const [activeResource, setActiveResource] = useState<NodeResources | null>(null);
 
+  // Use DB-loaded nodeResources if available, otherwise fall back to static RESOURCES map
+  const resourceMap = cat.nodeResources ?? RESOURCES;
+
   const handleNodeClick = useCallback((id: string) => {
-    const res = RESOURCES[id];
+    const res = resourceMap[id];
     if (res) setActiveResource(res);
-  }, []);
+  }, [resourceMap]);
 
   /* ── Render real flowchart for available roadmaps ─────── */
   if (cat.id === 'frontend' || cat.id === 'dsa') {
