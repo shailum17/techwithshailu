@@ -133,7 +133,9 @@ export default function ToolCard({ name, description, category, url, icon_url, i
             upvoted ? 'text-lime font-semibold' : 'text-ink-faint hover:text-lime'
           }`}
         >
-          <span>▲</span>
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4l8 16H4L12 4z" />
+          </svg>
           <span>{(localVotes / 1000).toFixed(1)}K upvotes</span>
         </button>
       )}

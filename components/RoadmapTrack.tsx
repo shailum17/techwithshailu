@@ -64,9 +64,9 @@ export default function RoadmapTrack({ nodes }: { nodes: Node[] }) {
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold z-10 flex-shrink-0"
                    style={dotStyle}>
                 {isCompleted
-                  ? '+'
+                  ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                   : isInProgress
-                    ? <span className="text-xs font-bold">●</span>
+                    ? <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6" /></svg>
                     : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                           d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

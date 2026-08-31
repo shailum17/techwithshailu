@@ -41,7 +41,7 @@ const categoryColors: Record<string, string> = {
   'Graphic Design': 'text-fuchsia-400 bg-fuchsia-950 border-fuchsia-800',
   Knowledge:        'text-teal-400 bg-teal-950 border-teal-800',
   Research:         'text-indigo-400 bg-indigo-950 border-indigo-800',
-  Agent:            'text-lime bg-lime/10 border-lime/30',
+  Agent:            'text-lime-400 bg-lime-950/50 border-lime-800/60',
 };
 
 const categoryAvatarBg: Record<string, string> = {
@@ -60,7 +60,7 @@ const categoryAvatarBg: Record<string, string> = {
   'Graphic Design': 'bg-fuchsia-900 text-fuchsia-400',
   Knowledge:        'bg-teal-900 text-teal-400',
   Research:         'bg-indigo-900 text-indigo-400',
-  Agent:            'bg-lime/10 text-lime',
+  Agent:            'bg-lime-900/40 text-lime-400',
 };
 
 /* ── ToolLogo ─────────────────────────────────────────────────── */
@@ -76,18 +76,95 @@ function ToolLogo({ name, url, logo, avatarClass }: {
       <img
         src={faviconUrl}
         alt={name}
-        width={36}
-        height={36}
-        className="w-9 h-9 rounded-xl object-contain group-hover:scale-110 transition-transform flex-shrink-0"
-        style={{ background: 'rgba(255,255,255,0.05)' }}
+        width={40}
+        height={40}
+        className="w-10 h-10 rounded-xl object-contain flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+        style={{ background: 'rgba(255,255,255,0.06)', padding: '4px' }}
         onError={() => setErrored(true)}
       />
     );
   }
   return (
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold
-                    group-hover:scale-110 transition-transform flex-shrink-0 ${avatarClass}`}>
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold
+                    transition-transform duration-200 group-hover:scale-105 flex-shrink-0 ${avatarClass}`}>
       {name.slice(0, 2)}
+    </div>
+  );
+}
+
+/* ── SpotlightCard — Magic-UI inspired mouse-tracked spotlight ── */
+function SpotlightCard({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [mousePos, setMousePos] = useState({ x: -300, y: -300 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setMousePos({ x: e.clientX - r.left, y: e.clientY - r.top });
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => { setIsHovered(false); setMousePos({ x: -300, y: -300 }); }}
+      className="group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300"
+      style={{
+        background: '#0E0E0E',
+        border: active
+          ? '1px solid rgba(168,230,61,0.7)'
+          : '1px solid rgba(255,255,255,0.07)',
+        boxShadow: active
+          ? '0 0 0 1px rgba(168,230,61,0.2), 0 8px 32px rgba(168,230,61,0.15)'
+          : isHovered
+          ? '0 4px 24px rgba(0,0,0,0.5)'
+          : '0 1px 6px rgba(0,0,0,0.35)',
+      }}
+    >
+      {/* Spotlight radial that follows the cursor */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 rounded-2xl"
+        style={{
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          background: `radial-gradient(300px circle at ${mousePos.x}px ${mousePos.y}px,
+            rgba(168,230,61,0.09) 0%,
+            rgba(168,230,61,0.03) 45%,
+            transparent 70%
+          )`,
+        }}
+      />
+      {/* Glowing border highlight that follows the cursor */}
+      {!active && (
+        <div
+          className="pointer-events-none absolute inset-0 z-0 rounded-2xl"
+          style={{
+            opacity: isHovered ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            background: `radial-gradient(200px circle at ${mousePos.x}px ${mousePos.y}px,
+              rgba(168,230,61,0.18),
+              transparent 70%
+            )`,
+            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+            padding: '1px',
+          }}
+        />
+      )}
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }
@@ -95,19 +172,8 @@ function ToolLogo({ name, url, logo, avatarClass }: {
 /* ── ToolCard ─────────────────────────────────────────────────── */
 function ToolCard({ tool, active }: { tool: AiTool; active: boolean }) {
   const { name, description, category, url, logo, is_free, votes } = tool;
-  const cardRef = useRef<HTMLDivElement>(null);
   const [upvoted, setUpvoted] = useState(false);
   const [localVotes, setLocalVotes] = useState(votes ?? 0);
-
-  const handleTilt = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = cardRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = ((e.clientY - r.top)  / r.height - 0.5) * 10;
-    const y = ((e.clientX - r.left) / r.width  - 0.5) * -10;
-    el.style.transform = `perspective(700px) rotateX(${x}deg) rotateY(${y}deg) translateY(-3px)`;
-  };
-  const resetTilt = () => { if (cardRef.current) cardRef.current.style.transform = ''; };
 
   const colorClass  = categoryColors[category]    || 'text-ink-muted bg-surface-tertiary border-surface-border';
   const avatarClass = categoryAvatarBg[category]  || 'bg-surface-tertiary text-ink-muted';
@@ -118,65 +184,93 @@ function ToolCard({ tool, active }: { tool: AiTool; active: boolean }) {
     else         { setLocalVotes(v => v + 1); setUpvoted(true); }
   };
 
+  const formatVotes = (v: number) =>
+    v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v);
+
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleTilt}
-      onMouseLeave={resetTilt}
-      style={{ transition: 'transform 0.15s ease, box-shadow 0.25s ease', transformStyle: 'preserve-3d' }}
-      className={`group flex flex-col gap-3 p-4 rounded-2xl cursor-pointer
-                  border shadow-card transition-all duration-300 ${
-                    active
-                      ? 'border-lime shadow-lime-glow'
-                      : 'border-surface-border hover:border-lime/50 hover:shadow-[0_8px_28px_rgba(168,230,61,0.15)]'
-                  }`}
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <ToolLogo name={name} url={url} logo={logo} avatarClass={avatarClass} />
-          <div>
-            <p className="text-ink text-sm font-semibold font-poppins group-hover:text-lime transition-colors">
-              {name}
-            </p>
-            <button
-              onClick={handleUpvote}
-              className={`flex items-center gap-1 text-xs mt-0.5 transition-colors ${
-                upvoted ? 'text-lime font-semibold' : 'text-ink-faint hover:text-lime'
-              }`}
-            >
-              <span>▲</span>
-              <span>{(localVotes / 1000).toFixed(1)}K</span>
-            </button>
+    <SpotlightCard active={active}>
+      <div className="flex flex-col p-4 gap-0">
+
+        {/* ── Header: logo + name + pricing badge ── */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <ToolLogo name={name} url={url} logo={logo} avatarClass={avatarClass} />
+            <div className="min-w-0">
+              <p className="text-ink text-sm font-semibold font-poppins group-hover:text-lime
+                            transition-colors truncate leading-tight">
+                {name}
+              </p>
+              {/* Upvote row */}
+              <button
+                onClick={handleUpvote}
+                className={`flex items-center gap-1 mt-1 text-xs transition-all duration-200 ${
+                  upvoted ? 'text-lime font-semibold' : 'text-ink-faint hover:text-lime'
+                }`}
+              >
+                <svg
+                  className={`w-3 h-3 transition-transform ${upvoted ? 'scale-125' : ''}`}
+                  viewBox="0 0 24 24"
+                  fill={upvoted ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+                <span>{formatVotes(localVotes)}</span>
+              </button>
+            </div>
           </div>
+
+          {/* Free / Paid pill */}
+          {is_free ? (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 leading-5"
+              style={{ color: '#A8E63D', background: 'rgba(168,230,61,0.10)', border: '1px solid rgba(168,230,61,0.28)' }}
+            >
+              Free
+            </span>
+          ) : (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 leading-5"
+              style={{ color: '#FCD34D', background: 'rgba(252,211,77,0.10)', border: '1px solid rgba(252,211,77,0.28)' }}
+            >
+              Paid
+            </span>
+          )}
         </div>
-      </div>
 
-      <p className="text-ink-muted text-xs leading-relaxed line-clamp-2">{description}</p>
+        {/* ── Description ── */}
+        <p className="text-ink-muted text-xs leading-relaxed line-clamp-2 mb-3">
+          {description}
+        </p>
 
-      <div className="flex flex-wrap gap-1.5">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${colorClass}`}>{category}</span>
-        {is_free ? (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full"
-                style={{ color: '#A8E63D', background: 'rgba(168,230,61,0.12)', border: '1px solid rgba(168,230,61,0.35)' }}>
-            Free
+        {/* ── Hairline divider ── */}
+        <div className="h-px mb-3" style={{ background: 'rgba(255,255,255,0.05)' }} />
+
+        {/* ── Footer: category badge + CTA ── */}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border flex-shrink-0 ${colorClass}`}>
+            {category}
           </span>
-        ) : (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full"
-                style={{ color: '#FCD34D', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.4)' }}>
-            Paid
-          </span>
-        )}
-      </div>
 
-      <a href={url} target="_blank" rel="noopener noreferrer"
-         className="text-xs py-2 text-center mt-auto rounded-xl font-semibold transition-all duration-200
-                    hover:shadow-lime-glow active:scale-95"
-         style={{ background: '#A8E63D', color: '#000' }}
-         onClick={e => e.stopPropagation()}>
-        Try Now →
-      </a>
-    </div>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg
+                       transition-all duration-200 active:scale-95 hover:brightness-110 flex-shrink-0"
+            style={{ background: '#A8E63D', color: '#000' }}
+          >
+            Try Now
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </a>
+        </div>
+
+      </div>
+    </SpotlightCard>
   );
 }
 
@@ -357,11 +451,11 @@ export default function AIToolsClient({
                   onFocus={e => (e.currentTarget.style.borderColor = 'rgba(168,230,61,0.5)')}
                   onBlur={e  => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint
-                                  rounded px-1.5 py-0.5 font-mono"
+                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-faint
+                                  rounded px-1.5 py-0.5 font-mono pointer-events-none"
                       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                   ⌘K
-                </span>
+                </kbd>
               </div>
               <select value={sort} onChange={e => setSort(e.target.value as typeof sort)}
                 className="rounded-xl px-4 py-2.5 text-ink text-sm focus:outline-none cursor-pointer"
@@ -385,8 +479,11 @@ export default function AIToolsClient({
                 className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
               >
                 {filtered.map(tool => (
-                  <motion.div key={tool.id ?? tool.name} variants={cardVariants}
-                    onClick={() => setActiveCard(activeCard === tool.name ? null : tool.name)}>
+                  <motion.div
+                    key={tool.id ?? tool.name}
+                    variants={cardVariants}
+                    onClick={() => setActiveCard(activeCard === tool.name ? null : tool.name)}
+                  >
                     <ToolCard tool={tool} active={activeCard === tool.name} />
                   </motion.div>
                 ))}
