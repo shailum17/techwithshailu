@@ -22,16 +22,16 @@ export default function SectionReveal({ children, className = '' }: SectionRevea
     offset: ['start 0.9', 'end 0.1'],
   });
 
-  const rawY = useTransform(scrollYProgress, [0, 1], [20, -20]);
-  const y = useSpring(rawY, { stiffness: 80, damping: 30 });
+  const rawY = useTransform(scrollYProgress, [0, 1], [12, -12]);
+  const y = useSpring(rawY, { stiffness: 120, damping: 40 });
 
   return (
     <motion.section
       ref={ref}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, amount: 0.05 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       style={{ y }}
       className={`relative ${className}`}
     >
