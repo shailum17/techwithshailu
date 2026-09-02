@@ -16,6 +16,7 @@ interface Job {
   tags?: string[];
   is_featured?: boolean;
   createdAt?: string;
+  apply_link?: string;
   logo_domain?: string;
   logo_url?: string;
 }
@@ -149,112 +150,178 @@ function CompanyAvatar({ logoUrl, domain, company }: { logoUrl?: string; domain?
   );
 }
 
-/* ─── #2 Job card with glow hover ──────────────────────────── */
+/* ─── Job card ─────────────────────────────────────────────── */
 function JobCard({ job }: { job: Job }) {
   const [bookmarked, setBookmarked] = useState(false);
-  const isNew = job.createdAt
+  const jobIsNew = job.createdAt
     ? Date.now() - new Date(job.createdAt).getTime() < 24 * 3600 * 1000
     : false;
+  const isRemote = job.location.toLowerCase().includes('remote');
 
   return (
-    <Link href={`/jobs/${job.id}`} className="block h-full">
-      <div
-        className="group relative rounded-2xl p-5 flex flex-col gap-3 h-full cursor-pointer
-                   transition-all duration-300 hover:-translate-y-1"
-        style={{
-      background: '#0E0E0E',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.border = '1px solid rgba(168,230,61,0.5)';
-          (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(168,230,61,0.15)';
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.border = '1px solid rgba(255,255,255,0.08)';
-          (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
-        }}
-      >
-        {/* Bookmark */}
-        <button
-          onClick={e => { e.preventDefault(); setBookmarked(!bookmarked); }}
-          className="absolute top-4 right-4 text-white/30 hover:text-lime transition-colors z-10"
-          aria-label="Bookmark"
-        >
-          <svg className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'}
-            viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-        </button>
+    <div
+      className="group relative rounded-2xl flex flex-col h-full cursor-pointer
+                 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+      style={{
+        background: 'linear-gradient(145deg,#111 0%,#0E0E0E 100%)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.45)',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,230,61,0.3)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(168,230,61,0.08)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.45)';
+      }}
+    >
+      {/* Top shimmer on hover */}
+      <div className="absolute inset-x-0 top-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+           style={{ background: 'linear-gradient(90deg,transparent,rgba(168,230,61,0.6),transparent)' }} />
 
-        {/* Header */}
-        <div className="flex items-start gap-3 pr-6">
+      {/* Bookmark button */}
+      <button
+        onClick={e => { e.preventDefault(); e.stopPropagation(); setBookmarked(!bookmarked); }}
+        className="absolute top-3.5 right-3.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center
+                   transition-all duration-150"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(168,230,61,0.35)')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
+        aria-label="Bookmark"
+      >
+        <svg className={`w-3.5 h-3.5 transition-colors ${bookmarked ? 'text-lime' : 'text-white/30 group-hover:text-white/60'}`}
+          fill={bookmarked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        </svg>
+      </button>
+
+      {/* Card body */}
+      <Link href={`/jobs/${job.id}`} className="flex flex-col flex-1 p-5">
+
+        {/* ── Header: logo + title + company ── */}
+        <div className="flex items-start gap-3 mb-4 pr-7">
           <CompanyAvatar logoUrl={job.logo_url} domain={job.logo_domain} company={job.company} />
-          <div className="min-w-0">
-            <h3 className="font-poppins font-semibold text-white text-sm truncate
-                           group-hover:text-lime transition-colors">
-              {job.title}
-            </h3>
-            <p className="text-white/50 text-xs mt-0.5">{job.company}</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2 flex-wrap">
+              <h3 className="font-poppins font-semibold text-white text-sm leading-snug
+                             group-hover:text-lime transition-colors line-clamp-2 flex-1">
+                {job.title}
+              </h3>
+              {jobIsNew && (
+                <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest"
+                      style={{ background: '#A8E63D', color: '#000' }}>New</span>
+              )}
+              {!jobIsNew && job.is_featured && (
+                <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest"
+                      style={{ background: 'rgba(168,230,61,0.1)', color: '#A8E63D', border: '1px solid rgba(168,230,61,0.22)' }}>Top</span>
+              )}
+            </div>
+            <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(255,255,255,0.38)' }}>{job.company}</p>
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2">
-          {(isNew || job.is_featured) && (
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide"
-                  style={{ background: '#A8E63D', color: '#000' }}>
-              {isNew ? 'NEW' : 'TOP'}
+        {/* ── Info row: location + batch ── */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mb-4"
+             style={{ color: 'rgba(255,255,255,0.32)' }}>
+          <span className="flex items-center gap-1">
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {job.location}
+          </span>
+          {job.batch_year && (
+            <span className="flex items-center gap-1">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-4-4.5l4 2.5 4-2.5" />
+              </svg>
+              Batch {job.batch_year}
             </span>
           )}
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(168,230,61,0.12)', color: '#A8E63D', border: '1px solid rgba(168,230,61,0.25)' }}>
+        </div>
+
+        {/* ── Chips ── */}
+        <div className="flex flex-wrap gap-1.5 mt-auto">
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(168,230,61,0.08)', color: '#A8E63D', border: '1px solid rgba(168,230,61,0.18)' }}>
             {job.type}
           </span>
-          {job.location.toLowerCase().includes('remote') && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: 'rgba(168,230,61,0.12)', color: '#A8E63D', border: '1px solid rgba(168,230,61,0.25)' }}>
+          {isRemote && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
+                  style={{ background: 'rgba(96,165,250,0.08)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.18)' }}>
               Remote
             </span>
           )}
-          {/* Purple pill salary */}
           {job.salary && (
-            <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: 'rgba(106,76,195,0.2)', color: '#A78BFA', border: '1px solid rgba(106,76,195,0.35)' }}>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
+                  style={{ background: 'rgba(155,127,232,0.09)', color: '#B49EF0', border: '1px solid rgba(155,127,232,0.22)' }}>
               {job.salary}
             </span>
           )}
         </div>
 
-        {/* Location + batch */}
-        <div className="flex items-center gap-3 text-white/40 text-xs">
-          <span className="flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-            </svg>
-            {job.location}
-          </span>
-          {job.batch_year && <span>Batch {job.batch_year}</span>}
-        </div>
-
-        {/* Skill tags */}
+        {/* ── Tags ── */}
         {job.tags && job.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-3 mt-auto"
-               style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-            {job.tags.slice(0, 4).map(tag => (
-              <span key={tag}
-                className="text-xs text-white/50 px-2 py-0.5 rounded-md transition-colors
-                           hover:text-lime"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="flex flex-wrap gap-1.5 mt-3 pt-3"
+               style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            {job.tags.slice(0, 3).map(tag => (
+              <span key={tag} className="text-xs px-2 py-0.5 rounded-md"
+                    style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 {tag}
               </span>
             ))}
+            {job.tags.length > 3 && (
+              <span className="text-xs px-2 py-0.5 rounded-md" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                +{job.tags.length - 3}
+              </span>
+            )}
           </div>
         )}
+      </Link>
+
+      {/* ── Bottom action strip ── */}
+      <div className="flex items-center gap-2 px-5 py-3 mt-auto"
+           style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.015)' }}>
+        {/* Apply button */}
+        {job.apply_link ? (
+          <a
+            href={job.apply_link as string}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg
+                       transition-all duration-200 hover:brightness-110 active:scale-95"
+            style={{ background: '#A8E63D', color: '#000' }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Apply Now
+          </a>
+        ) : (
+          <div className="flex-1" />
+        )}
+        {/* Know more */}
+        <Link
+          href={`/jobs/${job.id}`}
+          onClick={e => e.stopPropagation()}
+          className="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-lg
+                     transition-all duration-200 hover:text-lime"
+          style={{ color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,230,61,0.3)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; }}
+        >
+          Details
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
 
