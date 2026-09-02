@@ -27,30 +27,12 @@ function isNew(createdAt?: string | Date, created_at?: string | Date): boolean {
   return Date.now() - new Date(ts).getTime() < 24 * 3600 * 1000;
 }
 
-const JOB_BOARD_DOMAINS = new Set([
-  'linkedin.com','jobs.lever.co','greenhouse.io','workday.com',
-  'myworkdayjobs.com','taleo.net','icims.com','breezy.hr',
-  'bamboohr.com','smartrecruiters.com','jobvite.com',
-  'naukri.com','internshala.com','unstop.com','wellfound.com',
-  'angel.co','adzuna.com','indeed.com','glassdoor.com',
-  'monster.com','shine.com','freshersworld.com','hirist.com',
-  'instahyre.com','cutshort.io','simplyhired.com',
-  'jsearch.p.rapidapi.com','rapidapi.com','apply.workable.com',
-]);
-
-function getLogoUrl(logoUrl?: string, logoDomain?: string, applyLink?: string): string | null {
+function getLogoUrl(company: string, logoUrl?: string): string | null {
   if (logoUrl) return logoUrl;
-  const domain = logoDomain ?? (() => {
-    try {
-      if (applyLink) {
-        const host = new URL(applyLink).hostname.replace(/^www\./, '');
-        if (!JOB_BOARD_DOMAINS.has(host) && !host.includes('rapidapi')) return host;
-      }
-    } catch { /* ignore */ }
-    return null;
-  })();
-  if (!domain) return null;
-  return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN;
+  if (!token || token === 'pk_your_token_here') return null;
+  const name = encodeURIComponent(company.trim());
+  return `https://img.logo.dev/name/${name}?token=${token}&size=64&format=png`;
 }
 
 function Countdown({ deadline }: { deadline: string | Date }) {
@@ -99,7 +81,7 @@ export default function JobCard({
   const isRemote      = location.toLowerCase().includes('remote');
 
   const [logoFailed, setLogoFailed] = useState(false);
-  const logoSrc = getLogoUrl(logo_url, logo_domain, apply_link);
+  const logoSrc = getLogoUrl(company, logo_url);
 
   return (
     <Link href={`/jobs/${id}`} className="block h-full group">

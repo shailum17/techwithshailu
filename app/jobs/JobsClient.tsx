@@ -122,52 +122,27 @@ function LimeRadio({
 
 /* ─── helpers ──────────────────────────────────────────────── */
 
-// Job-board proxy domains — the apply link points to these,
-// not the actual company site. Map them back to nothing so we
-// fall through to name-based search or initials.
-const JOB_BOARD_DOMAINS = new Set([
-  'linkedin.com','jobs.lever.co','greenhouse.io','workday.com',
-  'myworkdayjobs.com','taleo.net','icims.com','breezy.hr',
-  'bamboohr.com','smartrecruiters.com','jobvite.com',
-  'naukri.com','internshala.com','unstop.com','wellfound.com',
-  'angel.co','adzuna.com','indeed.com','glassdoor.com',
-  'monster.com','shine.com','freshersworld.com','hirist.com',
-  'instahyre.com','cutshort.io','simplyhired.com',
-  'jsearch.p.rapidapi.com','rapidapi.com','apply.workable.com',
-  'careers.google.com','jobs.careers.microsoft.com',
-]);
-
-function getLogoUrl(logoUrl?: string, logoDomain?: string, applyLink?: string): string | null {
-  // 1. Explicit upload wins
+function getLogoUrl(company: string, logoUrl?: string): string | null {
+  // Explicit upload always wins
   if (logoUrl) return logoUrl;
 
-  // 2. Explicit domain stored in DB
-  const domain = logoDomain ?? (() => {
-    try {
-      if (applyLink) {
-        const host = new URL(applyLink).hostname.replace(/^www\./, '');
-        // Only use if it's a real company domain, not a job board proxy
-        if (!JOB_BOARD_DOMAINS.has(host) && !host.includes('rapidapi')) return host;
-      }
-    } catch { /* ignore */ }
-    return null;
-  })();
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN;
+  if (!token || token === 'pk_your_token_here') return null;
 
-  if (!domain) return null;
-
-  // Use Google favicon service — free, no key, always returns something
-  return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+  // Search by company name — logo.dev resolves it to the right brand
+  const name = encodeURIComponent(company.trim());
+  return `https://img.logo.dev/name/${name}?token=${token}&size=64&format=png`;
 }
 
 /* ─── Company logo avatar ──────────────────────────────────── */
 function CompanyAvatar({
-  logoUrl, domain, applyLink, company,
+  logoUrl, company,
 }: {
-  logoUrl?: string; domain?: string; applyLink?: string; company: string;
+  logoUrl?: string; company: string;
 }) {
   const [failed, setFailed] = useState(false);
   const initials = company.slice(0, 2).toUpperCase();
-  const src = getLogoUrl(logoUrl, domain, applyLink);
+  const src = getLogoUrl(company, logoUrl);
 
   if (src && !failed) {
     return (
@@ -244,7 +219,7 @@ function JobCard({ job }: { job: Job }) {
 
         {/* ── Header: logo + title + company ── */}
         <div className="flex items-start gap-3 mb-4 pr-7">
-          <CompanyAvatar logoUrl={job.logo_url} domain={job.logo_domain} applyLink={job.apply_link} company={job.company} />
+          <CompanyAvatar logoUrl={job.logo_url} company={job.company} />
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2 flex-wrap">
               <h3 className="font-poppins font-semibold text-white text-sm leading-snug
