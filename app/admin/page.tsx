@@ -1185,85 +1185,143 @@ function PendingJobsView({ adminKey, onBadgeUpdate }: { adminKey: string; onBadg
         </div>
       )}
 
-      {/* Job cards */}
-      {jobs.map(job => (
-        <div key={job.id} style={{
-          background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 14, padding: '18px 20px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16,
-        }}>
-          {/* Left */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-              <p className="font-poppins font-bold text-white" style={{ fontSize: 14 }}>{job.title}</p>
-              {job.type && (
+      {/* ── Sectioned job cards ── */}
+      {jobs.length > 0 && (() => {
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const fresh = jobs.filter(j => new Date(j.fetched_at).getTime() >= cutoff);
+        const older = jobs.filter(j => new Date(j.fetched_at).getTime() <  cutoff);
+
+        const JobCard = (job: PendingJob) => (
+          <div key={job.id} style={{
+            background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 14, padding: '18px 20px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16,
+          }}>
+            {/* Left */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                <p className="font-poppins font-bold text-white" style={{ fontSize: 14 }}>{job.title}</p>
+                {job.type && (
+                  <span style={{
+                    background: 'rgba(168,230,61,0.1)', color: '#A8E63D',
+                    border: '1px solid rgba(168,230,61,0.25)',
+                    borderRadius: 20, padding: '2px 9px', fontSize: 11, fontWeight: 600,
+                  }}>{job.type}</span>
+                )}
                 <span style={{
-                  background: 'rgba(168,230,61,0.1)', color: '#A8E63D',
-                  border: '1px solid rgba(168,230,61,0.25)',
-                  borderRadius: 20, padding: '2px 9px', fontSize: 11, fontWeight: 600,
-                }}>{job.type}</span>
+                  background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 20, padding: '2px 9px', fontSize: 11,
+                }}>via {job.source}</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{job.company}</span>
+                {job.location && <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{job.location}</span>}
+                {job.salary   && <span style={{ color: '#A8E63D', fontSize: 12 }}>{job.salary}</span>}
+              </div>
+
+              {job.description && (
+                <p style={{
+                  color: 'rgba(255,255,255,0.35)', fontSize: 12, lineHeight: 1.6,
+                  display: '-webkit-box', WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 8,
+                }}>
+                  {job.description.replace(/<[^>]+>/g, '').slice(0, 200)}
+                </p>
               )}
-              <span style={{
-                background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 20, padding: '2px 9px', fontSize: 11,
-              }}>via {job.source}</span>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                {job.apply_link && (
+                  <a href={job.apply_link} target="_blank" rel="noopener noreferrer"
+                    style={{ color: '#A8E63D', fontSize: 11, textDecoration: 'underline' }}>
+                    View apply link ↗
+                  </a>
+                )}
+                <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
+                  {new Date(job.fetched_at).toLocaleString()}
+                </p>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 8 }}>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{job.company}</span>
-              {job.location && <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{job.location}</span>}
-              {job.salary   && <span style={{ color: '#A8E63D', fontSize: 12 }}>{job.salary}</span>}
+            {/* Right — action buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+              <button onClick={() => openEditor(job)} style={{
+                background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)',
+                color: '#4ade80', borderRadius: 10, padding: '8px 18px',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontFamily: 'var(--font-outfit)', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,222,128,0.18)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(74,222,128,0.1)')}>
+                Approve
+              </button>
+              <button onClick={() => reject(job.id)} style={{
+                background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)',
+                color: '#f87171', borderRadius: 10, padding: '8px 18px',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontFamily: 'var(--font-outfit)', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.15)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}>
+                Reject
+              </button>
             </div>
+          </div>
+        );
 
-            {job.description && (
-              <p style={{
-                color: 'rgba(255,255,255,0.35)', fontSize: 12, lineHeight: 1.6,
-                display: '-webkit-box', WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: 8,
-              }}>
-                {job.description.replace(/<[^>]+>/g, '').slice(0, 200)}
-              </p>
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+            {/* ── Newly Fetched (last 24 h) ── */}
+            {fresh.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'rgba(168,230,61,0.08)', border: '1px solid rgba(168,230,61,0.22)',
+                    color: '#A8E63D', borderRadius: 20, padding: '4px 12px',
+                    fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#A8E63D',
+                                   boxShadow: '0 0 6px #A8E63D', display: 'inline-block' }} />
+                    Newly Fetched
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>
+                    {fresh.length} job{fresh.length !== 1 ? 's' : ''} · last 24 hours
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {fresh.map(JobCard)}
+                </div>
+              </div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              {job.apply_link && (
-                <a href={job.apply_link} target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#A8E63D', fontSize: 11, textDecoration: 'underline' }}>
-                  View apply link ↗
-                </a>
-              )}
-              <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
-                {new Date(job.fetched_at).toLocaleString()}
-              </p>
-            </div>
-          </div>
+            {/* ── Older ── */}
+            {older.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.4)', borderRadius: 20, padding: '4px 12px',
+                    fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}>
+                    Older
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>
+                    {older.length} job{older.length !== 1 ? 's' : ''} · older than 24 hours
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {older.map(JobCard)}
+                </div>
+              </div>
+            )}
 
-          {/* Right — action buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-            <button onClick={() => openEditor(job)} style={{
-              background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)',
-              color: '#4ade80', borderRadius: 10, padding: '8px 18px',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-outfit)', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,222,128,0.18)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(74,222,128,0.1)')}>
-              Approve
-            </button>
-            <button onClick={() => reject(job.id)} style={{
-              background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)',
-              color: '#f87171', borderRadius: 10, padding: '8px 18px',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-              fontFamily: 'var(--font-outfit)', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.15)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}>
-              Reject
-            </button>
           </div>
-        </div>
-      ))}
+        );
+      })()}
     </div>
     </>
   );

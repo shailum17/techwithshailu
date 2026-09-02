@@ -215,9 +215,13 @@ export default function PendingJobsPage() {
           </div>
         )}
 
-        {/* Job cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {jobs.map(job => (
+        {/* ── Sectioned job cards ── */}
+        {jobs.length > 0 && (() => {
+          const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+          const fresh = jobs.filter(j => new Date(j.fetched_at).getTime() >= cutoff);
+          const older = jobs.filter(j => new Date(j.fetched_at).getTime() <  cutoff);
+
+          const JobCard = (job: PendingJob) => (
             <div key={job.id} style={{
               background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 16, padding: '20px 24px',
@@ -305,8 +309,60 @@ export default function PendingJobsPage() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          );
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+              {/* ── Newly Fetched (last 24 h) ── */}
+              {fresh.length > 0 && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(168,230,61,0.08)', border: '1px solid rgba(168,230,61,0.22)',
+                      color: '#A8E63D', borderRadius: 20, padding: '4px 12px',
+                      fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#A8E63D',
+                                     boxShadow: '0 0 6px #A8E63D', display: 'inline-block' }} />
+                      Newly Fetched
+                    </span>
+                    <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>
+                      {fresh.length} job{fresh.length !== 1 ? 's' : ''} · last 24 hours
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {fresh.map(JobCard)}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Older ── */}
+              {older.length > 0 && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                      color: 'rgba(255,255,255,0.4)', borderRadius: 20, padding: '4px 12px',
+                      fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                      Older
+                    </span>
+                    <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>
+                      {older.length} job{older.length !== 1 ? 's' : ''} · older than 24 hours
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {older.map(JobCard)}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
