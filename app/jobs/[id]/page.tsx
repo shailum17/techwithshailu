@@ -8,7 +8,7 @@ import { formatJobDescription } from '@/lib/formatJobDescription';
 interface JobDetail {
   id: string; title: string; company: string; location: string; type: string;
   salary?: string; batch_year?: number; deadline?: string; description: string;
-  apply_link: string; tags?: string[]; createdAt?: string;
+  apply_link: string; tags?: string[]; created_at?: string; createdAt?: string;
   logo_domain?: string; logo_url?: string; banner_url?: string;
 }
 
@@ -94,9 +94,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   if (!job) notFound();
 
   const deadline      = job.deadline ? new Date(job.deadline) : null;
-  const postedDaysAgo = job.createdAt
-    ? Math.floor((Date.now() - new Date(job.createdAt).getTime()) / 86_400_000)
-    : 2;
+  const rawDate       = job.created_at ?? job.createdAt;
+  const postedDaysAgo = rawDate
+    ? Math.floor((Date.now() - new Date(rawDate).getTime()) / 86_400_000)
+    : null;
 
   return (
     <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
@@ -159,7 +160,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           {job.location.toLowerCase().includes('remote') && <span className="tag-lime">Remote</span>}
           <span className="text-xs px-2.5 py-1 rounded-full text-purple-brand border border-purple-brand/30"
                 style={{ background: 'rgba(155,127,232,0.1)' }}>
-            Posted {postedDaysAgo} day{postedDaysAgo !== 1 ? 's' : ''} ago
+            {postedDaysAgo === null
+              ? 'Recently posted'
+              : postedDaysAgo === 0
+              ? 'Posted today'
+              : `Posted ${postedDaysAgo} day${postedDaysAgo !== 1 ? 's' : ''} ago`}
           </span>
           {deadline && (
             <span className="text-ink-muted text-xs flex items-center gap-1">
