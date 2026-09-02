@@ -120,6 +120,45 @@ function LimeRadio({
   );
 }
 
+/* ─── helpers ──────────────────────────────────────────────── */
+
+// Job-board proxy domains — the apply link points to these,
+// not the actual company site. Map them back to nothing so we
+// fall through to name-based search or initials.
+const JOB_BOARD_DOMAINS = new Set([
+  'linkedin.com','jobs.lever.co','greenhouse.io','workday.com',
+  'myworkdayjobs.com','taleo.net','icims.com','breezy.hr',
+  'bamboohr.com','smartrecruiters.com','jobvite.com',
+  'naukri.com','internshala.com','unstop.com','wellfound.com',
+  'angel.co','adzuna.com','indeed.com','glassdoor.com',
+  'monster.com','shine.com','freshersworld.com','hirist.com',
+  'instahyre.com','cutshort.io','simplyhired.com',
+  'jsearch.p.rapidapi.com','rapidapi.com','apply.workable.com',
+  'careers.google.com','jobs.careers.microsoft.com',
+]);
+
+function getLogoUrl(logoUrl?: string, logoDomain?: string, applyLink?: string): string | null {
+  // 1. Explicit upload wins
+  if (logoUrl) return logoUrl;
+
+  // 2. Explicit domain stored in DB
+  const domain = logoDomain ?? (() => {
+    try {
+      if (applyLink) {
+        const host = new URL(applyLink).hostname.replace(/^www\./, '');
+        // Only use if it's a real company domain, not a job board proxy
+        if (!JOB_BOARD_DOMAINS.has(host) && !host.includes('rapidapi')) return host;
+      }
+    } catch { /* ignore */ }
+    return null;
+  })();
+
+  if (!domain) return null;
+
+  // Use Google favicon service — free, no key, always returns something
+  return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+}
+
 /* ─── Company logo avatar ──────────────────────────────────── */
 function CompanyAvatar({
   logoUrl, domain, applyLink, company,
@@ -128,21 +167,12 @@ function CompanyAvatar({
 }) {
   const [failed, setFailed] = useState(false);
   const initials = company.slice(0, 2).toUpperCase();
-
-  // Derive domain from apply_link if logo_domain not set
-  const derivedDomain = domain || (() => {
-    try {
-      if (applyLink) return new URL(applyLink).hostname.replace(/^www\./, '');
-    } catch { /* ignore */ }
-    return null;
-  })();
-
-  const src = logoUrl || (derivedDomain ? `https://logo.clearbit.com/${derivedDomain}` : null);
+  const src = getLogoUrl(logoUrl, domain, applyLink);
 
   if (src && !failed) {
     return (
-      <div className="w-11 h-11 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center p-1.5"
-           style={{ background: '#fff', border: '1px solid rgba(255,255,255,0.12)' }}>
+      <div className="w-11 h-11 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+           style={{ background: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: 5 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
