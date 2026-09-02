@@ -17,6 +17,8 @@ interface JobCardProps {
   createdAt?: string | Date;
   created_at?: string | Date;
   logo_url?: string;
+  logo_domain?: string;
+  apply_link?: string;
 }
 
 function isNew(createdAt?: string | Date, created_at?: string | Date): boolean {
@@ -63,12 +65,21 @@ function Countdown({ deadline }: { deadline: string | Date }) {
 
 export default function JobCard({
   id, title, company, location, type,
-  salary, batch_year, deadline, tags = [], is_featured, createdAt, created_at, logo_url,
+  salary, batch_year, deadline, tags = [], is_featured, createdAt, created_at, logo_url, logo_domain, apply_link,
 }: JobCardProps) {
   const jobIsNew      = isNew(createdAt, created_at);
   const showCountdown = deadline && new Date(deadline).getTime() - Date.now() < 3 * 24 * 3600 * 1000;
   const initials      = company.slice(0, 2).toUpperCase();
   const isRemote      = location.toLowerCase().includes('remote');
+
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  // Derive domain: explicit logo_domain → extract from apply_link → fallback initials
+  const derivedDomain = logo_domain || (() => {
+    try { if (apply_link) return new URL(apply_link).hostname.replace(/^www\./, ''); } catch { /* ignore */ }
+    return null;
+  })();
+  const logoSrc = logo_url || (derivedDomain ? `https://logo.clearbit.com/${derivedDomain}` : null);
 
   return (
     <Link href={`/jobs/${id}`} className="block h-full group">
@@ -113,19 +124,24 @@ export default function JobCard({
           <div className="flex items-start gap-3 mb-4">
             {/* Logo */}
             <div
-              className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center
-                         overflow-hidden text-sm font-bold font-poppins"
-              style={{
-                background: 'rgba(168,230,61,0.07)',
-                border: '1px solid rgba(168,230,61,0.14)',
-                color: '#A8E63D',
-              }}
-            >
-              {logo_url
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={logo_url} alt={company} className="w-9 h-9 object-contain" />
-                : initials
+              className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
+              style={
+                logoSrc && !logoFailed
+                  ? { background: '#fff', border: '1px solid rgba(255,255,255,0.12)', padding: 6 }
+                  : { background: 'rgba(168,230,61,0.07)', border: '1px solid rgba(168,230,61,0.14)', color: '#A8E63D' }
               }
+            >
+              {logoSrc && !logoFailed ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoSrc}
+                  alt={company}
+                  className="w-full h-full object-contain"
+                  onError={() => setLogoFailed(true)}
+                />
+              ) : (
+                <span className="text-sm font-bold font-poppins">{initials}</span>
+              )}
             </div>
 
             {/* Title + company */}

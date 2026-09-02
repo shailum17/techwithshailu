@@ -121,15 +121,28 @@ function LimeRadio({
 }
 
 /* ─── Company logo avatar ──────────────────────────────────── */
-function CompanyAvatar({ logoUrl, domain, company }: { logoUrl?: string; domain?: string; company: string }) {
+function CompanyAvatar({
+  logoUrl, domain, applyLink, company,
+}: {
+  logoUrl?: string; domain?: string; applyLink?: string; company: string;
+}) {
   const [failed, setFailed] = useState(false);
   const initials = company.slice(0, 2).toUpperCase();
-  const src = logoUrl || (domain ? `https://logo.clearbit.com/${domain}` : null);
+
+  // Derive domain from apply_link if logo_domain not set
+  const derivedDomain = domain || (() => {
+    try {
+      if (applyLink) return new URL(applyLink).hostname.replace(/^www\./, '');
+    } catch { /* ignore */ }
+    return null;
+  })();
+
+  const src = logoUrl || (derivedDomain ? `https://logo.clearbit.com/${derivedDomain}` : null);
 
   if (src && !failed) {
     return (
-      <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(168,230,61,0.2)' }}>
+      <div className="w-11 h-11 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center p-1.5"
+           style={{ background: '#fff', border: '1px solid rgba(255,255,255,0.12)' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -142,8 +155,8 @@ function CompanyAvatar({ logoUrl, domain, company }: { logoUrl?: string; domain?
   }
 
   return (
-    <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center
-                    text-lime font-bold text-sm font-poppins transition-colors"
+    <div className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center
+                    text-lime font-bold text-sm font-poppins"
          style={{ background: 'rgba(168,230,61,0.1)', border: '1px solid rgba(168,230,61,0.2)' }}>
       {initials}
     </div>
@@ -201,7 +214,7 @@ function JobCard({ job }: { job: Job }) {
 
         {/* ── Header: logo + title + company ── */}
         <div className="flex items-start gap-3 mb-4 pr-7">
-          <CompanyAvatar logoUrl={job.logo_url} domain={job.logo_domain} company={job.company} />
+          <CompanyAvatar logoUrl={job.logo_url} domain={job.logo_domain} applyLink={job.apply_link} company={job.company} />
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2 flex-wrap">
               <h3 className="font-poppins font-semibold text-white text-sm leading-snug
