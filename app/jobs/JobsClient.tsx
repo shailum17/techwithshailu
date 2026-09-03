@@ -169,13 +169,12 @@ function getSourceLabel(applyLink?: string, source?: string): string {
     const m: Record<string, string> = { unstop: 'Unstop', adzuna: 'Adzuna', rapidapi: 'Job Search' };
     return m[source.toLowerCase()] ?? source;
   }
-  if (!applyLink) return '';
+  if (!applyLink || !applyLink.startsWith('http')) return '';
   try {
     const host = new URL(applyLink).hostname.replace(/^www\./, '');
     if (DOMAIN_LABELS[host]) return DOMAIN_LABELS[host];
     for (const [d, l] of Object.entries(DOMAIN_LABELS)) if (host.includes(d)) return l;
-    const root = host.split('.').slice(-2, -1)[0];
-    return root ? root.charAt(0).toUpperCase() + root.slice(1) : '';
+    return '';
   } catch { return ''; }
 }
 

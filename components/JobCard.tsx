@@ -67,26 +67,24 @@ const DOMAIN_LABELS: Record<string, string> = {
 };
 
 function getSourceLabel(applyLink?: string, source?: string): string {
-  // Explicit source field from DB takes priority
+  // Explicit source field from DB takes priority (auto-fetched jobs)
   if (source) {
     const map: Record<string, string> = {
       unstop: 'Unstop', adzuna: 'Adzuna', rapidapi: 'Job Search',
     };
     return map[source.toLowerCase()] ?? source;
   }
-  if (!applyLink) return '';
+  // Must be a valid http/https URL — skip junk values like "manual", "#", ""
+  if (!applyLink || !applyLink.startsWith('http')) return '';
   try {
     const host = new URL(applyLink).hostname.replace(/^www\./, '');
-    // Check exact match then partial match
     if (DOMAIN_LABELS[host]) return DOMAIN_LABELS[host];
     for (const [domain, label] of Object.entries(DOMAIN_LABELS)) {
       if (host.includes(domain)) return label;
     }
-    // Fall back to the root domain prettified
-    return host.split('.').slice(-2, -1)[0]
-      ? host.split('.').slice(-2, -1)[0].charAt(0).toUpperCase() +
-        host.split('.').slice(-2, -1)[0].slice(1)
-      : '';
+    // Only show company career sites — skip generic-looking domains
+    // (e.g. don't show "via Somecompany" for unknown one-off domains)
+    return '';
   } catch { return ''; }
 }
 
