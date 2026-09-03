@@ -10,14 +10,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { id } = await params;
   try {
     const { data, error } = await supabaseAdmin
       .from('blogs')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
     if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);
@@ -31,20 +32,30 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const authError = checkAdminAuth(req);
   if (authError) return authError;
 
+  const { id } = await params;
+
   try {
     const body = await req.json();
     delete body.id;
+    delete body.updated_at;
 
-    const extra: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (body.published === true) extra.published_at = new Date().toISOString();
+    // Set published_at when publishing for the first time
+    if (body.published === true) {
+      body.published_at = new Date().toISOString();
+    }
 
     const { data, error } = await supabaseAdmin
       .from('blogs')
-      .update({ ...body, ...extra })
-      .eq('id', params.id)
+      .update(body)
+      .eq('id', id)
       .select()
       .single();
-    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (error) {
+      console.error('[PUT /api/blogs/:id] Supabase error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);
   } catch (err) {
     console.error('[PUT /api/blogs/:id]', err);
@@ -56,11 +67,13 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   const authError = checkAdminAuth(req);
   if (authError) return authError;
 
+  const { id } = await params;
+
   try {
     const { error } = await supabaseAdmin
       .from('blogs')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (err) {
