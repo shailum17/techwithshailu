@@ -127,17 +127,33 @@ async function fetchUnstop(query: string): Promise<Job[]> {
     console.log(`[Unstop] total=${items.length} valid=${valid.length}`);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return valid.map((i: any): Job => ({
-      title:       (i.title ?? '').trim(),
-      company:     (i.organisation?.name ?? 'Unknown').trim(),
-      location:    i.region === 'online' ? 'Remote' : (i.region ?? 'India'),
-      type:        i.subtype === 'internships' ? 'Internship' : 'Job',
-      description: formatJobDescription(i.details ?? ''),
-      apply_link:  i.seo_url ?? `https://unstop.com/${i.type ?? 'internships'}/${i.id}`,
-      salary:      null,
-      deadline:    i.regnRequirements?.end_regn_dt ?? null,
-      source:      'unstop',
-    }));
+    return valid.map((i: any): Job => {
+      // Unstop returns stipend in i.prizes (for internships) or i.salary_details
+      let salary: string | null = null;
+      const stipend = i.prizes?.[0];   // e.g. { type: 'cash', min: 5000, max: 15000, unit: 'month' }
+      if (stipend?.min) {
+        const unit = (stipend.unit ?? '').toLowerCase().includes('month') ? '/mo' :
+                     (stipend.unit ?? '').toLowerCase().includes('year')  ? ' PA' : '';
+        if (stipend.max && stipend.max !== stipend.min) {
+          salary = `₹${(stipend.min / 1000).toFixed(0)}k–₹${(stipend.max / 1000).toFixed(0)}k${unit}`;
+        } else {
+          salary = `₹${(stipend.min / 1000).toFixed(0)}k${unit}`;
+        }
+      } else if (i.salary) {
+        salary = i.salary; // plain string fallback
+      }
+      return {
+        title:       (i.title ?? '').trim(),
+        company:     (i.organisation?.name ?? 'Unknown').trim(),
+        location:    i.region === 'online' ? 'Remote' : (i.region ?? 'India'),
+        type:        i.subtype === 'internships' ? 'Internship' : 'Job',
+        description: formatJobDescription(i.details ?? ''),
+        apply_link:  i.seo_url ?? `https://unstop.com/${i.type ?? 'internships'}/${i.id}`,
+        salary,
+        deadline:    i.regnRequirements?.end_regn_dt ?? null,
+        source:      'unstop',
+      };
+    });
   } catch (err) {
     console.error('[Unstop]', err instanceof Error ? err.message : err);
     return [];
@@ -192,9 +208,17 @@ async function fetchAdzuna(query: string): Promise<Job[]> {
         ? 'Internship' : 'Job';
       let salary: string | null = null;
       if (j.salary_min) {
-        const lo = Math.round(j.salary_min / 100000);
-        const hi = j.salary_max ? Math.round(j.salary_max / 100000) : null;
-        salary = hi ? `₹${lo}L–${hi}L PA` : `₹${lo}L PA`;
+        const min = Number(j.salary_min);
+        const max = j.salary_max ? Number(j.salary_max) : null;
+        // Adzuna India returns annual INR values
+        const fmtInr = (v: number) => v >= 100000
+          ? `₹${(v / 100000).toFixed(1).replace(/\.0$/, '')}L`
+          : v >= 1000
+          ? `₹${(v / 1000).toFixed(0)}k`
+          : `₹${v}`;
+        salary = (max && max !== min)
+          ? `${fmtInr(min)}–${fmtInr(max)} PA`
+          : `${fmtInr(min)} PA`;
       }
       return {
         title,
@@ -292,11 +316,36 @@ async function fetchOneRapidQuery(query: string, key: string): Promise<Job[]> {
     return items.map((j: any): Job => {
       let salary: string | null = null;
       if (j.job_min_salary) {
-        const c = j.job_salary_currency ?? '';
-        const p = j.job_salary_period   ?? '';
-        salary = j.job_max_salary
-          ? `${c}${j.job_min_salary}–${j.job_max_salary} ${p}`.trim()
-          : `${c}${j.job_min_salary} ${p}`.trim();
+        const currency = (j.job_salary_currency ?? '').toUpperCase();
+        const period   = (j.job_salary_period   ?? '').toUpperCase();
+        const min      = Number(j.job_min_salary);
+        const max      = j.job_max_salary ? Number(j.job_max_salary) : null;
+
+        // Format period label
+        const periodLabel = period === 'MONTH'  ? '/mo'
+                          : period === 'YEAR'   ? ' PA'
+                          : period === 'HOUR'   ? '/hr'
+                          : period === 'WEEK'   ? '/wk'
+                          : '';
+
+        if (currency === 'INR') {
+          // Convert to lakhs if ≥ 1L
+          const fmtInr = (v: number) => v >= 100000
+            ? `₹${(v / 100000).toFixed(1).replace(/\.0$/, '')}L`
+            : `₹${(v / 1000).toFixed(0)}k`;
+          salary = max && max !== min
+            ? `${fmtInr(min)}–${fmtInr(max)}${periodLabel}`
+            : `${fmtInr(min)}${periodLabel}`;
+        } else {
+          // USD or other — show as-is with currency symbol
+          const sym = currency === 'USD' ? '$' : currency + ' ';
+          const fmtAmt = (v: number) => v >= 1000
+            ? `${sym}${(v / 1000).toFixed(0)}k`
+            : `${sym}${v}`;
+          salary = max && max !== min
+            ? `${fmtAmt(min)}–${fmtAmt(max)}${periodLabel}`
+            : `${fmtAmt(min)}${periodLabel}`;
+        }
       }
       return {
         title:       (j.job_title ?? '').trim(),
