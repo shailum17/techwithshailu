@@ -47,6 +47,8 @@ export async function GET(req: NextRequest) {
       regn_open:  i.regn_open,
       paid:       i.paid,
       end_regn_dt: i.regnRequirements?.end_regn_dt,
+      prizes:     i.prizes,        // ← salary source
+      salary_raw: i.salary,        // ← plain string fallback
       expired:    i.regnRequirements?.end_regn_dt
         ? new Date(i.regnRequirements.end_regn_dt).getTime() < now
         : false,
@@ -94,9 +96,15 @@ export async function GET(req: NextRequest) {
       data_keys: raw && typeof raw === 'object' && !Array.isArray(raw) ? Object.keys(raw) : 'array',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sample: items.slice(0, 3).map((j: any) => ({
-        title:   j.job_title,
-        company: j.employer_name,
-        link:    j.job_apply_link,
+        title:            j.job_title,
+        company:          j.employer_name,
+        link:             j.job_apply_link,
+        salary_currency:  j.job_salary_currency,
+        salary_period:    j.job_salary_period,
+        salary_min:       j.job_min_salary,
+        salary_max:       j.job_max_salary,
+        // First 300 chars of description to check text-based extraction
+        description_peek: (j.job_description ?? '').slice(0, 300),
       })),
     });
   }
@@ -129,9 +137,12 @@ export async function GET(req: NextRequest) {
       count: parsed?.count,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sample: results.slice(0, 3).map((j: any) => ({
-        title:   j.title,
-        company: j.company?.display_name,
-        url:     j.redirect_url,
+        title:            j.title,
+        company:          j.company?.display_name,
+        url:              j.redirect_url,
+        salary_min:       j.salary_min,
+        salary_max:       j.salary_max,
+        description_peek: (j.description ?? '').slice(0, 300),
       })),
     });
   }

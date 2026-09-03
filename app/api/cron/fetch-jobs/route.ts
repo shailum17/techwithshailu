@@ -54,8 +54,54 @@ async function fetchWithTimeout(input: RequestInfo, init: RequestInit, ms = 8000
 }
 
 /* ─────────────────────────────────────────────────────────────
-   DB logger
+   Salary extractor — parses salary from job description text
+   when the API's structured salary fields are empty.
+   Handles common Indian formats found in job descriptions:
+     ₹15,000/month · ₹15k/mo · ₹5-8 LPA · 15000 per month
+     INR 15000 · Rs. 15,000 · CTC 5L · Stipend: ₹10k
 ───────────────────────────────────────────────────────────── */
+function extractSalaryFromText(text: string): string | null {
+  if (!text) return null;
+  // Strip HTML tags first
+  const plain = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+
+  const patterns: RegExp[] = [
+    // ₹15,000 - ₹20,000 per month | ₹15000/month
+    /₹\s*[\d,]+(?:\s*[-–to]+\s*₹?\s*[\d,]+)?\s*(?:per\s+)?(?:month|mo|\/mo|monthly)/i,
+    // ₹5 LPA | ₹5-8 LPA | ₹5L - ₹8L
+    /₹\s*[\d.]+\s*[-–to]*\s*₹?\s*[\d.]*\s*(?:LPA|L\.?P\.?A|lakhs?\s*p\.?a|lakh\s*per\s*annum)/i,
+    // ₹5L | ₹5k per month
+    /₹\s*[\d.]+\s*[Lk]\s*(?:[-–]\s*₹?\s*[\d.]+\s*[Lk])?\s*(?:per\s+(?:month|year|annum)|\/mo|\/yr|PA)?/i,
+    // Stipend: 15000 | Stipend of ₹15,000
+    /stipend[:\s]+(?:of\s+)?(?:₹|Rs\.?\s*|INR\s*)?\s*[\d,]+(?:\s*[-–]\s*[\d,]+)?(?:\s*(?:per\s+)?(?:month|mo))?/i,
+    // INR 15,000 | Rs 15000 | Rs. 15,000
+    /(?:INR|Rs\.?)\s*[\d,]+(?:\s*[-–]\s*[\d,]+)?(?:\s*(?:per\s+)?(?:month|year|annum|LPA))?/i,
+    // CTC: 5 LPA | CTC of 6-8 LPA
+    /CTC[:\s]+(?:of\s+)?[\d.]+\s*[-–to]*\s*[\d.]*\s*(?:LPA|L\.?P\.?A|lakhs?)/i,
+    // 15,000 per month | 15000/month (plain number + period)
+    /\b[\d,]{4,}\s*(?:[-–]\s*[\d,]+)?\s*(?:per\s+month|\/month|per\s*mo|\/mo)\b/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = plain.match(pattern);
+    if (match) {
+      // Clean up and normalise
+      let s = match[0].trim()
+        .replace(/\s+/g, ' ')
+        .replace(/Rs\.\s*/i, '₹')
+        .replace(/INR\s*/i, '₹')
+        .replace(/per month/i, '/mo')
+        .replace(/per annum/i, 'PA')
+        .replace(/per year/i, 'PA')
+        .replace(/lakhs? per annum/i, 'LPA')
+        .replace(/L\.P\.A\.?/i, 'LPA');
+      // Trim to 40 chars so it fits the card
+      if (s.length > 40) s = s.slice(0, 38) + '…';
+      return s;
+    }
+  }
+  return null;
+}
 async function saveLog(entry: {
   trigger_type:        string;
   query:               string;
@@ -142,6 +188,8 @@ async function fetchUnstop(query: string): Promise<Job[]> {
       } else if (i.salary) {
         salary = i.salary; // plain string fallback
       }
+      // Last resort: extract salary from description text
+      if (!salary) salary = extractSalaryFromText(i.details ?? '');
       return {
         title:       (i.title ?? '').trim(),
         company:     (i.organisation?.name ?? 'Unknown').trim(),
@@ -220,6 +268,8 @@ async function fetchAdzuna(query: string): Promise<Job[]> {
           ? `${fmtInr(min)}–${fmtInr(max)} PA`
           : `${fmtInr(min)} PA`;
       }
+      // Fallback: extract from description text
+      if (!salary) salary = extractSalaryFromText(j.description ?? '');
       return {
         title,
         company:     (j.company?.display_name ?? 'Unknown').trim(),
@@ -347,6 +397,8 @@ async function fetchOneRapidQuery(query: string, key: string): Promise<Job[]> {
             : `${fmtAmt(min)}${periodLabel}`;
         }
       }
+      // Fallback: extract from description text
+      if (!salary) salary = extractSalaryFromText(j.job_description ?? '');
       return {
         title:       (j.job_title ?? '').trim(),
         company:     (j.employer_name ?? 'Unknown').trim(),
