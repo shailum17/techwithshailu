@@ -14,13 +14,13 @@ async function getFeaturedJobs() {
   try {
     const base = `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs`;
     // Try featured first; if none are marked featured, fall back to latest 6
-    const featuredRes = await fetch(`${base}?featured=true&limit=6`, { next: { revalidate: 3600 } });
+    const featuredRes = await fetch(`${base}?featured=true&limit=6`, { next: { revalidate: 60 } });
     if (featuredRes.ok) {
       const featured = await featuredRes.json();
       if (Array.isArray(featured) && featured.length > 0) return featured;
     }
     // Fallback: latest 6 live jobs
-    const latestRes = await fetch(`${base}?limit=6`, { next: { revalidate: 3600 } });
+    const latestRes = await fetch(`${base}?limit=6`, { next: { revalidate: 60 } });
     if (!latestRes.ok) return [];
     return latestRes.json();
   } catch { return []; }
@@ -29,14 +29,12 @@ async function getFeaturedJobs() {
 async function getFeaturedTools() {
   try {
     const base = `${process.env.NEXT_PUBLIC_APP_URL}/api/tools`;
-    // Try featured first; if none marked featured, fall back to latest 4
-    const featuredRes = await fetch(`${base}?featured=true&limit=4`, { next: { revalidate: 3600 } });
+    const featuredRes = await fetch(`${base}?featured=true&limit=4`, { next: { revalidate: 60 } });
     if (featuredRes.ok) {
       const featured = await featuredRes.json();
       if (Array.isArray(featured) && featured.length > 0) return featured;
     }
-    // Fallback: latest 4 tools
-    const latestRes = await fetch(`${base}?limit=4`, { next: { revalidate: 3600 } });
+    const latestRes = await fetch(`${base}?limit=4`, { next: { revalidate: 60 } });
     if (!latestRes.ok) return [];
     return latestRes.json();
   } catch { return []; }

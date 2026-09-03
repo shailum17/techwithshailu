@@ -364,6 +364,15 @@ function JobsView({ jobs, loading, adminKey, onRefresh }: {
     onRefresh();
   }
 
+  async function toggleFeatured(id: string, current: boolean) {
+    await fetch(`/api/jobs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ is_featured: !current }),
+    });
+    onRefresh();
+  }
+
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
@@ -461,14 +470,45 @@ function JobsView({ jobs, loading, adminKey, onRefresh }: {
                     )}
                   </div>
                 </div>
-                <button onClick={()=>del(j.id)}
-                  style={{ color:'#f87171',background:'none',border:'none',cursor:'pointer',
-                            fontSize:12,flexShrink:0,padding:'4px 8px',borderRadius:6,
-                            transition:'background 0.15s' }}
-                  onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.background='rgba(248,113,113,0.1)'}
-                  onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.background='none'}>
-                  Delete
-                </button>
+                <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                  {/* Feature / Unfeature toggle */}
+                  <button
+                    onClick={() => toggleFeatured(j.id, !!j.is_featured)}
+                    title={j.is_featured ? 'Remove from featured' : 'Add to homepage featured'}
+                    style={{
+                      background: j.is_featured ? 'rgba(168,230,61,0.12)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${j.is_featured ? 'rgba(168,230,61,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                      color: j.is_featured ? '#A8E63D' : 'rgba(255,255,255,0.35)',
+                      cursor: 'pointer', borderRadius: 6, padding: '4px 8px',
+                      fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(168,230,61,0.5)';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#A8E63D';
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = j.is_featured
+                        ? 'rgba(168,230,61,0.35)' : 'rgba(255,255,255,0.1)';
+                      (e.currentTarget as HTMLButtonElement).style.color = j.is_featured
+                        ? '#A8E63D' : 'rgba(255,255,255,0.35)';
+                    }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill={j.is_featured ? 'currentColor' : 'none'}
+                         stroke="currentColor" strokeWidth={2}>
+                      <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    {j.is_featured ? 'Featured' : 'Feature'}
+                  </button>
+                  <button onClick={()=>del(j.id)}
+                    style={{ color:'#f87171',background:'none',border:'none',cursor:'pointer',
+                              fontSize:12,flexShrink:0,padding:'4px 8px',borderRadius:6,
+                              transition:'background 0.15s' }}
+                    onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.background='rgba(248,113,113,0.1)'}
+                    onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.background='none'}>
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
             {jobs.length===0&&(
@@ -485,7 +525,7 @@ function JobsView({ jobs, loading, adminKey, onRefresh }: {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   TOOLS VIEW
+   JOBS VIEW — create + list live jobs
    ═══════════════════════════════════════════════════════════════ */
 function ToolsView({ tools, loading, adminKey, onRefresh }: {
   tools: Tool[]; loading: boolean; adminKey: string; onRefresh: () => void;
@@ -1163,7 +1203,8 @@ function PendingJobsView({ adminKey, onBadgeUpdate }: { adminKey: string; onBadg
       id: job.id, title: job.title ?? '', company: job.company ?? '',
       location: job.location ?? 'Remote', type: job.type ?? 'Internship',
       salary: job.salary ?? '', apply_link: job.apply_link ?? '',
-      description: job.description ?? '', tags: '', deadline: '', batch_year: '', is_featured: false,
+      description: job.description ?? '', tags: '', deadline: '', batch_year: '',
+      is_featured: false, // pending jobs start unfeatured — admin can check before publishing
     });
   }
 
