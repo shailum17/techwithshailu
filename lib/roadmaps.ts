@@ -62,26 +62,39 @@ function toCategory(row: RoadmapRow): RoadmapCategory {
 
 /* ── Fetch all roadmap categories (ordered) ─────────────────── */
 export async function getRoadmapCategories(): Promise<RoadmapCategory[]> {
-  const { data, error } = await supabaseAdmin
-    .from('roadmaps')
-    .select('id, title, slug, description, content, tags, order')
-    .order('order', { ascending: true });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('roadmaps')
+      .select('id, title, slug, description, content, tags, order')
+      .order('order', { ascending: true });
 
-  if (error) throw new Error(`[getRoadmapCategories] ${error.message}`);
-  if (!data?.length) return [];
+    if (error) {
+      console.error('[getRoadmapCategories]', error.message);
+      return [];
+    }
+    if (!data?.length) return [];
 
-  return (data as RoadmapRow[]).map(toCategory);
+    return (data as RoadmapRow[]).map(toCategory);
+  } catch (err) {
+    console.error('[getRoadmapCategories] fetch failed:', err instanceof Error ? err.message : err);
+    return [];
+  }
 }
 
 /* ── Fetch a single roadmap category by slug ────────────────── */
 export async function getRoadmapCategory(slug: string): Promise<RoadmapCategory | null> {
-  const { data, error } = await supabaseAdmin
-    .from('roadmaps')
-    .select('id, title, slug, description, content, tags, order')
-    .eq('slug', slug)
-    .single();
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('roadmaps')
+      .select('id, title, slug, description, content, tags, order')
+      .eq('slug', slug)
+      .single();
 
-  if (error || !data) return null;
+    if (error || !data) return null;
 
-  return toCategory(data as RoadmapRow);
+    return toCategory(data as RoadmapRow);
+  } catch (err) {
+    console.error('[getRoadmapCategory] fetch failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
 }
