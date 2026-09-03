@@ -16,7 +16,9 @@ interface Job {
   tags?: string[];
   is_featured?: boolean;
   createdAt?: string;
+  created_at?: string;
   apply_link?: string;
+  source?: string;
   logo_domain?: string;
   logo_url?: string;
 }
@@ -139,6 +141,44 @@ function avatarColor(company: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
+function formatPostedDate(ts?: string): string {
+  if (!ts) return '';
+  const date = new Date(ts);
+  const diffDays = Math.floor((Date.now() - date.getTime()) / 86_400_000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7)  return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+const DOMAIN_LABELS: Record<string, string> = {
+  'linkedin.com': 'LinkedIn', 'naukri.com': 'Naukri',
+  'internshala.com': 'Internshala', 'unstop.com': 'Unstop',
+  'indeed.com': 'Indeed', 'glassdoor.com': 'Glassdoor',
+  'wellfound.com': 'Wellfound', 'angel.co': 'AngelList',
+  'cutshort.io': 'Cutshort', 'instahyre.com': 'Instahyre',
+  'hirist.com': 'Hirist', 'shine.com': 'Shine',
+  'freshersworld.com': 'Freshersworld', 'monster.com': 'Monster',
+  'greenhouse.io': 'Greenhouse', 'lever.co': 'Lever',
+  'jobs.lever.co': 'Lever', 'workday.com': 'Workday',
+};
+
+function getSourceLabel(applyLink?: string, source?: string): string {
+  if (source) {
+    const m: Record<string, string> = { unstop: 'Unstop', adzuna: 'Adzuna', rapidapi: 'Job Search' };
+    return m[source.toLowerCase()] ?? source;
+  }
+  if (!applyLink) return '';
+  try {
+    const host = new URL(applyLink).hostname.replace(/^www\./, '');
+    if (DOMAIN_LABELS[host]) return DOMAIN_LABELS[host];
+    for (const [d, l] of Object.entries(DOMAIN_LABELS)) if (host.includes(d)) return l;
+    const root = host.split('.').slice(-2, -1)[0];
+    return root ? root.charAt(0).toUpperCase() + root.slice(1) : '';
+  } catch { return ''; }
+}
+
 /* ─── Company logo avatar ──────────────────────────────────── */
 function CompanyAvatar({ logoUrl, company }: { logoUrl?: string; company: string }) {
   const [failed, setFailed] = useState(false);
@@ -178,7 +218,9 @@ function JobCard({ job }: { job: Job }) {
   const jobIsNew = job.createdAt
     ? Date.now() - new Date(job.createdAt).getTime() < 24 * 3600 * 1000
     : false;
-  const isRemote = job.location.toLowerCase().includes('remote');
+  const isRemote    = job.location.toLowerCase().includes('remote');
+  const postedDate  = formatPostedDate(job.created_at ?? job.createdAt);
+  const sourceLabel = getSourceLabel(job.apply_link, job.source);
 
   return (
     <div
@@ -244,8 +286,8 @@ function JobCard({ job }: { job: Job }) {
           </div>
         </div>
 
-        {/* ── Salary — prominent ── */}
-        {job.salary ? (
+        {/* ── Salary ── */}
+        {job.salary && (
           <div className="flex items-center gap-1.5 mb-3">
             <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#B49EF0' }}
                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,28 +296,42 @@ function JobCard({ job }: { job: Job }) {
             </svg>
             <span className="text-sm font-semibold" style={{ color: '#B49EF0' }}>{job.salary}</span>
           </div>
-        ) : (
-          <div className="mb-3" />
         )}
 
-        {/* ── Location + batch ── */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mb-4"
-             style={{ color: 'rgba(255,255,255,0.32)' }}>
-          <span className="flex items-center gap-1">
+        {/* ── Info grid: location · eligibility · posted · source ── */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs mb-4"
+             style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <span className="flex items-center gap-1 truncate">
             <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            {job.location}
+            <span className="truncate">{job.location}</span>
           </span>
-          {job.batch_year && (
-            <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 truncate">
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-4-4.5l4 2.5 4-2.5" />
+            </svg>
+            <span className="truncate">{job.batch_year ? `Batch ${job.batch_year}` : 'All batches'}</span>
+          </span>
+          {postedDate && (
+            <span className="flex items-center gap-1 truncate">
               <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-4-4.5l4 2.5 4-2.5" />
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Batch {job.batch_year}
+              <span className="truncate">{postedDate}</span>
+            </span>
+          )}
+          {sourceLabel && (
+            <span className="flex items-center gap-1 truncate">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              <span className="truncate">via {sourceLabel}</span>
             </span>
           )}
         </div>

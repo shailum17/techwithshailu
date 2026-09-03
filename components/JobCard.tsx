@@ -19,6 +19,7 @@ interface JobCardProps {
   logo_url?: string;
   logo_domain?: string;
   apply_link?: string;
+  source?: string;
 }
 
 /* ── helpers ───────────────────────────────────────────────── */
@@ -26,6 +27,67 @@ function isNew(createdAt?: string | Date, created_at?: string | Date): boolean {
   const ts = createdAt ?? created_at;
   if (!ts) return false;
   return Date.now() - new Date(ts).getTime() < 24 * 3600 * 1000;
+}
+
+function formatPostedDate(createdAt?: string | Date, created_at?: string | Date): string {
+  const ts = createdAt ?? created_at;
+  if (!ts) return '';
+  const date = new Date(ts);
+  const diffMs = Date.now() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86_400_000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7)  return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+// Map apply-link domain to a readable source label
+const DOMAIN_LABELS: Record<string, string> = {
+  'linkedin.com':        'LinkedIn',
+  'naukri.com':          'Naukri',
+  'internshala.com':     'Internshala',
+  'unstop.com':          'Unstop',
+  'indeed.com':          'Indeed',
+  'glassdoor.com':       'Glassdoor',
+  'wellfound.com':       'Wellfound',
+  'angel.co':            'AngelList',
+  'cutshort.io':         'Cutshort',
+  'instahyre.com':       'Instahyre',
+  'hirist.com':          'Hirist',
+  'shine.com':           'Shine',
+  'freshersworld.com':   'Freshersworld',
+  'monster.com':         'Monster',
+  'greenhouse.io':       'Greenhouse',
+  'lever.co':            'Lever',
+  'workday.com':         'Workday',
+  'jobs.lever.co':       'Lever',
+  'apply.workable.com':  'Workable',
+  'smartrecruiters.com': 'SmartRecruiters',
+};
+
+function getSourceLabel(applyLink?: string, source?: string): string {
+  // Explicit source field from DB takes priority
+  if (source) {
+    const map: Record<string, string> = {
+      unstop: 'Unstop', adzuna: 'Adzuna', rapidapi: 'Job Search',
+    };
+    return map[source.toLowerCase()] ?? source;
+  }
+  if (!applyLink) return '';
+  try {
+    const host = new URL(applyLink).hostname.replace(/^www\./, '');
+    // Check exact match then partial match
+    if (DOMAIN_LABELS[host]) return DOMAIN_LABELS[host];
+    for (const [domain, label] of Object.entries(DOMAIN_LABELS)) {
+      if (host.includes(domain)) return label;
+    }
+    // Fall back to the root domain prettified
+    return host.split('.').slice(-2, -1)[0]
+      ? host.split('.').slice(-2, -1)[0].charAt(0).toUpperCase() +
+        host.split('.').slice(-2, -1)[0].slice(1)
+      : '';
+  } catch { return ''; }
 }
 
 // Deterministic color from company name — same company always gets same color
@@ -119,11 +181,14 @@ function CompanyLogo({ company, logoUrl }: { company: string; logoUrl?: string }
 /* ── JobCard ────────────────────────────────────────────────── */
 export default function JobCard({
   id, title, company, location, type,
-  salary, batch_year, deadline, tags = [], is_featured, createdAt, created_at, logo_url,
+  salary, batch_year, deadline, tags = [], is_featured,
+  createdAt, created_at, logo_url, apply_link, source,
 }: JobCardProps) {
   const jobIsNew      = isNew(createdAt, created_at);
   const showCountdown = deadline && new Date(deadline).getTime() - Date.now() < 3 * 24 * 3600 * 1000;
   const isRemote      = location.toLowerCase().includes('remote');
+  const postedDate    = formatPostedDate(createdAt, created_at);
+  const sourceLabel   = getSourceLabel(apply_link, source);
 
   return (
     <Link href={`/jobs/${id}`} className="block h-full group">
@@ -176,8 +241,8 @@ export default function JobCard({
             </div>
           </div>
 
-          {/* ── Salary — prominent ── */}
-          {salary ? (
+          {/* ── Salary ── */}
+          {salary && (
             <div className="flex items-center gap-1.5 mb-3">
               <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#B49EF0' }}
                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -186,28 +251,52 @@ export default function JobCard({
               </svg>
               <span className="text-sm font-semibold" style={{ color: '#B49EF0' }}>{salary}</span>
             </div>
-          ) : (
-            <div className="mb-3" />
           )}
 
-          {/* ── Location + batch ── */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mb-4"
-               style={{ color: 'rgba(255,255,255,0.32)' }}>
-            <span className="flex items-center gap-1">
+          {/* ── Info grid: location · eligibility · source · posted ── */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs mb-4"
+               style={{ color: 'rgba(255,255,255,0.38)' }}>
+
+            {/* Location */}
+            <span className="flex items-center gap-1 truncate">
               <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              {location}
+              <span className="truncate">{location}</span>
             </span>
-            {batch_year && (
-              <span className="flex items-center gap-1">
+
+            {/* Eligibility / batch */}
+            <span className="flex items-center gap-1 truncate">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-4-4.5l4 2.5 4-2.5" />
+              </svg>
+              <span className="truncate">
+                {batch_year ? `Batch ${batch_year}` : 'All batches'}
+              </span>
+            </span>
+
+            {/* Posted date */}
+            {postedDate && (
+              <span className="flex items-center gap-1 truncate">
                 <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-4-4.5l4 2.5 4-2.5" />
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Batch {batch_year}
+                <span className="truncate">{postedDate}</span>
+              </span>
+            )}
+
+            {/* Source */}
+            {sourceLabel && (
+              <span className="flex items-center gap-1 truncate">
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <span className="truncate">via {sourceLabel}</span>
               </span>
             )}
           </div>
@@ -231,15 +320,15 @@ export default function JobCard({
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-3 pt-3"
                  style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              {tags.slice(0, 4).map(tag => (
+              {tags.slice(0, 3).map(tag => (
                 <span key={tag} className="text-xs px-2 py-0.5 rounded-md"
                       style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   {tag}
                 </span>
               ))}
-              {tags.length > 4 && (
+              {tags.length > 3 && (
                 <span className="text-xs px-2 py-0.5 rounded-md" style={{ color: 'rgba(255,255,255,0.22)' }}>
-                  +{tags.length - 4}
+                  +{tags.length - 3}
                 </span>
               )}
             </div>
