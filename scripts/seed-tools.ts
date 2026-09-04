@@ -161,4 +161,46 @@ export const TOOLS_SEED = [
   // Audio
   { name: 'ElevenLabs',     description: 'Industry-leading AI voice synthesis and audio cloning tool for any language.',  category: 'Audio',          url: 'https://elevenlabs.io',           is_free: true,  votes: 7600,  logo: null },
   { name: 'Suno',           description: 'Generate complete songs with AI — full melodies, lyrics and vocals from a text prompt.', category: 'Audio', url: 'https://suno.ai',                is_free: true,  votes: 6400,  logo: null },
+
+  // ── NEW TOOLS (gap analysis additions) ────────────────────────
+
+  // Research (7 new)
+  { name: 'Consensus',        description: 'AI search engine for scientific research with evidence-backed answers from 200M+ papers.',                        category: 'Research',        url: 'https://consensus.app',              is_free: true,  votes: 4200,  logo: null },
+  { name: 'Elicit',           description: 'AI research assistant that finds, summarises and synthesises findings across academic papers.',                   category: 'Research',        url: 'https://elicit.com',                 is_free: true,  votes: 3900,  logo: null },
+  { name: 'Semantic Scholar', description: 'Free AI-powered academic search engine that surfaces and summarises scholarly papers.',                           category: 'Research',        url: 'https://semanticscholar.org',        is_free: true,  votes: 3600,  logo: null },
+  { name: 'SciSpace',         description: 'AI research companion for reading, understanding and writing academic papers.',                                   category: 'Research',        url: 'https://typeset.io',                 is_free: true,  votes: 2800,  logo: 'typeset.io' },
+  { name: 'Research Rabbit',  description: 'Visual AI tool that maps citation networks to help you discover related research.',                               category: 'Research',        url: 'https://researchrabbitapp.com',      is_free: true,  votes: 2400,  logo: null },
+  { name: 'Julius AI',        description: 'AI data analyst that runs statistics, builds charts and interprets datasets from plain English.',                 category: 'Research',        url: 'https://julius.ai',                  is_free: true,  votes: 2200,  logo: null },
+  { name: 'Humata AI',        description: 'Ask AI anything about your PDFs, contracts or research files instantly.',                                        category: 'Research',        url: 'https://humata.ai',                  is_free: true,  votes: 1800,  logo: null },
+
+  // Audio (5 new)
+  { name: 'Udio',             description: 'AI music generator that creates full songs with vocals and instrumentals from text prompts.',                     category: 'Audio',           url: 'https://udio.com',                   is_free: true,  votes: 3800,  logo: null },
+  { name: 'AIVA',             description: 'AI composer specialising in classical, orchestral and cinematic film scores.',                                   category: 'Audio',           url: 'https://aiva.ai',                    is_free: true,  votes: 2600,  logo: null },
+  { name: 'LALAL.AI',         description: 'AI vocal remover and stem splitter for isolating instruments and vocals from any track.',                        category: 'Audio',           url: 'https://lalal.ai',                   is_free: true,  votes: 2400,  logo: null },
+  { name: 'Adobe Podcast',    description: "Adobe's free AI tool for studio-quality audio enhancement and noise removal.",                                   category: 'Audio',           url: 'https://podcast.adobe.com',          is_free: true,  votes: 2100,  logo: 'adobe.com' },
+  { name: 'Amazon Polly',     description: 'Cloud text-to-speech service with 47+ natural-sounding voices in 24 languages.',                                category: 'Audio',           url: 'https://aws.amazon.com/polly',       is_free: false, votes: 1600,  logo: 'aws.amazon.com' },
+
+  // Agent (6 new)
+  { name: 'Manus',            description: 'Generalist autonomous AI agent that plans and executes multi-step tasks end-to-end.',                            category: 'Agent',           url: 'https://manus.im',                   is_free: true,  votes: 4800,  logo: null },
+  { name: 'ChatGPT Atlas',    description: "OpenAI's AI-native browser with deep ChatGPT integration and agentic navigation.",                              category: 'Agent',           url: 'https://openai.com',                 is_free: true,  votes: 4200,  logo: 'openai.com' },
+  { name: 'OpenAI Operator',  description: "OpenAI's browser-driving agent that completes web tasks like booking and shopping autonomously.",               category: 'Agent',           url: 'https://openai.com/operator',        is_free: false, votes: 3400,  logo: 'openai.com' },
+  { name: 'Genspark Super Agent', description: 'General-purpose web agent that automates research, comparisons and structured tasks.',                      category: 'Agent',           url: 'https://genspark.ai',                is_free: true,  votes: 2800,  logo: null },
+  { name: 'Dia (Browser Co.)', description: 'AI-first browser from The Browser Company built for agentic, conversational browsing.',                        category: 'Agent',           url: 'https://diabrowser.com',             is_free: true,  votes: 2200,  logo: null },
+  { name: 'Fellou',           description: 'Agentic browser with a persistent AI side-panel for automated workflows.',                                       category: 'Agent',           url: 'https://fellou.ai',                  is_free: true,  votes: 1800,  logo: null },
+
+  // Knowledge (2 new)
+  { name: 'Obsidian',         description: 'Markdown-based knowledge base with AI plugins for linked notes and second-brain workflows.',                     category: 'Knowledge',       url: 'https://obsidian.md',                is_free: true,  votes: 3200,  logo: null },
+  { name: 'Mem',              description: 'AI-powered knowledge base that automatically organises and surfaces your notes.',                                category: 'Knowledge',       url: 'https://mem.ai',                     is_free: false, votes: 1900,  logo: null },
+
+  // Chatbots (3 new)
+  { name: 'DeepSeek',         description: 'Free, open-weight AI chatbot known for strong reasoning and coding at low cost.',                                category: 'Chatbots',        url: 'https://chat.deepseek.com',          is_free: true,  votes: 5400,  logo: null },
+  { name: 'Qwen Chat',        description: "Alibaba's free multilingual AI chatbot and open-weight model family.",                                          category: 'Chatbots',        url: 'https://chat.qwen.ai',               is_free: true,  votes: 3200,  logo: null },
+  { name: 'Mistral Le Chat',  description: "Mistral AI's free, fast conversational assistant with web search and coding support.",                          category: 'Chatbots',        url: 'https://chat.mistral.ai',            is_free: true,  votes: 3000,  logo: null },
+
+  // Career & Resume (5 new — new category)
+  { name: 'Kickresume',       description: 'AI resume builder ranked best for students and entry-level candidates, with ATS templates.',                     category: 'Career & Resume', url: 'https://kickresume.com',             is_free: true,  votes: 3600,  logo: null },
+  { name: 'Rezi',             description: 'AI resume builder focused on ATS optimisation and keyword-matching against job descriptions.',                   category: 'Career & Resume', url: 'https://rezi.ai',                    is_free: true,  votes: 3200,  logo: null },
+  { name: 'Enhancv',          description: 'AI resume builder with strong writing support, clean templates and LinkedIn import.',                            category: 'Career & Resume', url: 'https://enhancv.com',                is_free: true,  votes: 2600,  logo: null },
+  { name: 'aiApply',          description: 'AI tool that auto-tailors resumes and cover letters to specific job postings.',                                  category: 'Career & Resume', url: 'https://aiapply.co',                 is_free: false, votes: 2000,  logo: null },
+  { name: 'BeamJobs',         description: 'AI resume builder with industry-specific templates and bullet-point suggestions.',                               category: 'Career & Resume', url: 'https://beamjobs.com',               is_free: true,  votes: 1600,  logo: null },
 ];
