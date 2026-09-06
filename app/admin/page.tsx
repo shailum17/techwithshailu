@@ -2875,6 +2875,54 @@ published: false
 
         {/* ── List ─────────────────────────────────────────── */}
         <div>
+          {/* Header row — title + refresh */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <p className="font-poppins font-bold text-white" style={{ fontSize: 15 }}>
+              All Posts&nbsp;
+              <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>({blogs.length})</span>
+            </p>
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'rgba(168,230,61,0.08)',
+                border: '1px solid rgba(168,230,61,0.25)',
+                color: loading ? 'rgba(255,255,255,0.3)' : '#A8E63D',
+                borderRadius: 9, padding: '7px 14px',
+                fontSize: 12, fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: 'var(--font-outfit)',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { if (!loading) { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,230,61,0.15)'; b.style.borderColor = 'rgba(168,230,61,0.45)'; }}}
+              onMouseLeave={e => { if (!loading) { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,230,61,0.08)'; b.style.borderColor = 'rgba(168,230,61,0.25)'; }}}
+            >
+              {loading ? (
+                <>
+                  <span style={{
+                    width: 11, height: 11,
+                    border: '2px solid rgba(255,255,255,0.15)',
+                    borderTopColor: 'rgba(255,255,255,0.6)',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                  Refreshing…
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
+                    <path d="M20.5 9A9 9 0 005.2 5.2L1 10m22 4l-4.2 4.8A9 9 0 013.5 15"/>
+                  </svg>
+                  Refresh
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Stats row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
             {[
