@@ -55,6 +55,7 @@ function formatDate(iso: string) {
 
 /* ── PostRow ──────────────────────────────────────────────────── */
 function PostRow({ post, showThumb = false }: { post: BlogPost; showThumb?: boolean }) {
+  const coverSrc = post.cover_url || ((post.content ?? '').match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? '');
   return (
     <Link href={`/blog/${post.slug}`} className="block group">
       <div className="flex gap-3 py-2.5 px-2 -mx-2 rounded-xl transition-colors duration-150 cursor-pointer hover:bg-white/[0.04]">
@@ -63,9 +64,9 @@ function PostRow({ post, showThumb = false }: { post: BlogPost; showThumb?: bool
           <div className={`w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center
                            overflow-hidden bg-gradient-to-br
                            ${thumbGradient[post.category] ?? thumbGradient.General}`}>
-            {post.cover_url
+            {coverSrc
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={post.cover_url} alt="" className="w-full h-full object-cover" />
+              ? <img src={coverSrc} alt="" className="w-full h-full object-cover" />
               : <span className={`font-poppins font-black text-lg
                                   ${thumbTextColor[post.category] ?? 'text-lime'}`}>
                   {(post.category ?? 'G').slice(0, 2).toUpperCase()}
