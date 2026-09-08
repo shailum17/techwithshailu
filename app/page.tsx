@@ -9,6 +9,25 @@ import SectionReveal from '@/components/SectionReveal';
 import CommunityCTA from '@/components/CommunityCTA';
 import WhatIsInsideBento from '@/components/WhatIsInsideBento';
 import { getRoadmapCategories } from '@/lib/roadmaps';
+import { supabase } from '@/lib/supabase';
+
+async function getLatestBlogs() {
+  try {
+    const { data, error } = await supabase
+      .from('blogs')
+      .select('slug, title, category, published_at, excerpt')
+      .eq('published', true)
+      .order('published_at', { ascending: false })
+      .limit(3);
+    if (error) { console.error('[home blogs]', error.message); return []; }
+    return (data ?? []).map(p => ({
+      slug:     p.slug,
+      title:    p.title,
+      category: p.category ?? 'General',
+      date:     p.published_at ?? '',
+    }));
+  } catch { return []; }
+}
 
 async function getFeaturedJobs() {
   try {
@@ -58,7 +77,7 @@ const TIME_MAP: Record<string, string> = {
   aiml:          '2–3 months',
   devops:        '2–3 months',
 };
-const blogPreviews: { slug: string; title: string; category: string; date: string }[] = [];
+
 
 /* ─── What we offer ──────────────────────────────────────────── */
 const FEATURES = [
@@ -134,10 +153,11 @@ const FEATURES = [
 ];
 
 export default async function HomePage() {
-  const [featuredJobs, featuredTools, dbRoadmaps] = await Promise.all([
+  const [featuredJobs, featuredTools, dbRoadmaps, blogPreviews] = await Promise.all([
     getFeaturedJobs(),
     getFeaturedTools(),
     getRoadmapCategories(),
+    getLatestBlogs(),
   ]);
   const jobs  = featuredJobs  as Parameters<typeof JobCardsGrid>[0]['jobs'];
   const tools = featuredTools as (Parameters<typeof ToolCard>[0] & { id?: string })[];
