@@ -11,6 +11,25 @@ import WhatIsInsideBento from '@/components/WhatIsInsideBento';
 import { getRoadmapCategories } from '@/lib/roadmaps';
 import { supabase } from '@/lib/supabase';
 
+async function getSiteStats() {
+  try {
+    const [jobsRes, toolsRes, blogsRes, usersRes] = await Promise.all([
+      supabase.from('jobs').select('id', { count: 'exact', head: true }),
+      supabase.from('tools').select('id', { count: 'exact', head: true }),
+      supabase.from('blogs').select('id', { count: 'exact', head: true }).eq('published', true),
+      supabase.from('users').select('id', { count: 'exact', head: true }),
+    ]);
+    return {
+      students:  usersRes.count  ?? 0,
+      jobs:      jobsRes.count   ?? 0,
+      tools:     toolsRes.count  ?? 0,
+      resources: blogsRes.count  ?? 0,
+    };
+  } catch {
+    return { students: 0, jobs: 0, tools: 0, resources: 0 };
+  }
+}
+
 async function getLatestBlogs() {
   try {
     const { data, error } = await supabase
@@ -153,11 +172,12 @@ const FEATURES = [
 ];
 
 export default async function HomePage() {
-  const [featuredJobs, featuredTools, dbRoadmaps, blogPreviews] = await Promise.all([
+  const [featuredJobs, featuredTools, dbRoadmaps, blogPreviews, siteStats] = await Promise.all([
     getFeaturedJobs(),
     getFeaturedTools(),
     getRoadmapCategories(),
     getLatestBlogs(),
+    getSiteStats(),
   ]);
   const jobs  = featuredJobs  as Parameters<typeof JobCardsGrid>[0]['jobs'];
   const tools = featuredTools as (Parameters<typeof ToolCard>[0] & { id?: string })[];
@@ -174,7 +194,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSection />
+      <HeroSection stats={siteStats} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-32 pb-16 pt-6">
 

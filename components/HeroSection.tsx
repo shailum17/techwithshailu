@@ -204,19 +204,24 @@ function FloatCard({ children, className, delay = 0 }: { children: React.ReactNo
   );
 }
 
-/* ─── Stats ──────────────────────────────────────────────────── */
-const STATS = [
-  { label: 'CS Students',   value: 2000, suffix: '+' },
-  { label: 'Jobs Listed',   value: 500,  suffix: '+' },
-  { label: 'AI Tools',      value: 100,  suffix: '+' },
-  { label: 'Free Resources',value: 50,   suffix: '+' },
-];
-
 /* ─── Chip marquee ───────────────────────────────────────────── */
 const CHIPS = ['Freshers Jobs','AI Tools','DSA Roadmap','Resume Templates','Free Courses','Interview Prep','Project Ideas','Tech Blogs'];
 
+interface HeroStats {
+  students: number;
+  jobs:      number;
+  tools:     number;
+  resources: number;
+}
+
 /* ─── HeroSection ────────────────────────────────────────────── */
-export default function HeroSection() {
+export default function HeroSection({ stats }: { stats?: HeroStats }) {
+  const liveStats = [
+    { label: 'CS Students',    value: stats?.students ?? 2000, suffix: '+' },
+    { label: 'Jobs Listed',    value: stats?.jobs      ?? 500,  suffix: '+' },
+    { label: 'AI Tools',       value: stats?.tools     ?? 100,  suffix: '+' },
+    { label: 'Free Resources', value: stats?.resources ?? 50,   suffix: '+' },
+  ];
   const containerRef = useRef<HTMLDivElement>(null);
 
   /* Scroll parallax */
@@ -451,7 +456,7 @@ export default function HeroSection() {
               transition={{ duration: 3.5, repeat: Infinity, ease: 'linear', repeatDelay: 2 }}
             />
           </div>
-          {STATS.map(({ label, value, suffix }, i) => (
+          {liveStats.map(({ label, value, suffix }, i) => (
             <motion.div key={label} className="text-center"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
