@@ -217,10 +217,10 @@ interface HeroStats {
 /* ─── HeroSection ────────────────────────────────────────────── */
 export default function HeroSection({ stats }: { stats?: HeroStats }) {
   const liveStats = [
-    { label: 'CS Students',    value: stats?.students ?? 2000, suffix: '+' },
-    { label: 'Jobs Listed',    value: stats?.jobs      ?? 500,  suffix: '+' },
-    { label: 'AI Tools',       value: stats?.tools     ?? 100,  suffix: '+' },
-    { label: 'Free Resources', value: stats?.resources ?? 50,   suffix: '+' },
+    { label: 'Students Reached', value: stats?.students ?? 0,   suffix: '+' },
+    { label: 'Jobs Listed',       value: stats?.jobs      ?? 0,  suffix: '+' },
+    { label: 'AI Tools',          value: stats?.tools     ?? 0,  suffix: '+' },
+    { label: 'Free Resources',    value: stats?.resources ?? 50, suffix: '+' },
   ];
   const containerRef = useRef<HTMLDivElement>(null);
 

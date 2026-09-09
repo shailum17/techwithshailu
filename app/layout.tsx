@@ -3,6 +3,7 @@ import { Poppins, Outfit } from 'next/font/google';
 import './globals.css';
 import RootShell from '@/components/RootShell';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import VisitorPing from '@/components/VisitorPing';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${poppins.variable} ${outfit.variable}`} suppressHydrationWarning>
       <body className="bg-[#080808] text-ink font-outfit antialiased min-h-screen">
         <RootShell>{children}</RootShell>
+        <VisitorPing />
         <SpeedInsights />
       </body>
     </html>

@@ -13,18 +13,19 @@ import { supabase } from '@/lib/supabase';
 
 async function getSiteStats() {
   try {
-    const [jobsRes, toolsRes] = await Promise.all([
+    const [jobsRes, toolsRes, visitorsRes] = await Promise.all([
       supabase.from('jobs').select('id',  { count: 'exact', head: true }),
       supabase.from('tools').select('id', { count: 'exact', head: true }),
+      supabase.from('site_stats').select('value').eq('key', 'visitor_count').single(),
     ]);
     return {
-      students:  2000,                   // fixed — no auth system yet
-      jobs:      jobsRes.count  ?? 0,    // real DB count
-      tools:     toolsRes.count ?? 0,    // real DB count
-      resources: 50,                     // fixed — roadmaps + resources pages
+      students:  visitorsRes.data?.value ?? 0,  // real visitor count
+      jobs:      jobsRes.count   ?? 0,           // real job count
+      tools:     toolsRes.count  ?? 0,           // real tool count
+      resources: 50,                             // fixed — roadmaps + resource pages
     };
   } catch {
-    return { students: 2000, jobs: 0, tools: 0, resources: 50 };
+    return { students: 0, jobs: 0, tools: 0, resources: 50 };
   }
 }
 
