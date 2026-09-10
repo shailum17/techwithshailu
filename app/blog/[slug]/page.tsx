@@ -127,8 +127,7 @@ export default async function BlogPostPage(
             {post.cover_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={post.cover_url} alt={post.title}
-                   className="w-full h-56 md:h-72 object-cover rounded-2xl mb-8"
-                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                   className="w-full h-56 md:h-72 object-cover rounded-2xl mb-8" />
             )}
 
             {/* Post header */}

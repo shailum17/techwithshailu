@@ -71,9 +71,8 @@ function extractFirstImage(html: string): string {
   return match?.[1] ?? '';
 }
 
-function Thumbnail({ post, large = false }: { post: BlogPost; large?: boolean }) {
+function Thumbnail({ post }: { post: BlogPost }) {
   const cfg      = thumbConfig[post.category] ?? thumbConfig.General;
-  const h        = large ? 'h-36 md:h-44' : 'h-36';
   const coverSrc = post.cover_url || extractFirstImage(post.content ?? '');
 
   if (coverSrc) {
@@ -81,18 +80,17 @@ function Thumbnail({ post, large = false }: { post: BlogPost; large?: boolean })
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={coverSrc} alt={post.title}
-        className={`w-full ${large ? 'md:w-56' : ''} ${h} rounded-xl flex-shrink-0 object-cover`}
+        className="w-full h-36 object-cover"
       />
     );
   }
 
   return (
     <div
-      className={`${large ? 'w-full md:w-56' : 'w-full'} ${h} rounded-xl flex-shrink-0
-                  flex flex-col items-center justify-center gap-2 overflow-hidden`}
+      className="w-full h-36 flex flex-col items-center justify-center gap-2 overflow-hidden"
       style={{ background: `linear-gradient(135deg, ${cfg.from}, ${cfg.to})`,
                border: `1px solid ${cfg.color}18` }}>
-      <span style={{ fontSize: large ? 36 : 28, lineHeight: 1 }}>{cfg.icon}</span>
+      <span style={{ fontSize: 32, lineHeight: 1 }}>{cfg.icon}</span>
       <span style={{ fontSize: 11, fontWeight: 700, color: cfg.color,
                      letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.7 }}>
         {post.category}
@@ -102,8 +100,7 @@ function Thumbnail({ post, large = false }: { post: BlogPost; large?: boolean })
 }
 
 export default async function BlogPage() {
-  const posts   = await getPosts();
-  const featured = posts[0];
+  const posts = await getPosts();
 
   return (
     <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>
@@ -127,23 +124,27 @@ export default async function BlogPage() {
             <p className="text-ink-muted text-sm">Check back soon — new content is on the way.</p>
           </div>
         ) : (
-          <>
-            {/* ── Featured post ─────────────────────────── */}
-            {featured && (
-              <Link href={`/blog/${featured.slug}`}>
-                <div className="rounded-2xl p-6 md:p-8 mb-8 cursor-pointer
-                                transition-all duration-300 hover:-translate-y-1
-                                border border-white/10 hover:border-lime/40"
-                     style={{ background: '#0E0E0E', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border
-                                          ${categoryColor[featured.category] ?? 'text-lime border-lime/30'}`}
-                              style={{ background: categoryCardBg[featured.category] ?? 'rgba(168,230,61,0.06)' }}>
-                          {featured.category}
-                        </span>
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full border
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {posts.map((post, i) => (
+              <Link key={post.slug} href={`/blog/${post.slug}`}>
+                <article className="rounded-2xl overflow-hidden flex flex-col h-full cursor-pointer
+                                    hover:-translate-y-1 transition-all duration-300 group
+                                    border border-white/10 hover:border-lime/40"
+                         style={{ background: '#0E0E0E' }}>
+                  {/* Thumbnail */}
+                  <div className="overflow-hidden">
+                    <Thumbnail post={post} />
+                  </div>
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border
+                                        ${categoryColor[post.category] ?? 'text-lime border-lime/30'}`}
+                            style={{ background: categoryCardBg[post.category] ?? 'rgba(168,230,61,0.06)' }}>
+                        {post.category}
+                      </span>
+                      {i === 0 && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full border
                                          text-amber-400 border-amber-400/30 inline-flex items-center gap-1"
                               style={{ background: 'rgba(251,191,36,0.08)' }}>
                           <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -151,81 +152,34 @@ export default async function BlogPage() {
                           </svg>
                           Featured
                         </span>
-                      </div>
-                      <h2 className="font-poppins font-bold text-xl md:text-2xl text-ink mb-3 hover:text-lime transition-colors">
-                        {featured.title}
-                      </h2>
-                      <p className="text-ink-muted text-sm leading-relaxed mb-4 line-clamp-2">{featured.excerpt}</p>
-                      <div className="flex items-center gap-3 text-xs text-ink-faint flex-wrap">
-                        <span>techwithshailu</span>
-                        <span>·</span>
-                        <span>{formatDate(featured.published_at)}</span>
-                        {featured.read_time && (
-                          <>
-                            <span>·</span>
-                            <span className="flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {featured.read_time}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      )}
                     </div>
-                    <Thumbnail post={featured} large />
+                    <h3 className="font-poppins font-semibold text-ink text-sm leading-snug mb-1.5
+                                   group-hover:text-lime transition-colors flex-1 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-ink-muted text-xs line-clamp-2 mb-3">{post.excerpt}</p>
+                    <div className="flex items-center gap-2 text-xs text-ink-faint mt-auto pt-3 flex-wrap"
+                         style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span>{formatDate(post.published_at)}</span>
+                      {post.read_time && (
+                        <>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {post.read_time}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </article>
               </Link>
-            )}
-
-            {/* ── Post grid ─────────────────────────────── */}
-            {posts.length > 1 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {posts.slice(1).map(post => (
-                  <Link key={post.slug} href={`/blog/${post.slug}`}>
-                    <article className="rounded-2xl p-5 flex flex-col h-full cursor-pointer
-                                        hover:-translate-y-1 transition-all duration-300 overflow-hidden group
-                                        border border-white/10 hover:border-purple-brand/40"
-                             style={{ background: '#0E0E0E' }}>
-                      <div className="mb-4 group-hover:scale-[1.01] transition-transform duration-300 rounded-xl overflow-hidden">
-                        <Thumbnail post={post} />
-                      </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border w-fit mb-3
-                                        ${categoryColor[post.category] ?? 'text-lime border-lime/30'}`}
-                            style={{ background: categoryCardBg[post.category] ?? 'rgba(168,230,61,0.06)' }}>
-                        {post.category}
-                      </span>
-                      <h3 className="font-poppins font-semibold text-ink text-base leading-snug mb-2
-                                     group-hover:text-lime transition-colors flex-1">
-                        {post.title}
-                      </h3>
-                      <p className="text-ink-muted text-sm line-clamp-2 mb-3">{post.excerpt}</p>
-                      <div className="flex items-center gap-3 text-xs text-ink-faint mt-auto pt-3"
-                           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                        <span>techwithshailu</span>
-                        <span>·</span>
-                        <span>{formatDate(post.published_at)}</span>
-                        {post.read_time && (
-                          <>
-                            <span>·</span>
-                            <span className="flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {post.read_time}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </article>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
     </div>

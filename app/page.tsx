@@ -33,16 +33,17 @@ async function getLatestBlogs() {
   try {
     const { data, error } = await supabase
       .from('blogs')
-      .select('slug, title, category, published_at, excerpt')
+      .select('slug, title, category, published_at, excerpt, cover_url, content')
       .eq('published', true)
       .order('published_at', { ascending: false })
       .limit(3);
     if (error) { console.error('[home blogs]', error.message); return []; }
     return (data ?? []).map(p => ({
-      slug:     p.slug,
-      title:    p.title,
-      category: p.category ?? 'General',
-      date:     p.published_at ?? '',
+      slug:      p.slug,
+      title:     p.title,
+      category:  p.category ?? 'General',
+      date:      p.published_at ?? '',
+      cover_url: p.cover_url || (p.content?.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? '') || '',
     }));
   } catch { return []; }
 }
@@ -249,9 +250,9 @@ export default async function HomePage() {
           <SectionHeader eyebrow="Fresh reads" title="Latest Articles"
             desc="Tips, guides and career updates for CS students" href="/blog" linkText="View all" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {blogPreviews.map(({ slug, title, category, date }, i) => (
+            {blogPreviews.map(({ slug, title, category, date, cover_url }, i) => (
               <FadeUp key={slug} delay={i * 0.09}>
-                <BlogCard slug={slug} title={title} category={category} date={date} />
+                <BlogCard slug={slug} title={title} category={category} date={date} coverUrl={cover_url} />
               </FadeUp>
             ))}
           </div>
