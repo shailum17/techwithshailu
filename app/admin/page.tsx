@@ -2804,15 +2804,14 @@ published: false
               </div>
             </div>
 
-            {/* Cover URL */}
-            <div>
-              <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600,
-                               letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 5 }}>
-                Cover Image URL <span style={{ color: 'rgba(255,255,255,0.2)', textTransform: 'none', fontWeight: 400 }}>(optional)</span>
-              </label>
-              <input type="text" placeholder="https://..." value={form.cover_url}
-                onChange={e => setForm(f => ({ ...f, cover_url: e.target.value }))} style={IS} />
-            </div>
+            {/* Cover Image */}
+            <ImageUpload
+              label="Cover Image"
+              hint="(optional)"
+              value={form.cover_url}
+              onChange={url => setForm(f => ({ ...f, cover_url: url }))}
+              size={64}
+            />
 
             {/* Tags */}
             <div>
