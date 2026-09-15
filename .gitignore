@@ -43,6 +43,10 @@ AUTOMATION_SETUP.md
 AUTOMATION-SETUP.md
 FEATURES-COMPLETED.md
 TODO.md
-supabase
+# Supabase CLI local state — keep SQL schema files tracked
+.supabase/
+supabase/.branches
+supabase/.temp
 /.kiro
+/.kiro/skills
 
