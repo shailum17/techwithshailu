@@ -1,20 +1,29 @@
 /**
  * app/api/roadmaps/route.ts
  *
- * GET  /api/roadmaps  — list roadmaps (?category=, ?q=)
+ * GET  /api/roadmaps  — list roadmaps (public, anon client, respects RLS)
+ *   ?category=  filter by category
+ *   ?q=         full-text search
+ *
  * POST /api/roadmaps  — create roadmap (admin only)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
+  // Rate limit: 120 requests / minute per IP
+  const limited = rateLimit(req, { limit: 120, windowMs: 60_000, prefix: 'roadmaps' });
+  if (limited) return limited;
+
   try {
     const { searchParams } = new URL(req.url);
 
-    let query = supabaseAdmin.from('roadmaps').select('*');
+    // Use anon client — respects Supabase RLS policies
+    let query = supabase.from('roadmaps').select('*');
 
     const category = searchParams.get('category');
     const search   = searchParams.get('q');

@@ -1,20 +1,30 @@
 /**
  * app/api/blogs/route.ts
  *
- * GET  /api/blogs  — list posts (?tag=, ?q=, ?published=true)
+ * GET  /api/blogs  — list posts (public, anon client, respects RLS)
+ *   ?tag=           filter by tag
+ *   ?q=             full-text search
+ *   ?published=true only published posts
+ *
  * POST /api/blogs  — create post (admin only)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
+  // Rate limit: 120 requests / minute per IP
+  const limited = rateLimit(req, { limit: 120, windowMs: 60_000, prefix: 'blogs' });
+  if (limited) return limited;
+
   try {
     const { searchParams } = new URL(req.url);
 
-    let query = supabaseAdmin.from('blogs').select('*');
+    // Use anon client — respects Supabase RLS policies
+    let query = supabase.from('blogs').select('*');
 
     const tag       = searchParams.get('tag');
     const search    = searchParams.get('q');

@@ -7,16 +7,21 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
 
 type Params = { params: Promise<{ id: string }> };
 
 /* ── GET ──────────────────────────────────────────────────────── */
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
+  const limited = rateLimit(req, { limit: 120, windowMs: 60_000, prefix: 'tools-id' });
+  if (limited) return limited;
+
   const { id } = await params;
   try {
-    const { data, error } = await supabaseAdmin
+    // Use anon client — respects Supabase RLS policies
+    const { data, error } = await supabase
       .from('tools')
       .select('*')
       .eq('id', id)

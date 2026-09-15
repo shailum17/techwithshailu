@@ -1,24 +1,31 @@
 /**
  * app/api/tools/route.ts
  *
- * GET  /api/tools  — list AI tools
+ * GET  /api/tools  — list AI tools (public, anon client, respects RLS)
  *   ?category=     filter by category
- *   ?featured=true  is_featured = true
+ *   ?featured=true is_featured = true
  *   ?q=            full-text search
+ *   ?limit=        max results
  *
  * POST /api/tools  — create tool (admin only)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
+  // Rate limit: 120 requests / minute per IP
+  const limited = rateLimit(req, { limit: 120, windowMs: 60_000, prefix: 'tools' });
+  if (limited) return limited;
+
   try {
     const { searchParams } = new URL(req.url);
 
-    let query = supabaseAdmin.from('tools').select('*');
+    // Use anon client — respects Supabase RLS policies
+    let query = supabase.from('tools').select('*');
 
     const category = searchParams.get('category');
     const featured = searchParams.get('featured');

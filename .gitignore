@@ -49,4 +49,6 @@ supabase/.branches
 supabase/.temp
 /.kiro
 /.kiro/skills
+/.agents
+/.aider-desk
 

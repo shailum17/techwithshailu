@@ -1,27 +1,34 @@
 /**
  * app/api/jobs/route.ts
  *
- * GET  /api/jobs  — list jobs
- *   ?type=        filter by type (Job | Internship | Full-time)
- *   ?location=    ilike filter on location
- *   ?batch_year=  exact match
- *   ?featured=true  is_featured = true
- *   ?q=           full-text search (title, company, description)
+ * GET  /api/jobs  — list jobs (public, anon client, respects RLS)
+ *   ?type=         filter by type (Job | Internship | Full-time)
+ *   ?location=     ilike filter on location
+ *   ?batch_year=   exact match
+ *   ?featured=true is_featured = true
+ *   ?q=            full-text search (title, company, description)
  *   ?sort=newest|deadline
+ *   ?limit=        max results
  *
  * POST /api/jobs  — create job (admin only)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
+  // Rate limit: 120 requests / minute per IP
+  const limited = rateLimit(req, { limit: 120, windowMs: 60_000, prefix: 'jobs' });
+  if (limited) return limited;
+
   try {
     const { searchParams } = new URL(req.url);
 
-    let query = supabaseAdmin.from('jobs').select('*');
+    // Use anon client — respects Supabase RLS policies
+    let query = supabase.from('jobs').select('*');
 
     const type     = searchParams.get('type');
     const location = searchParams.get('location');
@@ -30,11 +37,11 @@ export async function GET(req: NextRequest) {
     const search   = searchParams.get('q');
     const sort     = searchParams.get('sort') || 'newest';
 
-    if (type)               query = query.eq('type', type);
-    if (location)           query = query.ilike('location', `%${location}%`);
-    if (batch)              query = query.eq('batch_year', Number(batch));
+    if (type)                query = query.eq('type', type);
+    if (location)            query = query.ilike('location', `%${location}%`);
+    if (batch)               query = query.eq('batch_year', Number(batch));
     if (featured === 'true') query = query.eq('is_featured', true);
-    if (search)             query = query.textSearch('fts', search, { type: 'websearch' });
+    if (search)              query = query.textSearch('fts', search, { type: 'websearch' });
 
     query = sort === 'deadline'
       ? query.order('deadline', { ascending: true })
@@ -67,10 +74,12 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    // Supabase errors have a 'code' and 'details' property
+    const msg    = err instanceof Error ? err.message : String(err);
     const detail = (err as Record<string, unknown>)?.details ?? (err as Record<string, unknown>)?.hint ?? msg;
     console.error('[POST /api/jobs]', err);
-    return NextResponse.json({ error: 'Database error', detail: `${msg}${detail && detail !== msg ? ` — ${detail}` : ''}` }, { status: 503 });
+    return NextResponse.json(
+      { error: 'Database error', detail: `${msg}${detail && detail !== msg ? ` — ${detail}` : ''}` },
+      { status: 503 },
+    );
   }
 }
