@@ -13,7 +13,11 @@
  *  5. Wrap orphan text blocks in <p>
  *  6. Re-order into standard sections: About / Role / Responsibilities /
  *     Requirements / Nice-to-have / Interview Process / Benefits
+ *  7. Final pass: sanitize with sanitizeJobHtml to strip any residual
+ *     XSS vectors (event handlers, javascript: URLs, iframes, etc.)
  */
+
+import { sanitizeJobHtml } from '@/lib/sanitize';
 
 // Known section heading keywords → canonical label
 const SECTION_MAP: [RegExp, string][] = [
@@ -180,5 +184,5 @@ export function formatJobDescription(raw: string): string {
     }
   }
 
-  return parts.join('\n') || `<p>${lines.join('</p><p>')}</p>`;
+  return sanitizeJobHtml(parts.join('\n') || `<p>${lines.join('</p><p>')}</p>`);
 }

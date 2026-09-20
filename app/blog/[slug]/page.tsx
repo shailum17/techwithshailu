@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReadingProgress from '@/components/ReadingProgress';
 import { supabase } from '@/lib/supabase';
+import { sanitizeBlogHtml } from '@/lib/sanitize';
 import BlogSidebar from './BlogSidebar';
 
 interface BlogPost {
@@ -173,7 +174,7 @@ export default async function BlogPostPage(
                          hover:prose-a:underline prose-code:text-lime
                          prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10"
               style={{ background: '#0E0E0E', border: '1px solid rgba(255,255,255,0.08)' }}
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(post.content) }}
             />
 
 

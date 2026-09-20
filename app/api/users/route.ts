@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'email is required' }, { status: 400 });
     }
 
-    const email = body.email.toLowerCase();
+    const email = body.email.toLowerCase().trim();
+
+    // Basic email format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+    }
 
     /* Prevent duplicates */
     const { data: existing } = await supabaseAdmin
@@ -46,9 +51,16 @@ export async function POST(req: NextRequest) {
 
     if (existing) return NextResponse.json({ message: 'Already registered' }, { status: 200 });
 
+    // Allowlist only the fields a subscriber may set — never spread the full
+    // body to prevent mass assignment (e.g. callers cannot override `role`,
+    // `id`, `created_at`, or any other privileged column).
     const { data, error } = await supabaseAdmin
       .from('users')
-      .insert({ ...body, email, role: 'user' })
+      .insert({
+        email,
+        name: typeof body.name === 'string' ? body.name.slice(0, 100).trim() : null,
+        role: 'user',  // always force role — never accept from client
+      })
       .select()
       .single();
     if (error) throw error;

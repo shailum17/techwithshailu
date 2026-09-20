@@ -123,32 +123,6 @@ export default function Footer() {
         }}
       />
 
-      {/* ── Animated marquee banner ─────────────────────────────── */}
-      <div
-        className="relative overflow-hidden py-4 border-b"
-        style={{
-          background:
-            'linear-gradient(135deg, rgba(168,230,61,0.07) 0%, rgba(168,230,61,0.03) 100%)',
-          borderColor: 'rgba(168,230,61,0.12)',
-        }}
-      >
-        <div className="flex gap-8 animate-marquee-chips whitespace-nowrap select-none" aria-hidden="true">
-          {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span
-              key={i}
-              className={
-                item === '✦'
-                  ? 'text-lime text-sm opacity-50'
-                  : 'font-poppins font-semibold text-sm tracking-widest uppercase'
-              }
-              style={{ color: item === '✦' ? '#A8E63D' : 'rgba(240,240,240,0.35)' }}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* ── Main content ────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
 

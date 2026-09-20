@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ImageUpload from '@/components/ImageUpload';
 
 /* ── types ──────────────────────────────────────────────────── */
@@ -2454,6 +2454,21 @@ function BlogView({ blogs, loading, adminKey, onRefresh }: {
   const [saving,  setSaving]  = useState(false);
   const [preview, setPreview] = useState(false);
 
+  // Client-side preview sanitization: strip script tags, event handlers,
+  // and javascript: URLs to prevent self-XSS in the admin preview pane.
+  // (Full sanitization via sanitize-html runs server-side on every save.)
+  const safePreviewHtml = useMemo(() => {
+    const raw = form.content || '<p style="color:rgba(255,255,255,0.2)">Nothing to preview yet…</p>';
+    return raw
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/\s+on\w+\s*=\s*(['"])[^'"]*\1/gi, '')
+      .replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '')
+      .replace(/href\s*=\s*(['"])\s*javascript:[^'"]*\1/gi, 'href="#"')
+      .replace(/src\s*=\s*(['"])\s*javascript:[^'"]*\1/gi, 'src=""');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.content]);
+
   function flash(text: string, ok = true) {
     setMsg(text); setMsgOk(ok); setTimeout(() => setMsg(''), 4000);
   }
@@ -2843,7 +2858,7 @@ published: false
                   className="prose prose-sm prose-invert max-w-none"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
                             borderRadius: 10, padding: '12px 14px', minHeight: 160, fontSize: 13 }}
-                  dangerouslySetInnerHTML={{ __html: form.content || '<p style="color:rgba(255,255,255,0.2)">Nothing to preview yet…</p>' }}
+                  dangerouslySetInnerHTML={{ __html: safePreviewHtml }}
                 />
               ) : (
                 <textarea required rows={10} placeholder="<h2>Heading</h2><p>Your content…</p>"

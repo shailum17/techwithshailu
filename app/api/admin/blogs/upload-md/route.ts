@@ -16,6 +16,7 @@ import matter from 'gray-matter';
 import { marked } from 'marked';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { sanitizeBlogHtml } from '@/lib/sanitize';
 
 marked.setOptions({ gfm: true, breaks: false });
 
@@ -65,10 +66,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required frontmatter: slug' }, { status: 422 });
   }
 
-  // ── 3. Markdown → HTML ──────────────────────────────────────
+  // ── 3. Markdown → HTML (sanitized) ────────────────────────────
   let html: string;
   try {
-    html = await Promise.resolve(marked(mdBody));
+    const rawHtml = await Promise.resolve(marked(mdBody));
+    html = sanitizeBlogHtml(rawHtml);
   } catch (err) {
     return NextResponse.json({ error: `Markdown parse error: ${String(err)}` }, { status: 500 });
   }

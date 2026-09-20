@@ -24,10 +24,16 @@ yarn-error.log*
 
 # local env files — NEVER commit these
 .env
+.env.*
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
+.env.staging
+.env.preview
 
 # vercel
 .vercel
@@ -36,7 +42,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/.env.local
+# (covered by .env.* glob above)
 
 # local planning & automation docs
 AUTOMATION_SETUP.md
@@ -51,4 +57,4 @@ supabase/.temp
 /.kiro/skills
 /.agents
 /.aider-desk
-
+/skills-lock.json

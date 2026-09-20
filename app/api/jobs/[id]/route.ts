@@ -20,11 +20,14 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { id } = await params;
   try {
-    // Use anon client — respects Supabase RLS policies
+    // Use anon client — respects Supabase RLS (status = 'live' policy).
+    // Also enforce the filter here as defense-in-depth in case RLS is
+    // temporarily disabled or misconfigured.
     const { data, error } = await supabase
       .from('jobs')
       .select('*')
       .eq('id', id)
+      .eq('status', 'live')
       .single();
     if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);

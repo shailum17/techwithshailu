@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
+import { sanitizeBlogHtml } from '@/lib/sanitize';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -54,6 +55,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const doc  = {
       ...body,
+      // Sanitize HTML content before storing to prevent XSS
+      content:      typeof body.content === 'string' ? sanitizeBlogHtml(body.content) : body.content,
       published:    body.published ?? false,
       published_at: body.published ? new Date().toISOString() : null,
     };

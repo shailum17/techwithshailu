@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 
 type Params = { params: Promise<{ id: string }> };
@@ -15,7 +15,8 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
-    const { data, error } = await supabaseAdmin
+    // Use anon client so RLS policies are respected (not the admin bypass).
+    const { data, error } = await supabase
       .from('roadmaps')
       .select('*')
       .eq('id', id)

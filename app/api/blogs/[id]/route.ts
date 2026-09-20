@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
+import { sanitizeBlogHtml } from '@/lib/sanitize';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -19,11 +20,14 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { id } = await params;
   try {
-    // Use anon client — respects Supabase RLS policies
+    // Use anon client — respects Supabase RLS (published = true policy).
+    // Also enforce the filter here as defense-in-depth in case RLS is
+    // temporarily disabled or misconfigured.
     const { data, error } = await supabase
       .from('blogs')
       .select('*')
       .eq('id', id)
+      .eq('published', true)
       .single();
     if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);
@@ -43,6 +47,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const body = await req.json();
     delete body.id;
     delete body.updated_at;
+
+    // Sanitize HTML content before storing to prevent XSS
+    if (typeof body.content === 'string') {
+      body.content = sanitizeBlogHtml(body.content);
+    }
 
     // Set published_at when publishing for the first time
     if (body.published === true) {
