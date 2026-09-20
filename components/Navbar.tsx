@@ -208,7 +208,7 @@ export default function Navbar() {
             <span>Search</span>
           </Link>
           <a href="https://t.me/techwithshailu" target="_blank" rel="noopener noreferrer"
-             className="btn-purple text-sm py-2 px-4">
+             className="btn-lime-outline text-sm py-2 px-4">
             Get Started
           </a>
         </div>
@@ -303,7 +303,7 @@ export default function Navbar() {
 
               <li className="pt-2">
                 <a href="https://t.me/techwithshailu" target="_blank" rel="noopener noreferrer"
-                   className="block text-center btn-purple text-sm py-2.5">
+                   className="block text-center btn-lime-outline text-sm py-2.5">
                   Get Started
                 </a>
               </li>

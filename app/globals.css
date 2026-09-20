@@ -61,6 +61,16 @@
            hover:bg-purple-tint transition-all duration-200 active:scale-95;
   }
 
+  /* Lime outline button — primary CTA variant */
+  .btn-lime-outline {
+    @apply border font-semibold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95;
+    border-color: #A8E63D;
+    color: #A8E63D;
+  }
+  .btn-lime-outline:hover {
+    background: rgba(168,230,61,0.1);
+  }
+
   /* Section heading */
   .section-title {
     @apply font-poppins font-bold text-2xl md:text-3xl text-ink;
@@ -193,4 +203,10 @@
 }
 .animate-shiny-text {
   animation: shinyText 2s linear infinite;
+}
+
+/* ── Hero character float ────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
 }

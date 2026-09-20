@@ -19,13 +19,13 @@ async function getSiteStats() {
       supabase.from('site_stats').select('value').eq('key', 'visitor_count').single(),
     ]);
     return {
-      students:  visitorsRes.data?.value ?? 0,  // real visitor count
-      jobs:      jobsRes.count   ?? 0,           // real job count
-      tools:     toolsRes.count  ?? 0,           // real tool count
-      resources: 50,                             // fixed — roadmaps + resource pages
+      students:  Math.max(2000, visitorsRes.data?.value ?? 2000),  // floor at 2000
+      jobs:      jobsRes.count   ?? 0,
+      tools:     toolsRes.count  ?? 0,
+      resources: 50,
     };
   } catch {
-    return { students: 0, jobs: 0, tools: 0, resources: 50 };
+    return { students: 2000, jobs: 0, tools: 0, resources: 50 };
   }
 }
 
