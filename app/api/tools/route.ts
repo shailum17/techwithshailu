@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
+import { clampLimit, pick, TOOL_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
     query = query.order('created_at', { ascending: false });
 
     const limit = searchParams.get('limit');
-    if (limit) query = query.limit(Number(limit));
+    if (limit) query = query.limit(clampLimit(limit, 20, 100));
 
     const { data, error } = await query;
     if (error) throw error;
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = await req.json();
+    const body = pick(await req.json(), TOOL_FIELDS);
     const { data, error } = await supabaseAdmin
       .from('tools')
       .insert(body)
@@ -64,8 +65,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'DB error';
-    console.error('[POST /api/tools]', msg);
-    return NextResponse.json({ error: 'Database error', detail: msg }, { status: 503 });
+    console.error('[POST /api/tools]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Database error' }, { status: 503 });
   }
 }

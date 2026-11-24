@@ -1,3 +1,5 @@
+const isDev = process.env.NODE_ENV !== 'production';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -7,6 +9,19 @@ const nextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '*.supabase.co' },
     ],
+  },
+
+  async redirects() {
+    return [
+      // Legacy roadmap URLs (/resources/<slug>) → real pages. Done here rather
+      // than only in app/resources/[slug] so crawlers get a true 308 instead of
+      // a streamed client-side redirect.
+      {
+        source: '/resources/:slug(frontend|dsa|backend|system-design|aiml|devops)',
+        destination: '/resources/roadmaps/:slug',
+        permanent: true,
+      },
+    ];
   },
 
   async headers() {
@@ -41,13 +56,16 @@ const nextConfig = {
             value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
           },
           // Content Security Policy
-          // script-src 'self' 'unsafe-inline' needed for Next.js inline scripts & Framer Motion
+          // script-src 'unsafe-inline' is still needed for Next.js inline bootstrap
+          // scripts (removing it requires per-request nonces via middleware).
+          // 'unsafe-eval' is only needed by the dev server (React Refresh), so
+          // it is not sent in production.
           // img-src allows Cloudinary, Supabase storage, and logo providers
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+              `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://vercel.live`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://res.cloudinary.com https://*.supabase.co https://img.logo.dev https://t3.gstatic.com",

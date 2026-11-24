@@ -68,6 +68,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'DB error';
     console.error('[POST /api/users]', msg);
-    return NextResponse.json({ error: 'Database error', detail: msg }, { status: 503 });
+    return NextResponse.json({ error: 'Database error' }, { status: 503 });
   }
 }

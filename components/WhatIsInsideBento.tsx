@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 
 /* ─── Card animation variant ─────────────────────────────────── */
-const cardVariant = {
+const cardVariant: Variants = {
   hidden: { opacity: 0, y: 28, scale: 0.97 },
   visible: (i: number) => ({
     opacity: 1, y: 0, scale: 1,

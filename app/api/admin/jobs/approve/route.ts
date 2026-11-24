@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (fetchError || !job) {
       console.error('[approve] fetch error:', fetchError?.message, 'jobId:', jobId);
       return NextResponse.json(
-        { error: `Pending job not found: ${fetchError?.message ?? 'no data'}` },
+        { error: 'Pending job not found' },
         { status: 404 }
       );
     }
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error('[approve] insert error:', insertError.message, insertError.details, insertError.hint);
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to publish job' }, { status: 500 });
     }
 
     // 3. Remove from pending_jobs
@@ -76,13 +76,13 @@ export async function POST(req: NextRequest) {
 
     if (deleteError) {
       console.error('[approve] delete error:', deleteError.message);
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Job published but could not be removed from pending' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[POST /api/admin/jobs/approve]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

@@ -57,6 +57,7 @@ function toCategory(row: RoadmapRow): RoadmapCategory {
     dotColor:      meta.dotColor      ?? '#A8E63D',
     resources:     [],
     nodeResources: Object.keys(nodeResources).length > 0 ? nodeResources : undefined,
+    tags:          row.tags ?? [],
   };
 }
 

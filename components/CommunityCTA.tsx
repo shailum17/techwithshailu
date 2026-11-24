@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, type Variants } from 'framer-motion'
 
 /* ─── Outward flow canvas (reverse of hero gateway) ─────────── */
 function OutwardFlowCanvas() {
@@ -197,7 +197,7 @@ const container = {
   visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 }
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1, y: 0,
@@ -205,7 +205,7 @@ const fadeUp = {
   },
 }
 
-const iconItem = {
+const iconItem: Variants = {
   hidden: { opacity: 0, scale: 0.75 },
   visible: {
     opacity: 1, scale: 1,

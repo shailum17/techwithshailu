@@ -4,6 +4,7 @@ import './globals.css';
 import RootShell from '@/components/RootShell';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import VisitorPing from '@/components/VisitorPing';
+import { SITE_URL } from '@/lib/site';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -28,10 +29,10 @@ export const metadata: Metadata = {
   keywords: ['tech jobs India freshers', 'CS internships 2026', 'AI tools students', 'DSA roadmap', 'techwithshailu'],
   authors: [{ name: 'techwithshailu' }],
   creator: 'techwithshailu',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://techwithshailu.in'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website', locale: 'en_IN',
-    url: 'https://techwithshailu.in',
+    url: SITE_URL,
     siteName: 'techwithshailu',
     title: 'techwithshailu — Jobs, AI Tools & CS Resources',
     description: 'Curated tech jobs, AI tools, and study roadmaps for CS students in India.',

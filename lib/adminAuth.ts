@@ -3,6 +3,21 @@ import { timingSafeEqual } from 'crypto';
 import { rateLimit } from '@/lib/rateLimit';
 
 /**
+ * Constant-time string comparison. Returns false for differing lengths
+ * without leaking where the strings differ.
+ */
+export function safeEqual(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) {
+    // Still burn a comparison so timing doesn't reveal the length mismatch early
+    timingSafeEqual(b, b);
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
+
+/**
  * Verifies the x-admin-key header matches ADMIN_SECRET.
  *
  * Security properties:
@@ -27,23 +42,7 @@ export function checkAdminAuth(req: NextRequest): NextResponse | null {
 
   const provided = req.headers.get('x-admin-key') ?? '';
 
-  // timingSafeEqual requires equal-length buffers
-  const providedBuf = Buffer.from(provided);
-  const secretBuf   = Buffer.from(secret);
-
-  // If lengths differ, the comparison would throw — pad to a consistent length
-  // by comparing with a dummy buffer of the same length as the secret,
-  // then also verify lengths are equal (which prevents length-leaking).
-  const lengthsMatch = providedBuf.length === secretBuf.length;
-
-  // Use the secretBuf length as the comparison target to avoid short-circuit
-  const safeProvided = lengthsMatch
-    ? providedBuf
-    : Buffer.alloc(secretBuf.length); // wrong length → comparison will fail
-
-  const keyMatch = timingSafeEqual(safeProvided, secretBuf) && lengthsMatch;
-
-  if (!keyMatch) {
+  if (!safeEqual(provided, secret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

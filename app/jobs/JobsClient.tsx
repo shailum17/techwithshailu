@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
+import { safeHttpUrl } from '@/lib/validate';
 
 interface Job {
   id: string;
@@ -220,6 +221,7 @@ function JobCard({ job }: { job: Job }) {
   const isRemote    = job.location.toLowerCase().includes('remote');
   const postedDate  = formatPostedDate(job.created_at ?? job.createdAt);
   const sourceLabel = getSourceLabel(job.apply_link, job.source);
+  const applyHref   = safeHttpUrl(job.apply_link);
 
   return (
     <div
@@ -373,8 +375,8 @@ function JobCard({ job }: { job: Job }) {
       {/* ── Bottom action strip ── */}
       <div className="flex items-center gap-2 px-5 py-3"
            style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.015)' }}>
-        {job.apply_link ? (
-          <a href={job.apply_link as string} target="_blank" rel="noopener noreferrer"
+        {applyHref ? (
+          <a href={applyHref} target="_blank" rel="noopener noreferrer"
              onClick={e => e.stopPropagation()}
              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-lg
                         transition-all duration-200 hover:brightness-110 active:scale-95"
@@ -544,7 +546,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
     hidden:  {},
     visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
   };
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden:  { opacity: 0, y: 24, scale: 0.96 },
     visible: { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.35, ease: 'easeOut' } },
   };

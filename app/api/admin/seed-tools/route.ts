@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     // Upsert in batches of 50 to stay within Supabase limits
     const BATCH = 50;
     let inserted = 0;
-    let errors: string[] = [];
+    const errors: string[] = [];
 
     for (let i = 0; i < TOOLS_SEED.length; i += BATCH) {
       const batch = TOOLS_SEED.slice(i, i + BATCH);
@@ -49,6 +49,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     console.error('[POST /api/admin/seed-tools]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Seeding failed' }, { status: 500 });
   }
 }

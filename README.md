@@ -1,6 +1,6 @@
 # techwithshailu
 
-A full-stack web platform for **CS students & freshers in India**. Built with Next.js 15, MongoDB Atlas & Tailwind CSS. Features curated tech job listings, AI tools directory, study roadmaps & a blog. Dark-themed modern UI with glassmorphism design.
+A full-stack web platform for **CS students & freshers in India**. Built with Next.js 15, Supabase (Postgres) & Tailwind CSS. Features curated tech job listings (with an automated fetch → review pipeline), an AI tools directory, study roadmaps & a blog. Dark-themed modern UI with glassmorphism design.
 
 🌐 **Live Site:** [techwithshailu.in](https://techwithshailu.in) _(coming soon)_  
 📱 **Telegram:** [@techwithshailu](https://t.me/techwithshailu)  
@@ -10,27 +10,27 @@ A full-stack web platform for **CS students & freshers in India**. Built with Ne
 
 ## ✨ Features
 
-- **Job/Internship Listings** — Curated openings for CS students & freshers, filterable by location, type, batch year
-- **AI Tools Directory** — Hand-picked AI tools across categories (Writing, Coding, Image, Productivity, Research)
-- **Study Roadmaps** — Step-by-step paths for Frontend, DSA, Backend, System Design & AI/ML
-- **Blog** — Tech articles, interview tips & placement guides in simple language
-- **Admin Panel** — Password-protected panel to add/edit jobs and tools
-- **SEO Optimized** — Meta tags, sitemap, robots.txt, Open Graph ready
+- **Job/Internship Listings**: curated openings for CS students & freshers, filterable by type, location, batch year and full-text search
+- **Automated job pipeline**: a daily Vercel Cron pulls listings from Unstop, Adzuna and RapidAPI JSearch into a review queue; the admin approves or rejects them, with a Telegram alert for new items
+- **AI Tools Directory**: hand-picked AI tools across categories (Writing, Coding, Image, Productivity, Research)
+- **Study Roadmaps & Resources**: roadmaps (Frontend, DSA, Backend, System Design, AI/ML…), resume hub, cheat sheets, interview prep, free courses, project ideas
+- **Blog**: write in Markdown, upload the `.md` file, and it's converted to sanitized HTML
+- **Admin Panel**: manage jobs, tools, roadmaps and blogs, review pending jobs, view automation logs
+- **SEO**: metadata, Open Graph, sitemap, robots.txt
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer          | Technology           |
-|----------------|----------------------|
-| **Frontend**   | Next.js 15 (React 19), TypeScript |
-| **Styling**    | Tailwind CSS v3 |
-| **Database**   | MongoDB Atlas (M0 Free Tier) |
-| **ODM**        | Mongoose |
-| **Hosting**    | Vercel (free tier) |
-| **Domain**     | Namecheap / GoDaddy |
-
-**Cost:** ~₹800–1500/year (domain only; hosting + DB free)
+| Layer          | Technology |
+|----------------|------------|
+| **Framework**  | Next.js 15 (App Router), React 19, TypeScript |
+| **Styling**    | Tailwind CSS v3, Framer Motion, GSAP, anime.js |
+| **Database**   | Supabase (Postgres + Row Level Security) via `@supabase/supabase-js` |
+| **Content**    | `gray-matter` + `marked` + `sanitize-html` |
+| **Media**      | Cloudinary (signed uploads), logo.dev |
+| **Integrations** | Unstop, Adzuna, RapidAPI JSearch, Telegram Bot API |
+| **Hosting**    | Vercel (serverless functions, Cron, Speed Insights) |
 
 ---
 
@@ -38,37 +38,32 @@ A full-stack web platform for **CS students & freshers in India**. Built with Ne
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- MongoDB Atlas account (free M0 cluster)
+- Node.js 20+
+- A Supabase project (free tier is fine)
 - Git
 
-### 1. Clone the repository
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/shailum17/techwithshailu.git
 cd techwithshailu
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Set up environment variables
+### 2. Set up the database
 
-Create a `.env.local` file in the root directory:
+Run `supabase/schema.sql`, then the files in `supabase/migrations/` in order, in the Supabase SQL Editor.
+See [`supabase/README.md`](supabase/README.md) for details.
 
-```env
-# MongoDB Atlas connection string from https://cloud.mongodb.com
-MONGODB_URI=mongodb+srv://your-username:your-password@cluster0.xxxxx.mongodb.net/techwithshailu?retryWrites=true&w=majority
+### 3. Configure environment variables
 
-# Admin secret key for protecting POST/PUT/DELETE API routes
-ADMIN_SECRET=your_strong_random_secret_here
-
-# App URL for SEO/OG tags
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+```bash
+cp .env.example .env.local
 ```
+
+Fill in at least `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_SECRET` and `CRON_SECRET`. Every variable is described in
+[`.env.example`](.env.example). `NEXT_PUBLIC_*` values are baked in at build time.
 
 ### 4. Run the development server
 
@@ -76,14 +71,18 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-### 5. Build for production
+### 5. Checks and production build
 
 ```bash
+npm run lint
+npm run typecheck
 npm run build
 npm start
 ```
+
+CI (`.github/workflows/ci.yml`) runs lint, typecheck and build on every pull request.
 
 ---
 
@@ -91,90 +90,48 @@ npm start
 
 ```
 techwithshailu/
-├── app/                      # Next.js App Router
-│   ├── page.tsx             # Homepage
-│   ├── jobs/                # Job listings & detail pages
-│   ├── ai-tools/            # AI Tools directory
-│   ├── resources/           # Study roadmaps
-│   ├── blog/                # Blog articles
-│   ├── admin/               # Admin panel
-│   ├── api/                 # API routes (jobs, tools)
-│   ├── layout.tsx           # Root layout
-│   ├── globals.css          # Tailwind CSS
-│   ├── sitemap.ts           # Dynamic sitemap
-│   └── robots.ts            # Robots.txt
-├── components/              # Reusable React components
-│   ├── Navbar.tsx
-│   ├── Footer.tsx
-│   ├── JobCard.tsx
-│   ├── ToolCard.tsx
-│   ├── JobFilters.tsx
-│   └── CategoryTabs.tsx
-├── models/                  # Mongoose models
-│   ├── Job.ts
-│   └── Tool.ts
+├── app/
+│   ├── page.tsx               # Homepage
+│   ├── jobs/                  # Job listings & detail pages
+│   ├── ai-tools/              # AI tools directory
+│   ├── resources/             # Roadmaps, resume hub, cheat sheets, etc.
+│   ├── blog/                  # Blog list & posts
+│   ├── admin/                 # Admin panel (client-side, key-protected)
+│   ├── api/                   # Route handlers (public + /api/admin/* + /api/cron/*)
+│   ├── layout.tsx, sitemap.ts, robots.ts
+├── components/                # Shared React components
 ├── lib/
-│   ├── mongodb.ts           # MongoDB connection helper
-│   └── adminAuth.ts         # Admin middleware
-├── public/                  # Static assets
-├── .env.local               # Environment variables (DO NOT COMMIT)
-├── next.config.mjs          # Next.js config
-├── tailwind.config.ts       # Tailwind config
-├── tsconfig.json            # TypeScript config
-└── package.json
+│   ├── supabase.ts            # anon client (RLS) + service-role client (API routes only)
+│   ├── adminAuth.ts           # timing-safe x-admin-key check
+│   ├── rateLimit.ts           # per-IP rate limiting
+│   ├── sanitize.ts            # HTML sanitization (blogs, job descriptions)
+│   ├── validate.ts            # URL / limit / field allow-list helpers
+│   ├── roadmaps.ts            # roadmap data from Supabase
+│   └── site.ts                # canonical SITE_URL
+├── supabase/                  # schema, migrations, seeds (see supabase/README.md)
+├── docs/CODEBASE_ISSUES.md    # known issues and their status
+├── vercel.json                # Cron schedule for /api/cron/fetch-jobs
+└── next.config.mjs            # security headers, redirects, image domains
 ```
 
 ---
 
 ## 🔐 Admin Panel
 
-The admin panel is protected by a secret key. To access:
+1. Go to `/admin`.
+2. Enter the `ADMIN_SECRET` value. It's checked against the server before the dashboard opens.
+3. Manage jobs, pending jobs, tools, roadmaps and blogs.
 
-1. Navigate to `/admin`
-2. Enter the `ADMIN_SECRET` value from your `.env.local` file
-3. Add, edit or delete jobs and AI tools
-
-API routes (`POST`, `PUT`, `DELETE`) require the `x-admin-key` header matching `ADMIN_SECRET`.
+Every write route requires the `x-admin-key` header to match `ADMIN_SECRET`. The comparison is constant-time and rate-limited.
+`/api/cron/fetch-jobs` also accepts `Authorization: Bearer <CRON_SECRET>`, which is what Vercel Cron sends.
 
 ---
 
-## 🗄️ Database Schema
+## 🗄️ Database
 
-### Jobs Collection
-
-```ts
-{
-  title: string;        // "Software Engineer"
-  company: string;      // "Goldman Sachs"
-  location: string;     // "Bengaluru" or "Remote"
-  type: 'Job' | 'Internship' | 'Full-time';
-  batch_year?: number;  // 2026
-  salary?: string;      // "₹18–24 LPA"
-  apply_link: string;   // External URL
-  deadline?: Date;
-  description: string;  // HTML content
-  is_featured: boolean; // Show on homepage
-  tags: string[];       // ["React", "Node", "AWS"]
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-### Tools Collection
-
-```ts
-{
-  name: string;         // "ChatGPT"
-  description: string;  // One-line summary
-  category: 'Writing' | 'Image' | 'Coding' | 'Productivity' | 'Research';
-  url: string;          // External link
-  icon_url?: string;    // Optional icon URL
-  is_free: boolean;
-  is_featured: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+Tables: `jobs`, `pending_jobs`, `tools`, `blogs`, `roadmaps`, `users`, `automation_logs`, `site_stats`.
+The anon key can only read public rows (live jobs, published blogs, tools, roadmaps, site stats).
+All writes go through API routes that use the service-role key. Full definitions are in `supabase/`.
 
 ---
 
@@ -194,15 +151,12 @@ API routes (`POST`, `PUT`, `DELETE`) require the `x-admin-key` header matching `
 
 ## 🚢 Deployment (Vercel)
 
-1. Push your code to GitHub
-2. Connect your repo to [Vercel](https://vercel.com)
-3. Add environment variables in Vercel Dashboard:
-   - `MONGODB_URI`
-   - `ADMIN_SECRET`
-   - `NEXT_PUBLIC_APP_URL=https://techwithshailu.in`
-4. Deploy!
+1. Push your code to GitHub.
+2. Connect the repo to [Vercel](https://vercel.com).
+3. In the Vercel dashboard, add the environment variables from `.env.example`, with `NEXT_PUBLIC_APP_URL=https://techwithshailu.in`.
+4. Deploy. The Cron job in `vercel.json` runs the job fetch daily at 07:00 UTC.
 
-Vercel auto-deploys on every `git push` to main branch.
+Vercel auto-deploys on every `git push` to the main branch.
 
 ---
 
@@ -233,7 +187,6 @@ Vercel auto-deploys on every `git push` to main branch.
 - [ ] Company dashboard for posting jobs
 - [ ] Newsletter signup integration (Mailchimp / Resend)
 - [ ] Search with Algolia / MeiliSearch
-- [ ] Automated job scraping from LinkedIn / Unstop
 - [ ] Analytics (Google Analytics / Vercel Analytics)
 
 ---
@@ -241,9 +194,8 @@ Vercel auto-deploys on every `git push` to main branch.
 ## 📚 Resources Referenced
 
 - [Next.js Documentation](https://nextjs.org/docs)
-- [MongoDB Atlas Guide](https://www.mongodb.com/docs/atlas/)
+- [Supabase Docs](https://supabase.com/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
-- [Mongoose Docs](https://mongoosejs.com/docs/)
 
 ---
 

@@ -14,6 +14,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
+import { pick, BLOG_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = await req.json();
+    const body = pick(await req.json(), BLOG_FIELDS);
     const doc  = {
       ...body,
       // Sanitize HTML content before storing to prevent XSS
@@ -68,8 +69,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'DB error';
-    console.error('[POST /api/blogs]', msg);
-    return NextResponse.json({ error: 'Database error', detail: msg }, { status: 503 });
+    console.error('[POST /api/blogs]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Database error' }, { status: 503 });
   }
 }

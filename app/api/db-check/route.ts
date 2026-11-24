@@ -27,7 +27,8 @@ export async function GET() {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[db-check]', msg);
     return NextResponse.json(
-      { ok: false, status: 'error', message: msg },
+      // Public endpoint: never echo internal error text to the caller
+      { ok: false, status: 'error', message: 'Database unreachable — check server logs.' },
       { status: 500 }
     );
   }

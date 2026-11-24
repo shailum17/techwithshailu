@@ -11,6 +11,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
+import { pick, BLOG_FIELDS } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -44,9 +45,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const body = await req.json();
-    delete body.id;
-    delete body.updated_at;
+    const body: Record<string, unknown> = pick(await req.json(), BLOG_FIELDS);
 
     // Sanitize HTML content before storing to prevent XSS
     if (typeof body.content === 'string') {
@@ -67,7 +66,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     if (error) {
       console.error('[PUT /api/blogs/:id] Supabase error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);

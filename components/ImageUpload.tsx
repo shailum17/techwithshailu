@@ -8,21 +8,40 @@ interface Props {
   label?: string;                   // e.g. "Company Logo"
   hint?: string;                    // sub-label
   size?: number;                    // preview box px
+  adminKey: string;                 // sent to /api/admin/cloudinary-sign
 }
 
-const CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-const PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+interface SignedParams {
+  cloudName: string;
+  apiKey: string;
+  timestamp: number;
+  folder: string;
+  signature: string;
+}
 
-async function uploadToCloudinary(file: File): Promise<string> {
-  if (!CLOUD || !PRESET) {
-    throw new Error('Cloudinary env vars not set. Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to .env.local');
+/**
+ * Signed upload: ask our admin-only API for a short-lived signature, then
+ * upload straight to Cloudinary. No unsigned preset is exposed to the browser.
+ */
+async function uploadToCloudinary(file: File, adminKey: string): Promise<string> {
+  const signRes = await fetch('/api/admin/cloudinary-sign', {
+    method: 'POST',
+    headers: { 'x-admin-key': adminKey },
+  });
+  if (!signRes.ok) {
+    const body = await signRes.json().catch(() => ({}));
+    throw new Error(body.error ?? 'Could not authorise upload');
   }
+  const p = (await signRes.json()) as SignedParams;
+
   const fd = new FormData();
   fd.append('file', file);
-  fd.append('upload_preset', PRESET);
-  fd.append('folder', 'techwithshailu');
+  fd.append('api_key', p.apiKey);
+  fd.append('timestamp', String(p.timestamp));
+  fd.append('folder', p.folder);
+  fd.append('signature', p.signature);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`, {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${p.cloudName}/image/upload`, {
     method: 'POST',
     body: fd,
   });
@@ -31,7 +50,7 @@ async function uploadToCloudinary(file: File): Promise<string> {
   return data.secure_url as string;
 }
 
-export default function ImageUpload({ value, onChange, label = 'Image', hint, size = 56 }: Props) {
+export default function ImageUpload({ value, onChange, label = 'Image', hint, size = 56, adminKey }: Props) {
   const [mode, setMode]       = useState<'url' | 'file'>('file');
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -45,7 +64,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
     setError('');
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file);
+      const url = await uploadToCloudinary(file, adminKey);
       onChange(url);
       setImgErr(false);
     } catch (e: unknown) {
@@ -53,7 +72,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', hint, si
     } finally {
       setUploading(false);
     }
-  }, [onChange]);
+  }, [onChange, adminKey]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragging(false);

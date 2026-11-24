@@ -18,8 +18,12 @@
  * Every run is logged to automation_logs table.
  */
 
+import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { checkAdminAuth, safeEqual } from '@/lib/adminAuth';
 import { formatJobDescription } from '@/lib/formatJobDescription';
+import { safeHttpUrl } from '@/lib/validate';
+import { SITE_URL } from '@/lib/site';
 
 export const dynamic  = 'force-dynamic';
 export const maxDuration = 60; // allow up to 60s on Vercel Pro / increase if needed
@@ -196,7 +200,7 @@ async function fetchUnstop(query: string): Promise<Job[]> {
         location:    i.region === 'online' ? 'Remote' : (i.region ?? 'India'),
         type:        i.subtype === 'internships' ? 'Internship' : 'Job',
         description: formatJobDescription(i.details ?? ''),
-        apply_link:  i.seo_url ?? `https://unstop.com/${i.type ?? 'internships'}/${i.id}`,
+        apply_link:  safeHttpUrl(i.seo_url) ?? `https://unstop.com/${i.type ?? 'internships'}/${i.id}`,
         salary,
         deadline:    i.regnRequirements?.end_regn_dt ?? null,
         source:      'unstop',
@@ -276,7 +280,7 @@ async function fetchAdzuna(query: string): Promise<Job[]> {
         location:    loc,
         type,
         description: formatJobDescription(j.description ?? ''),
-        apply_link:  j.redirect_url ?? '',
+        apply_link:  safeHttpUrl(j.redirect_url) ?? '',
         salary,
         deadline:    null,
         source:      'adzuna',
@@ -405,7 +409,7 @@ async function fetchOneRapidQuery(query: string, key: string): Promise<Job[]> {
         location:    j.job_city ?? j.job_country ?? 'Remote',
         type:        j.job_employment_type ?? 'Internship',
         description: formatJobDescription(j.job_description ?? ''),
-        apply_link:  j.job_apply_link ?? '',
+        apply_link:  safeHttpUrl(j.job_apply_link) ?? '',
         salary,
         deadline:    null,
         source:      'rapidapi',
@@ -458,16 +462,24 @@ async function fetchRapidAPI(query: string): Promise<Job[]> {
 /* ═════════════════════════════════════════════════════════════
    MAIN HANDLER
 ═════════════════════════════════════════════════════════════ */
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
 
-  // Auth check
+  // Auth check — fail closed:
+  //  • Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`. If CRON_SECRET is
+  //    not configured, cron auth is disabled entirely (never compare against
+  //    the string "Bearer undefined").
+  //  • Otherwise fall back to the admin key check, which is timing-safe and
+  //    rate-limited.
+  const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get('authorization') ?? '';
-  const adminKey   = req.headers.get('x-admin-key')   ?? '';
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && adminKey !== process.env.ADMIN_SECRET) {
-    return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  const isCron     = !!cronSecret && safeEqual(authHeader, `Bearer ${cronSecret}`);
+
+  if (!isCron) {
+    const authError = checkAdminAuth(req);
+    if (authError) return authError;
   }
 
-  const trigger  = authHeader === `Bearer ${process.env.CRON_SECRET}` ? 'cron' : 'manual';
+  const trigger  = isCron ? 'cron' : 'manual';
   const rawQuery = new URL(req.url).searchParams.get('q') ?? 'software developer internship india';
 
   console.log(`[cron] START trigger=${trigger} query="${rawQuery}"`);
@@ -519,8 +531,8 @@ export async function GET(req: Request) {
     if (checkErr)  { errors.push(`check: ${checkErr.message}`); continue; }
     if (existing)  { dupeCount++; continue; }
 
-    // Build insert — only include deadline if the column exists
-    // (run: ALTER TABLE pending_jobs ADD COLUMN IF NOT EXISTS deadline date;  in Supabase SQL Editor)
+    // Build insert (pending_jobs.deadline is added by
+    // supabase/migrations/20261124000000_schema_sync.sql)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const insertRow: Record<string, any> = {
       title:       job.title,
@@ -562,7 +574,7 @@ export async function GET(req: Request) {
         text: `[techwithshailu] *techwithshailu*\n\n` +
               `[ok] *${newCount}* new opportunities added!\n` +
               `[stats] Sources: Unstop(${unstopJobs.length}) Adzuna(${adzunaJobs.length}) RapidAPI(${rapidJobs.length})\n` +
-              `Approve: https://techwithshailu.com/admin`,
+              `Approve: ${SITE_URL}/admin`,
         parse_mode: 'Markdown',
       }),
     }).catch(() => {/* non-fatal */});
