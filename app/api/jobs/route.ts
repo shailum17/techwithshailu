@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
+import { clampLimit, pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
       : query.order('created_at', { ascending: false });
 
     const limit = searchParams.get('limit');
-    if (limit) query = query.limit(Number(limit));
+    if (limit) query = query.limit(clampLimit(limit, 20, 100));
 
     const { data, error } = await query;
     if (error) throw error;
@@ -65,7 +66,12 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = await req.json();
+    const body = pick(await req.json(), JOB_FIELDS);
+    if (body.apply_link) {
+      const link = safeHttpUrl(body.apply_link);
+      if (!link) return NextResponse.json({ error: 'apply_link must be an http(s) URL' }, { status: 400 });
+      body.apply_link = link;
+    }
     const { data, error } = await supabaseAdmin
       .from('jobs')
       .insert(body)
@@ -74,12 +80,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
   } catch (err: unknown) {
-    const msg    = err instanceof Error ? err.message : String(err);
-    const detail = (err as Record<string, unknown>)?.details ?? (err as Record<string, unknown>)?.hint ?? msg;
     console.error('[POST /api/jobs]', err);
-    return NextResponse.json(
-      { error: 'Database error', detail: `${msg}${detail && detail !== msg ? ` — ${detail}` : ''}` },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: 'Database error' }, { status: 503 });
   }
 }

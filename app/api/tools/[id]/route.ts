@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
+import { pick, TOOL_FIELDS } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -42,9 +43,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const body = await req.json();
-    delete body.id;
-    delete body.updated_at;
+    const body = pick(await req.json(), TOOL_FIELDS);
 
     const { data, error } = await supabaseAdmin
       .from('tools')
@@ -55,7 +54,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     if (error) {
       console.error('[PUT /api/tools/:id] Supabase error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);

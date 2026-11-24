@@ -1,6 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════
 -- techwithshailu — Supabase Schema
 -- Run this entire file in: Supabase Dashboard → SQL Editor → New Query
+-- Then apply supabase/migrations/*.sql in order (see supabase/README.md).
 -- ═══════════════════════════════════════════════════════════════
 
 -- Enable UUID generation (already on by default in Supabase, but safe to include)

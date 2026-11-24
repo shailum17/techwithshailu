@@ -22,5 +22,6 @@ export interface RoadmapCategory {
   dotColor: string;
   resources: RoadmapResource[];
   nodeResources?: Record<string, NodeResources>;
+  tags?: string[];
   proTip?: { text: string; linkLabel?: string; linkUrl?: string };
 }

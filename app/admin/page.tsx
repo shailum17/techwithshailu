@@ -89,8 +89,10 @@ function Thumb({ src, fallback, color = '#A8E63D' }: { src?: string; fallback: s
 /* ═══════════════════════════════════════════════════════════════
    LOGIN — matches site card style
    ═══════════════════════════════════════════════════════════════ */
-function LoginScreen({ onAuth }: { onAuth: (k: string) => void }) {
-  const [key, setKey] = useState('');
+function LoginScreen({ onAuth }: { onAuth: (k: string) => Promise<string | null> }) {
+  const [key, setKey]           = useState('');
+  const [error, setError]       = useState('');
+  const [checking, setChecking] = useState(false);
   return (
     <div className="min-h-screen flex items-center justify-center pt-16"
          style={{ background: '#080808' }}>
@@ -122,12 +124,20 @@ function LoginScreen({ onAuth }: { onAuth: (k: string) => void }) {
         <p className="text-sm mb-7" style={{ color: 'rgba(255,255,255,0.4)' }}>
           Enter your admin key to access the dashboard.
         </p>
-        <form onSubmit={e => { e.preventDefault(); onAuth(key); }}>
+        <form onSubmit={async e => {
+          e.preventDefault();
+          setChecking(true); setError('');
+          const err = await onAuth(key);
+          if (err) { setError(err); setChecking(false); }
+        }}>
           <input type="password" placeholder="Admin secret key" value={key}
-            onChange={e => setKey(e.target.value)}
+            onChange={e => { setKey(e.target.value); setError(''); }}
             style={{ ...IS, marginBottom: 12 }} required />
-          <button type="submit" className="btn-lime w-full py-3 text-sm">
-            Access Panel
+          {error && (
+            <p role="alert" style={{ color: '#f87171', fontSize: 12, marginBottom: 12 }}>{error}</p>
+          )}
+          <button type="submit" className="btn-lime w-full py-3 text-sm" disabled={checking}>
+            {checking ? 'Checking…' : 'Access Panel'}
           </button>
         </form>
       </div>
@@ -388,9 +398,9 @@ function JobsView({ jobs, loading, adminKey, onRefresh }: {
           <p className="font-poppins font-bold text-white" style={{ fontSize:15, marginBottom:18 }}>Add New Job</p>
           <Flash msg={msg}/>
           <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            <ImageUpload value={form.logo_url} onChange={url=>setForm({...form,logo_url:url})}
+            <ImageUpload adminKey={adminKey} value={form.logo_url} onChange={url=>setForm({...form,logo_url:url})}
               label="Company Logo" hint="shown on card & detail page" size={50}/>
-            <ImageUpload value={form.banner_url} onChange={url=>setForm({...form,banner_url:url})}
+            <ImageUpload adminKey={adminKey} value={form.banner_url} onChange={url=>setForm({...form,banner_url:url})}
               label="Banner Image" hint="wide header image on detail page (optional)" size={50}/>
             {([
               {k:'title',      l:'Job Title',             r:true},
@@ -570,7 +580,7 @@ function ToolsView({ tools, loading, adminKey, onRefresh }: {
         <p className="font-poppins font-bold text-white" style={{ fontSize:15,marginBottom:18 }}>Add New AI Tool</p>
         <Flash msg={msg}/>
         <form onSubmit={submit} style={{ display:'flex',flexDirection:'column',gap:10 }}>
-          <ImageUpload value={form.icon_url} onChange={url=>setForm({...form,icon_url:url})}
+          <ImageUpload adminKey={adminKey} value={form.icon_url} onChange={url=>setForm({...form,icon_url:url})}
             label="Tool Icon" hint="optional" size={50}/>
           {([{k:'name',l:'Tool Name',r:true},{k:'url',l:'Tool URL',r:true}] as {k:string;l:string;r?:boolean}[]).map(({k,l,r})=>(
             <input key={k} type="text" placeholder={l} required={r}
@@ -2820,7 +2830,7 @@ published: false
             </div>
 
             {/* Cover Image */}
-            <ImageUpload
+            <ImageUpload adminKey={adminKey}
               label="Cover Image"
               hint="(optional)"
               value={form.cover_url}
@@ -3315,7 +3325,7 @@ function SecurityView() {
             const cfg = {
               active:   { dot:'#4ade80', label:'Active',  bg:'rgba(74,222,128,0.08)',  border:'rgba(74,222,128,0.2)',  text:'rgba(255,255,255,0.75)' },
               missing:  { dot:'rgba(255,255,255,0.2)', label:'Not set', bg:'rgba(255,255,255,0.04)', border:'rgba(255,255,255,0.1)', text:'rgba(255,255,255,0.3)' },
-            }[item.status];
+            }[item.status as 'active' | 'missing'];
             return (
               <div key={i} style={{ padding:'14px 0',
                                      borderBottom: i < 5 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
@@ -3446,10 +3456,20 @@ export default function AdminPage() {
     } catch { /* silent */ }
   }
 
-  function handleAuth(k: string) {
+  /** Verifies the key with the server; returns an error message or null on success. */
+  async function handleAuth(k: string): Promise<string | null> {
+    try {
+      const res = await fetch('/api/admin/verify', { headers: { 'x-admin-key': k } });
+      if (res.status === 401) return 'Invalid admin key.';
+      if (res.status === 429) return 'Too many attempts. Wait a minute and try again.';
+      if (!res.ok)            return 'Server error — check ADMIN_SECRET is configured.';
+    } catch {
+      return 'Cannot reach the server.';
+    }
     setAdminKey(k); setAuthed(true);
     fetchData();
     fetchPendingCount(k);
+    return null;
   }
 
   if (!authed) return <LoginScreen onAuth={handleAuth} />;

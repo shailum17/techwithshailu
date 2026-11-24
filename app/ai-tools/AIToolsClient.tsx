@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 /* ── Types ────────────────────────────────────────────────────── */
 export interface AiTool {
@@ -307,7 +307,7 @@ export default function AIToolsClient({
     );
 
   const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } };
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden:  { opacity: 0, y: 20, scale: 0.97 },
     visible: { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.3, ease: 'easeOut' } },
   };

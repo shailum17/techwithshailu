@@ -195,7 +195,7 @@ function CircuitBg({ color, opacity }: { color: string; opacity: number }) {
       });
       lines.forEach((el, i) => {
         animate(el as unknown as HTMLElement, {
-          strokeDashoffset: [{ to: 0 }, { to: -el.getTotalLength?.() ?? -200 }],
+          strokeDashoffset: [{ to: 0 }, { to: -(el.getTotalLength?.() ?? 200) }],
           duration: 3000 + i * 400,
           loop: true,
           ease: 'linear',

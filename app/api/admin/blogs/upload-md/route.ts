@@ -72,7 +72,8 @@ export async function POST(req: NextRequest) {
     const rawHtml = await Promise.resolve(marked(mdBody));
     html = sanitizeBlogHtml(rawHtml);
   } catch (err) {
-    return NextResponse.json({ error: `Markdown parse error: ${String(err)}` }, { status: 500 });
+    console.error('[POST /api/admin/blogs/upload-md] markdown parse:', err);
+    return NextResponse.json({ error: 'Markdown parse error' }, { status: 422 });
   }
 
   // ── 4. Normalise tags ───────────────────────────────────────
@@ -109,9 +110,9 @@ export async function POST(req: NextRequest) {
     updated_at:   now,
   };
 
-  // Columns that may not exist yet — add via Supabase SQL Editor:
-  //   ALTER TABLE blogs ADD COLUMN IF NOT EXISTS category  text default 'General';
-  //   ALTER TABLE blogs ADD COLUMN IF NOT EXISTS read_time text default '';
+  // category / read_time are added by
+  // supabase/migrations/20261124000000_schema_sync.sql; the fallback below
+  // keeps uploads working on databases where it hasn't been applied yet.
   const extendedPayload = {
     ...basePayload,
     ...(data.category  !== undefined ? { category:  data.category  } : {}),
@@ -145,12 +146,12 @@ export async function POST(req: NextRequest) {
 
       if (error2) {
         console.error('[POST /api/admin/blogs/upload-md] fallback error:', error2.message);
-        return NextResponse.json({ error: error2.message }, { status: 500 });
+        return NextResponse.json({ error: 'Database error' }, { status: 500 });
       }
       upserted = result2;
     } else {
       console.error('[POST /api/admin/blogs/upload-md]', error1.message);
-      return NextResponse.json({ error: error1.message }, { status: 500 });
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
   }
 

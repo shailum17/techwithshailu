@@ -45,7 +45,6 @@ export default function MagneticButton({
   };
 
   const props = {
-    ref,
     style: { x, y, ...styleProp },
     onMouseMove: handleMove,
     onMouseLeave: handleLeave,
@@ -56,14 +55,14 @@ export default function MagneticButton({
 
   if (href) {
     return (
-      <motion.a {...props} href={href} target={target} rel={rel}>
+      <motion.a {...props} ref={ref as React.RefObject<HTMLAnchorElement>} href={href} target={target} rel={rel}>
         {children}
       </motion.a>
     );
   }
 
   return (
-    <motion.button {...props}>
+    <motion.button {...props} ref={ref as React.RefObject<HTMLButtonElement>}>
       {children}
     </motion.button>
   );

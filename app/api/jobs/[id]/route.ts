@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
+import { pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -45,12 +46,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const body = await req.json();
-    // Never let the caller overwrite the primary key
-    delete body.id;
-    // Remove updated_at — only include if the column actually exists in the table
-    // (avoids silent failures on tables that don't have this column)
-    delete body.updated_at;
+    // Only allow-listed columns can be written (no id / timestamps / fts)
+    const body = pick(await req.json(), JOB_FIELDS);
+    if (body.apply_link) {
+      const link = safeHttpUrl(body.apply_link);
+      if (!link) return NextResponse.json({ error: 'apply_link must be an http(s) URL' }, { status: 400 });
+      body.apply_link = link;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('jobs')
@@ -61,7 +63,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     if (error) {
       console.error('[PUT /api/jobs/:id] Supabase error:', error.message, error.details);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);

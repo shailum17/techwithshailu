@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CopyLinkButton from '@/components/CopyLinkButton';
 import { formatJobDescription } from '@/lib/formatJobDescription';
+import { safeHttpUrl } from '@/lib/validate';
+import { SITE_URL } from '@/lib/site';
 
 interface JobDetail {
   id: string; title: string; company: string; location: string; type: string;
@@ -65,6 +67,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const { id }  = await params;
   const job     = await getJob(id);
   if (!job) notFound();
+  // Only render absolute http(s) apply links (third-party data is untrusted)
+  const applyHref = safeHttpUrl(job.apply_link) ?? '#';
 
   const deadline      = job.deadline ? new Date(job.deadline) : null;
   const rawDate       = job.created_at ?? job.createdAt;
@@ -120,7 +124,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
         {/* Identity bar — overlaps banner */}
         <div className="relative -mt-12 mb-6 flex items-end gap-4">
-          <div className="ring-4 rounded-2xl flex-shrink-0" style={{ ringColor: '#080808' }}>
+          <div className="ring-4 ring-[#080808] rounded-2xl flex-shrink-0">
             <CompanyLogo logoUrl={job.logo_url} domain={job.logo_domain} company={job.company} size={72} />
           </div>
           <div className="pb-1">
@@ -263,7 +267,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 <h2 className="font-poppins font-bold text-white text-base">Share this Job</h2>
               </div>
               <div className="flex flex-wrap gap-2">
-                <a href={`https://wa.me/?text=${encodeURIComponent(`${job.title} at ${job.company} — ${process.env.NEXT_PUBLIC_APP_URL || 'https://techwithshailu.in'}/jobs/${job.id}`)}`}
+                <a href={`https://wa.me/?text=${encodeURIComponent(`${job.title} at ${job.company} — ${SITE_URL}/jobs/${job.id}`)}`}
                    target="_blank" rel="noopener noreferrer"
                    className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all duration-200 hover:brightness-110"
                    style={{ background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.25)' }}>
@@ -273,7 +277,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   </svg>
                   WhatsApp
                 </a>
-                <a href={`https://t.me/share/url?url=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || 'https://techwithshailu.in'}/jobs/${job.id}`)}&text=${encodeURIComponent(`${job.title} at ${job.company}`)}`}
+                <a href={`https://t.me/share/url?url=${encodeURIComponent(`${SITE_URL}/jobs/${job.id}`)}&text=${encodeURIComponent(`${job.title} at ${job.company}`)}`}
                    target="_blank" rel="noopener noreferrer"
                    className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all duration-200 hover:brightness-110"
                    style={{ background: 'rgba(40,168,224,0.1)', color: '#29A8E0', border: '1px solid rgba(40,168,224,0.25)' }}>
@@ -283,7 +287,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   </svg>
                   Telegram
                 </a>
-                <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || 'https://techwithshailu.in'}/jobs/${job.id}`)}`}
+                <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${SITE_URL}/jobs/${job.id}`)}`}
                    target="_blank" rel="noopener noreferrer"
                    className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all duration-200 hover:brightness-110"
                    style={{ background: 'rgba(10,102,194,0.1)', color: '#0a66c2', border: '1px solid rgba(10,102,194,0.25)' }}>
@@ -316,7 +320,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 </div>
 
                 {/* Apply Now */}
-                <a href={job.apply_link} target="_blank" rel="noopener noreferrer"
+                <a href={applyHref} target="_blank" rel="noopener noreferrer"
                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl
                               font-bold text-sm transition-all duration-200
                               hover:brightness-110 active:scale-95"
@@ -408,7 +412,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       {/* ── Mobile sticky Apply bar ──────────────────────── */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 px-4 pb-4 pt-3"
            style={{ background: 'linear-gradient(to top,#080808 60%,transparent)', backdropFilter: 'blur(8px)' }}>
-        <a href={job.apply_link} target="_blank" rel="noopener noreferrer"
+        <a href={applyHref} target="_blank" rel="noopener noreferrer"
            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl
                       font-bold text-sm transition-all duration-200 hover:brightness-110 active:scale-95"
            style={{ background: '#A8E63D', color: '#000', boxShadow: '0 4px 24px rgba(168,230,61,0.4)' }}>
