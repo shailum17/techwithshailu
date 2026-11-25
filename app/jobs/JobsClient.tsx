@@ -5,7 +5,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import { safeHttpUrl } from '@/lib/validate';
 
-interface Job {
+export interface Job {
   id: string;
   title: string;
   company: string;

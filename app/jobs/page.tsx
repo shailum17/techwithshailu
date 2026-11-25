@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import JobsClient from './JobsClient';
+import JobsClient, { type Job } from './JobsClient';
+import { listLiveJobs } from '@/lib/data/public';
 
 export const metadata: Metadata = {
   title: 'Tech Jobs & Internships for CS Freshers 2026',
@@ -26,29 +27,26 @@ async function JobsContent({
 }) {
   const params = await searchParams;
 
-  // Fetch from API
-  const qs = new URLSearchParams();
-  if (params.q)          qs.set('q', params.q);
-  if (params.type)       qs.set('type', params.type);
-  if (params.location)   qs.set('location', params.location);
-  if (params.batch_year) qs.set('batch_year', params.batch_year);
-  if (params.sort)       qs.set('sort', params.sort);
-
-// 1. Jobs page — no fallback dummy data, show empty state when DB is empty
-  let jobs = [];
+  // Query Supabase directly (lib/data/public.ts). Calling our own /api/jobs from
+  // the server made every visitor share one rate-limit bucket (issue #3).
+  let jobs: Job[] = [];
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/jobs?${qs.toString()}`, {
-      cache: 'no-store',
+    const rows = await listLiveJobs({
+      q:         params.q || undefined,
+      type:      params.type || undefined,
+      location:  params.location || undefined,
+      batchYear: params.batch_year ? Number(params.batch_year) : undefined,
+      sort:      params.sort === 'deadline' ? 'deadline' : 'newest',
     });
-    if (res.ok) {
-      const apiJobs = await res.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      jobs = Array.isArray(apiJobs) ? apiJobs.map((j: any) => ({
-        ...j,
-        createdAt: j.created_at ?? j.createdAt ?? new Date().toISOString(),
-      })) : [];
-    }
-  } catch { jobs = []; }
+    // Rows come from the jobs table (schema matches JobsClient's Job shape)
+    jobs = rows.map(j => ({
+      ...j,
+      createdAt: j.created_at ?? j.createdAt ?? new Date().toISOString(),
+    })) as unknown as Job[];
+  } catch (err) {
+    console.error('[jobs page]', err instanceof Error ? err.message : err);
+    jobs = [];
+  }
 
   return <JobsClient initialJobs={jobs} initialParams={params} />;
 }

@@ -6,6 +6,7 @@ import CopyLinkButton from '@/components/CopyLinkButton';
 import { formatJobDescription } from '@/lib/formatJobDescription';
 import { safeHttpUrl } from '@/lib/validate';
 import { SITE_URL } from '@/lib/site';
+import { getLiveJob } from '@/lib/data/public';
 
 interface JobDetail {
   id: string; title: string; company: string; location: string; type: string;
@@ -45,12 +46,9 @@ function CompanyLogo({
   );
 }
 
+/** Direct, request-deduplicated query (lib/data/public.ts) — no self-fetch over HTTP. */
 async function getJob(id: string): Promise<JobDetail | null> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/jobs/${id}`, { cache: 'no-store' });
-    if (res.ok) return res.json();
-  } catch { /* fall through */ }
-  return null;
+  return (await getLiveJob(id)) as JobDetail | null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

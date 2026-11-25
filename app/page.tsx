@@ -10,6 +10,10 @@ import CommunityCTA from '@/components/CommunityCTA';
 import WhatIsInsideBento from '@/components/WhatIsInsideBento';
 import { getRoadmapCategories } from '@/lib/roadmaps';
 import { supabase } from '@/lib/supabase';
+import { featuredOrLatest, listLiveJobs, listTools } from '@/lib/data/public';
+
+// Re-render at most once a minute (this used to come from the fetch() cache options)
+export const revalidate = 60;
 
 async function getSiteStats() {
   try {
@@ -48,34 +52,13 @@ async function getLatestBlogs() {
   } catch { return []; }
 }
 
-async function getFeaturedJobs() {
-  try {
-    const base = `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs`;
-    // Try featured first; if none are marked featured, fall back to latest 6
-    const featuredRes = await fetch(`${base}?featured=true&limit=6`, { next: { revalidate: 60 } });
-    if (featuredRes.ok) {
-      const featured = await featuredRes.json();
-      if (Array.isArray(featured) && featured.length > 0) return featured;
-    }
-    // Fallback: latest 6 live jobs
-    const latestRes = await fetch(`${base}?limit=6`, { next: { revalidate: 60 } });
-    if (!latestRes.ok) return [];
-    return latestRes.json();
-  } catch { return []; }
+// Query Supabase directly (lib/data/public.ts) — no HTTP round-trip to our own API
+function getFeaturedJobs() {
+  return featuredOrLatest(featured => listLiveJobs({ featured, limit: 6 }));
 }
 
-async function getFeaturedTools() {
-  try {
-    const base = `${process.env.NEXT_PUBLIC_APP_URL}/api/tools`;
-    const featuredRes = await fetch(`${base}?featured=true&limit=4`, { next: { revalidate: 60 } });
-    if (featuredRes.ok) {
-      const featured = await featuredRes.json();
-      if (Array.isArray(featured) && featured.length > 0) return featured;
-    }
-    const latestRes = await fetch(`${base}?limit=4`, { next: { revalidate: 60 } });
-    if (!latestRes.ok) return [];
-    return latestRes.json();
-  } catch { return []; }
+function getFeaturedTools() {
+  return featuredOrLatest(featured => listTools({ featured, limit: 4 }));
 }
 
 /* ── Level derived from slug ───────────────────────────────── */

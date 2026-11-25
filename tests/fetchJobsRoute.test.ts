@@ -25,6 +25,20 @@ function table(name: string) {
         },
       };
     },
+    delete() {
+      const conds: ((r: Row) => boolean)[] = [];
+      const q = {
+        in(col: string, vals: unknown[]) { conds.push(r => vals.includes(r[col])); return q; },
+        lt(col: string, val: string) {
+          conds.push(r => String(r[col]) < val);
+          const before = db[name].length;
+          db[name] = db[name].filter(r => !conds.every(c => c(r)));
+          calls.push({ table: name, op: 'delete', arg: before - db[name].length });
+          return Promise.resolve({ error: null });
+        },
+      };
+      return q;
+    },
     insert(rows: Row | Row[]) {
       const list = Array.isArray(rows) ? rows : [rows];
       calls.push({ table: name, op: 'insert', arg: list.length });
@@ -107,12 +121,42 @@ describe('GET /api/cron/fetch-jobs', () => {
 
     const inserts = calls.filter(c => c.table === 'pending_jobs' && c.op === 'insert');
     expect(inserts).toEqual([{ table: 'pending_jobs', op: 'insert', arg: 2 }]);   // one bulk insert
-    expect(calls.filter(c => c.op === 'select-in')).toHaveLength(1);              // one lookup
+    // one lookup per table (pending_jobs + live jobs) for this batch of titles
+    expect(calls.filter(c => c.op === 'select-in').map(c => c.table)).toEqual(['pending_jobs', 'jobs']);
 
     expect(db.pending_jobs.map(r => r.title).sort()).toEqual(['Backend Intern', 'Data Intern', 'Frontend Intern']);
     expect(db.pending_jobs.every(r => r.type === 'Internship' || r.title === 'Data Intern')).toBe(true);
     expect(db.automation_logs).toHaveLength(1);
     expect(telegramCalls[0]).toContain('2 new opportunities');
+  });
+
+  it('does not re-queue listings that were approved, rejected or are already live (#2)', async () => {
+    db.pending_jobs = [
+      { title: 'Frontend Intern', company: 'Acme',    status: 'approved', fetched_at: new Date().toISOString() },
+      { title: 'Backend Intern',  company: 'Globex',  status: 'rejected', fetched_at: new Date().toISOString() },
+    ];
+    db.jobs = [{ title: 'Data Intern', company: 'Initech', status: 'live' }];
+
+    const { body } = await run();
+    expect(body.added_to_pending).toBe(0);
+    expect(body.skipped_duplicates).toBe(3);
+    expect(telegramCalls).toHaveLength(0);
+  });
+
+  it('purges reviewed rows older than the retention window, keeping pending ones', async () => {
+    const old = new Date(Date.now() - 200 * 86_400_000).toISOString();
+    const recent = new Date().toISOString();
+    db.pending_jobs = [
+      { title: 'Old approved', company: 'A', status: 'approved', fetched_at: old },
+      { title: 'Old rejected', company: 'B', status: 'rejected', fetched_at: old },
+      { title: 'Old pending',  company: 'C', status: 'pending',  fetched_at: old },
+      { title: 'New rejected', company: 'D', status: 'rejected', fetched_at: recent },
+    ];
+    await run();
+    const titles = db.pending_jobs.map(r => r.title);
+    expect(titles).not.toContain('Old approved');
+    expect(titles).not.toContain('Old rejected');
+    expect(titles).toEqual(expect.arrayContaining(['Old pending', 'New rejected']));
   });
 
   it('applies admin filters (location) on a manual run', async () => {

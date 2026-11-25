@@ -7,7 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { getLiveJob } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
@@ -21,17 +22,10 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { id } = await params;
   try {
-    // Use anon client — respects Supabase RLS (status = 'live' policy).
-    // Also enforce the filter here as defense-in-depth in case RLS is
-    // temporarily disabled or misconfigured.
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*')
-      .eq('id', id)
-      .eq('status', 'live')
-      .single();
-    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json(data);
+    // Shared with the job detail page (lib/data/public.ts): anon client + status = 'live'
+    const job = await getLiveJob(id);
+    if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json(job);
   } catch (err) {
     console.error('[GET /api/jobs/:id]', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

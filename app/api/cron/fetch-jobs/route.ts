@@ -32,6 +32,9 @@ import {
 export const dynamic  = 'force-dynamic';
 export const maxDuration = 60; // allow up to 60s on Vercel Pro / increase if needed
 
+/** Days to keep approved/rejected pending_jobs rows for de-duplication. */
+const REVIEWED_RETENTION_DAYS = 120;
+
 /* ─────────────────────────────────────────────────────────────
    Shared type
 ───────────────────────────────────────────────────────────── */
@@ -551,15 +554,19 @@ export async function GET(req: NextRequest) {
   let dupeCount = 0;
   const errors: string[] = [];
 
+  // "Seen before" = any pending_jobs row (pending, approved or rejected — reviewed
+  // rows are kept for exactly this) or any job already on the site.
   const existingKeys = new Set<string>();
   const titles = Array.from(new Set(allJobs.map(j => j.title)));
   for (const batch of chunk(titles, 50)) {
-    const { data, error } = await supabaseAdmin
-      .from('pending_jobs')
-      .select('title, company')
-      .in('title', batch);
-    if (error) { errors.push(`check: ${error.message}`); continue; }
-    for (const row of data ?? []) existingKeys.add(dedupeKey(row.title ?? '', row.company ?? ''));
+    for (const table of ['pending_jobs', 'jobs'] as const) {
+      const { data, error } = await supabaseAdmin
+        .from(table)
+        .select('title, company')
+        .in('title', batch);
+      if (error) { errors.push(`check ${table}: ${error.message}`); continue; }
+      for (const row of data ?? []) existingKeys.add(dedupeKey(row.title ?? '', row.company ?? ''));
+    }
   }
 
   const rows = [];
@@ -592,6 +599,19 @@ export async function GET(req: NextRequest) {
         else       newCount++;
       }
     }
+  }
+
+  // ── Purge long-reviewed rows ──────────────────────────────
+  // Approved/rejected rows are only kept to stop listings being re-queued;
+  // after ~4 months the source listing has expired anyway.
+  {
+    const cutoff = new Date(Date.now() - REVIEWED_RETENTION_DAYS * 86_400_000).toISOString();
+    const { error: purgeErr } = await supabaseAdmin
+      .from('pending_jobs')
+      .delete()
+      .in('status', ['approved', 'rejected'])
+      .lt('fetched_at', cutoff);
+    if (purgeErr) console.warn('[cron] purge of reviewed rows failed:', purgeErr.message);
   }
 
   // ── Log to DB ─────────────────────────────────────────────

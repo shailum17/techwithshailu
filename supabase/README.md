@@ -20,6 +20,9 @@ Run these files in order (SQL Editor, or `psql`):
      rate limits shared across serverless instances (admin auth failures, signups, visitor counter).
    - `20261125000200_approve_pending_job.sql` — `approve_pending_job()` moves a pending job to `jobs`
      in one transaction (used by the admin Approve button).
+   - `20261125000300_keep_reviewed_pending_jobs.sql` — approved/rejected jobs stay in `pending_jobs`
+     (status `approved` / `rejected`) so the daily fetch doesn't re-queue them; redefines
+     `approve_pending_job()` accordingly and adds title/status indexes.
 3. `seed-roadmaps.sql` — optional roadmap content (safe to re-run).
 
 `rls_policies.sql` is an older, more detailed version of the RLS setup and overlaps with

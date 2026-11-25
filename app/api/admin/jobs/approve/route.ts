@@ -8,9 +8,11 @@
  * from pending_jobs → jobs (live) applying any overrides.
  *
  * The move is done by the approve_pending_job() Postgres function
- * (supabase/migrations/20261125000200_approve_pending_job.sql) so the insert
- * and the delete happen in one transaction. If that function isn't deployed
- * yet, it falls back to the previous two-step insert-then-delete.
+ * (supabase/migrations/20261125000300_keep_reviewed_pending_jobs.sql) so the
+ * insert and marking the pending row 'approved' happen in one transaction.
+ * The row is kept so the daily fetch doesn't re-queue the same listing.
+ * If that function isn't deployed yet, it falls back to a two-step
+ * insert-then-mark-approved.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -53,7 +55,7 @@ function validateOverrides(o: Overrides): string | null {
 /** Previous non-atomic path, used only until the migration is applied. */
 async function legacyApprove(jobId: string, overrides: Overrides): Promise<NextResponse> {
   const { data: job, error: fetchError } = await supabaseAdmin
-    .from('pending_jobs').select('*').eq('id', jobId).single();
+    .from('pending_jobs').select('*').eq('id', jobId).eq('status', 'pending').single();
   if (fetchError || !job) {
     return NextResponse.json({ error: 'Pending job not found' }, { status: 404 });
   }
@@ -78,10 +80,12 @@ async function legacyApprove(jobId: string, overrides: Overrides): Promise<NextR
     return NextResponse.json({ error: 'Failed to publish job' }, { status: 500 });
   }
 
-  const { error: deleteError } = await supabaseAdmin.from('pending_jobs').delete().eq('id', jobId);
-  if (deleteError) {
-    console.error('[approve] delete error:', deleteError.message);
-    return NextResponse.json({ error: 'Job published but could not be removed from pending' }, { status: 500 });
+  // Keep the row as 'approved' so the daily fetch doesn't queue it again
+  const { error: updateError } = await supabaseAdmin
+    .from('pending_jobs').update({ status: 'approved' }).eq('id', jobId);
+  if (updateError) {
+    console.error('[approve] status update error:', updateError.message);
+    return NextResponse.json({ error: 'Job published but could not be marked approved' }, { status: 500 });
   }
   return NextResponse.json({ success: true });
 }

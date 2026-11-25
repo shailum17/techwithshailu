@@ -11,7 +11,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { listTools } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { clampLimit, pick, TOOL_FIELDS } from '@/lib/validate';
@@ -24,26 +25,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-
-    // Use anon client — respects Supabase RLS policies
-    let query = supabase.from('tools').select('*');
-
-    const category = searchParams.get('category');
-    const featured = searchParams.get('featured');
-    const search   = searchParams.get('q');
-
-    if (category)            query = query.eq('category', category);
-    if (featured === 'true') query = query.eq('is_featured', true);
-    if (search)              query = query.textSearch('fts', search, { type: 'websearch' });
-
-    query = query.order('created_at', { ascending: false });
-
     const limit = searchParams.get('limit');
-    if (limit) query = query.limit(clampLimit(limit, 20, 100));
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return NextResponse.json(data ?? []);
+    const tools = await listTools({
+      category: searchParams.get('category') || undefined,
+      featured: searchParams.get('featured') === 'true',
+      q:        searchParams.get('q') || undefined,
+      limit:    limit ? clampLimit(limit, 20, 100) : undefined,
+    });
+    return NextResponse.json(tools);
   } catch (err) {
     console.error('[GET /api/tools]', err);
     return NextResponse.json([]);

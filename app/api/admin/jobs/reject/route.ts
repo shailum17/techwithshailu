@@ -4,7 +4,8 @@
  * POST /api/admin/jobs/reject
  * Body: { jobId: string }
  *
- * Permanently deletes a job from pending_jobs.
+ * Marks a pending job as rejected. The row is kept (not deleted) so the
+ * daily fetch recognises it and doesn't queue the same listing again.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,16 +18,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const { jobId } = await req.json();
-    if (!jobId) {
+    if (typeof jobId !== 'string' || !jobId) {
       return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('pending_jobs')
-      .delete()
-      .eq('id', jobId);
+      .update({ status: 'rejected' })
+      .eq('id', jobId)
+      .eq('status', 'pending')
+      .select('id');
 
     if (error) throw error;
+    if (!data?.length) {
+      return NextResponse.json({ error: 'Pending job not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -14,7 +14,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { listLiveJobs } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { clampLimit, pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
@@ -27,33 +28,20 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-
-    // Use anon client — respects Supabase RLS policies
-    let query = supabase.from('jobs').select('*');
-
-    const type     = searchParams.get('type');
-    const location = searchParams.get('location');
-    const batch    = searchParams.get('batch_year');
-    const featured = searchParams.get('featured');
-    const search   = searchParams.get('q');
-    const sort     = searchParams.get('sort') || 'newest';
-
-    if (type)                query = query.eq('type', type);
-    if (location)            query = query.ilike('location', `%${location}%`);
-    if (batch)               query = query.eq('batch_year', Number(batch));
-    if (featured === 'true') query = query.eq('is_featured', true);
-    if (search)              query = query.textSearch('fts', search, { type: 'websearch' });
-
-    query = sort === 'deadline'
-      ? query.order('deadline', { ascending: true })
-      : query.order('created_at', { ascending: false });
-
     const limit = searchParams.get('limit');
-    if (limit) query = query.limit(clampLimit(limit, 20, 100));
+    const batch = searchParams.get('batch_year');
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return NextResponse.json(data ?? []);
+    // Same query the Server Components use (lib/data/public.ts)
+    const jobs = await listLiveJobs({
+      type:      searchParams.get('type') || undefined,
+      location:  searchParams.get('location') || undefined,
+      batchYear: batch ? Number(batch) : undefined,
+      featured:  searchParams.get('featured') === 'true',
+      q:         searchParams.get('q') || undefined,
+      sort:      searchParams.get('sort') === 'deadline' ? 'deadline' : 'newest',
+      limit:     limit ? clampLimit(limit, 20, 100) : undefined,
+    });
+    return NextResponse.json(jobs);
   } catch (err) {
     console.error('[GET /api/jobs]', err);
     return NextResponse.json([]);

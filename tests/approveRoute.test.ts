@@ -2,16 +2,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const rpc = vi.fn();
-const legacy = { inserted: [] as unknown[], deleted: [] as unknown[] };
+const legacy = { inserted: [] as unknown[], updated: [] as unknown[] };
 
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: {
     rpc: (fn: string, args: unknown) =>
       fn === 'rate_limit_hit' ? Promise.resolve({ data: null, error: { message: 'no db' } }) : rpc(fn, args),
     from: (t: string) => ({
-      select: () => ({ eq: () => ({ single: async () => ({ data: { id: 'x', title: 'P', company: 'C', source: 'unstop' }, error: null }) }) }),
+      select: () => ({ eq: () => ({ eq: () => ({
+        single: async () => ({ data: { id: 'x', title: 'P', company: 'C', source: 'unstop' }, error: null }),
+      }) }) }),
       insert: async (row: unknown) => { legacy.inserted.push({ t, row }); return { error: null }; },
-      delete: () => ({ eq: async (_c: string, id: string) => { legacy.deleted.push({ t, id }); return { error: null }; } }),
+      update: (patch: unknown) => ({
+        eq: async (_c: string, id: string) => { legacy.updated.push({ t, id, patch }); return { error: null }; },
+      }),
     }),
   },
 }));
@@ -29,7 +33,7 @@ beforeEach(() => {
   process.env.ADMIN_SECRET = 'admin-secret';
   rpc.mockReset();
   legacy.inserted.length = 0;
-  legacy.deleted.length = 0;
+  legacy.updated.length = 0;
 });
 
 describe('POST /api/admin/jobs/approve', () => {
@@ -53,7 +57,8 @@ describe('POST /api/admin/jobs/approve', () => {
     const res = await call({ jobId: ID, overrides: { title: 'Edited' } });
     expect(res.status).toBe(200);
     expect(legacy.inserted).toHaveLength(1);
-    expect(legacy.deleted).toEqual([{ t: 'pending_jobs', id: ID }]);
+    // pending row is kept and marked approved, not deleted (#2)
+    expect(legacy.updated).toEqual([{ t: 'pending_jobs', id: ID, patch: { status: 'approved' } }]);
   });
 
   it.each([

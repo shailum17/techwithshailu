@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from('pending_jobs')
       .select('*')
+      .eq('status', 'pending')   // approved / rejected rows are kept for de-duplication
       .order('fetched_at', { ascending: false });
 
     if (error) throw error;
