@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sharedRateLimit } from '@/lib/sharedRateLimit';
 import { safeEqual } from '@/lib/safeEqual';
 import { ADMIN_SESSION_COOKIE, verifySessionToken } from '@/lib/adminSession';
+import { getSessionEpoch } from '@/lib/settings';
 
 export { safeEqual };
 
@@ -102,7 +103,7 @@ export async function checkAdminAuth(req: NextRequest): Promise<NextResponse | n
 
   // ── 3. Session cookie ──────────────────────────────────────────────────────
   const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (verifySessionToken(token, secret)) {
+  if (token && verifySessionToken(token, secret, Date.now(), await getSessionEpoch())) {
     if (req.method !== 'GET' && req.method !== 'HEAD' && isCrossOrigin(req)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
