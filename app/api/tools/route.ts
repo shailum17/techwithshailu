@@ -5,7 +5,8 @@
  *   ?category=     filter by category
  *   ?featured=true is_featured = true
  *   ?q=            full-text search
- *   ?limit=        max results
+ *   ?limit=        page size (default 50, max 100)
+ *   ?offset=       rows to skip (paging)
  *
  * POST /api/tools  — create tool (admin only)
  */
@@ -15,7 +16,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { listTools } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { clampLimit, pick, validateTool, writeErrorStatus, TOOL_FIELDS } from '@/lib/validate';
+import { clampLimit, clampOffset, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, pick, validateTool, writeErrorStatus, TOOL_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -30,7 +31,9 @@ export async function GET(req: NextRequest) {
       category: searchParams.get('category') || undefined,
       featured: searchParams.get('featured') === 'true',
       q:        searchParams.get('q') || undefined,
-      limit:    limit ? clampLimit(limit, 20, 100) : undefined,
+      // Always bounded: no ?limit means the default page, never the whole table
+      limit:    clampLimit(limit, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT),
+      offset:   clampOffset(searchParams.get('offset')),
     });
     return NextResponse.json(tools);
   } catch (err) {

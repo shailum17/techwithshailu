@@ -9,11 +9,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
 import { pick, validateRoadmap, ROADMAP_FIELDS, isUuid, writeErrorStatus } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
+  const limited = rateLimit(req, { limit: 120, windowMs: 60_000, prefix: 'roadmaps-id' });
+  if (limited) return limited;
+
   const { id } = await params;
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {

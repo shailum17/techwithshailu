@@ -70,3 +70,25 @@ describe('GET /api/admin/logs', () => {
     },
   );
 });
+
+describe('public lists are always bounded', () => {
+  it.each([
+    ['/api/jobs', jobs, [0, 49]],
+    ['/api/jobs?limit=5000&offset=20', jobs, [20, 119]],
+    ['/api/tools', tools, [0, 49]],
+    ['/api/blogs', blogs, [0, 49]],
+    ['/api/roadmaps?limit=10', roadmaps, [0, 9]],
+  ] as const)('%s → range %j', async (path, handler, range) => {
+    db.queue({ data: [], error: null });
+    expect((await handler(get(path))).status).toBe(200);
+    expect(db.of('range').at(-1)?.args).toEqual(range);
+  });
+
+  it('/api/blogs list omits the full post content', async () => {
+    db.queue({ data: [], error: null });
+    await blogs(get('/api/blogs'));
+    const cols = String(db.of('select').at(-1)?.args[0]);
+    expect(cols).not.toContain('content');
+    expect(cols).not.toBe('*');
+  });
+});
