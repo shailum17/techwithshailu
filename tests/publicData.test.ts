@@ -6,7 +6,7 @@ let result: { data: unknown; error: unknown } = { data: [], error: null };
 
 function builder() {
   const b: Record<string, unknown> = {};
-  for (const m of ['select', 'eq', 'ilike', 'textSearch', 'order', 'limit']) {
+  for (const m of ['select', 'eq', 'ilike', 'textSearch', 'order', 'limit', 'range']) {
     b[m] = (...args: unknown[]) => { calls.push([m, ...args]); return b; };
   }
   b.maybeSingle = () => { calls.push(['maybeSingle']); return Promise.resolve(result); };
@@ -33,7 +33,12 @@ describe('listLiveJobs', () => {
     expect(calls).toContainEqual(['eq', 'is_featured', true]);
     expect(calls).toContainEqual(['textSearch', 'fts', 'react', { type: 'websearch' }]);
     expect(calls).toContainEqual(['order', 'deadline', { ascending: true }]);
-    expect(calls).toContainEqual(['limit', 6]);
+    expect(calls).toContainEqual(['range', 0, 5]);
+  });
+
+  it('pages with offset', async () => {
+    await listLiveJobs({ limit: 50, offset: 100 });
+    expect(calls).toContainEqual(['range', 100, 149]);
   });
 
   it('ignores an invalid batch year instead of querying NaN', async () => {
