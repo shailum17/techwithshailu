@@ -24,6 +24,7 @@ import { checkAdminAuth, safeEqual } from '@/lib/adminAuth';
 import { formatJobDescription } from '@/lib/formatJobDescription';
 import { isMissingColumnError, safeHttpUrl } from '@/lib/validate';
 import { SITE_URL } from '@/lib/site';
+import { fetchWithTimeout } from '@/lib/http';
 import { getAutoFetchEnabled } from '@/lib/settings';
 import {
   applyFetchFilters, chunk, dedupeKey, jsearchDatePosted, normalizeJobType, parseFetchFilters,
@@ -48,20 +49,6 @@ interface Job {
   salary:      string | null;
   deadline:    string | null;
   source:      string;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Helper — fetch with timeout so one slow source
-   never blocks the whole run
-───────────────────────────────────────────────────────────── */
-async function fetchWithTimeout(input: RequestInfo, init: RequestInit, ms = 8000): Promise<Response> {
-  const controller = new AbortController();
-  const timer      = setTimeout(() => controller.abort(), ms);
-  try {
-    return await fetch(input, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────
