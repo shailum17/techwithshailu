@@ -55,6 +55,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = pick(await req.json(), BLOG_FIELDS);
+    if (body.published !== undefined && typeof body.published !== 'boolean') {
+      return NextResponse.json({ error: '`published` must be true or false' }, { status: 400 });
+    }
     const doc  = {
       ...body,
       // Sanitize HTML content before storing to prevent XSS

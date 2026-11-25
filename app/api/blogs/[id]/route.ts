@@ -47,6 +47,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   try {
     const body: Record<string, unknown> = pick(await req.json(), BLOG_FIELDS);
+    if (body.published !== undefined && typeof body.published !== 'boolean') {
+      return NextResponse.json({ error: '`published` must be true or false' }, { status: 400 });
+    }
 
     // Sanitize HTML content before storing to prevent XSS
     if (typeof body.content === 'string') {
