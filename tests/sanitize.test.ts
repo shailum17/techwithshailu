@@ -65,3 +65,22 @@ describe('known sanitize-html bypass classes (upgraded to 2.18.2)', () => {
     expect(out).not.toMatch(/<script|onerror|javascript:|<meta|<svg|<form|formaction|<a /);
   });
 });
+
+describe('formatJobDescription input cap (#22)', () => {
+  it('bounds work and output on oversized / hostile third-party text', async () => {
+    const { MAX_RAW_DESCRIPTION_CHARS } = await import('@/lib/formatJobDescription');
+    const hostile = '<script '.repeat(200_000);            // 1.6 MB, quadratic for the old code
+    const t0 = performance.now();
+    formatJobDescription(hostile);
+    expect(performance.now() - t0).toBeLessThan(2_000);
+
+    const huge = `<p>${'word '.repeat(100_000)}</p>`;
+    expect(formatJobDescription(huge).length).toBeLessThan(MAX_RAW_DESCRIPTION_CHARS * 2);
+  });
+
+  it('leaves normal-sized descriptions untouched by the cap', () => {
+    const normal = 'Build features.\n• React\n• Node';
+    expect(formatJobDescription(normal)).toBe(formatJobDescription(normal.slice(0)));
+    expect(formatJobDescription(normal)).toContain('<li>Node</li>');
+  });
+});
