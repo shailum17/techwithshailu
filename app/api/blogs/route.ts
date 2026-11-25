@@ -44,7 +44,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data ?? []);
   } catch (err) {
     console.error('[GET /api/blogs]', err);
-    return NextResponse.json([]);
+    // 503 (not 200 []) so clients and monitoring can tell "no data" from "DB down"
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
   }
 }
 
