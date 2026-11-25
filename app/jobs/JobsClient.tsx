@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import { safeHttpUrl } from '@/lib/validate';
+import { compareByDeadline } from '@/lib/jobPipeline';
 
 export interface Job {
   id: string;
@@ -538,7 +539,7 @@ export default function JobsClient({ initialJobs, initialParams }: {
     .filter(j => batchYears.length === 0 || (j.batch_year && batchYears.includes(String(j.batch_year))))
     .filter(j => !jobType || j.type === jobType)
     .sort((a, b) => sort === 'deadline'
-      ? (a.deadline || '').localeCompare(b.deadline || '')
+      ? compareByDeadline(a, b)   // undated jobs last
       : (b.createdAt || '').localeCompare(a.createdAt || ''));
 
   /* #7 Stagger variants */

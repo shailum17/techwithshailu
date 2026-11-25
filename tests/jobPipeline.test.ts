@@ -68,3 +68,13 @@ describe('todayInIndia (#19)', () => {
     expect(openDeadlineFilter('2026-11-26')).toBe('deadline.is.null,deadline.gte.2026-11-26');
   });
 });
+
+describe('compareByDeadline (#27)', () => {
+  it('orders by date with undated jobs last', async () => {
+    const { compareByDeadline } = await import('@/lib/jobPipeline');
+    const jobs = [{ id: 'none' }, { id: 'dec', deadline: '2026-12-10' }, { id: 'nul', deadline: null },
+                  { id: 'nov', deadline: '2026-11-30' }, { id: 'empty', deadline: '' }];
+    expect([...jobs].sort(compareByDeadline).map(j => j.id).slice(0, 2)).toEqual(['nov', 'dec']);
+    expect([...jobs].sort(compareByDeadline).slice(2).every(j => !j.deadline)).toBe(true);
+  });
+});
