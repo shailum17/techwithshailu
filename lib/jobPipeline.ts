@@ -106,3 +106,15 @@ export function todayInIndia(now: Date = new Date()): string {
 export function openDeadlineFilter(today: string = todayInIndia()): string {
   return `deadline.is.null,deadline.gte.${today}`;
 }
+
+/**
+ * Sort comparator for "Deadline soon": earliest deadline first, jobs
+ * without a deadline last (an empty string would otherwise sort first).
+ * Deadlines are YYYY-MM-DD, so string order is date order.
+ */
+export function compareByDeadline(a: { deadline?: string | null }, b: { deadline?: string | null }): number {
+  const da = a.deadline || '';
+  const db = b.deadline || '';
+  if (!da || !db) return da ? -1 : db ? 1 : 0;
+  return da.localeCompare(db);
+}
