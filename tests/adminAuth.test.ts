@@ -45,6 +45,27 @@ describe('checkAdminAuth', () => {
     expect((await checkAdminAuth(req({ 'x-admin-key': 'anything' })))?.status).toBe(500);
   });
 
+  it('refuses a short ADMIN_SECRET in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    try {
+      expect((await checkAdminAuth(req({ 'x-admin-key': 'test-secret' })))?.status).toBe(500);
+      process.env.ADMIN_SECRET = 'x'.repeat(32);
+      expect(await checkAdminAuth(req({ 'x-admin-key': 'x'.repeat(32) }))).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('caps admin-key comparisons per minute even when they succeed', async () => {
+    const headers = { 'x-forwarded-for': '192.168.98.1', 'x-admin-key': 'test-secret' };
+    const statuses: (number | undefined)[] = [];
+    for (let i = 0; i < 61; i++) {
+      statuses.push((await checkAdminAuth(new NextRequest('http://localhost/api/admin/x', { headers })))?.status);
+    }
+    expect(statuses.slice(0, 60).every(s => s === undefined)).toBe(true);
+    expect(statuses[60]).toBe(429);
+  });
+
   it('rate-limits repeated attempts from one IP', async () => {
     const headers = { 'x-forwarded-for': '192.168.99.1', 'x-admin-key': 'nope' };
     const statuses: (number | undefined)[] = [];
