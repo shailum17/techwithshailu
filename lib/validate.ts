@@ -78,3 +78,25 @@ export const ROADMAP_FIELDS = [
   'title', 'slug', 'description', 'category', 'cover_url', 'content',
   'tags', 'order',
 ] as const;
+
+/** URL-safe slug: lowercase letters/digits separated by single hyphens. */
+export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export function isSlug(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= 200 && SLUG_RE.test(value);
+}
+
+/** Canonical UUID (any version). */
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
+/**
+ * True when a Supabase/PostgREST error means "column does not exist"
+ * (PostgREST PGRST204 schema-cache miss, Postgres 42703 undefined_column).
+ */
+export function isMissingColumnError(err: { code?: string } | null | undefined): boolean {
+  return err?.code === 'PGRST204' || err?.code === '42703';
+}
