@@ -30,6 +30,8 @@ Run these files in order (SQL Editor, or `psql`):
      `pending_jobs` rows first** (keeps approved → rejected → oldest pending); `jobs` is not touched.
    - `20261126000200_jobs_live_only_policy.sql` — drops the old `using (true)` read policies on `jobs`
      so the public anon key can read **live** jobs only (drafts/expired were readable before).
+   - `20261126000300_blog_first_image.sql` — generated `blogs.first_image_url` (first `<img>` in the post), so
+     the blog list and sidebar don't have to load every post's full HTML for thumbnails.
 3. `seed-roadmaps.sql` — optional roadmap content (safe to re-run).
 
 `rls_policies.sql` is an older, more detailed version of the RLS setup and overlaps with
