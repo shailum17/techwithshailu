@@ -12,6 +12,7 @@ import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
 import { pick, BLOG_FIELDS } from '@/lib/validate';
+import { resolvePublishedAt } from '@/lib/blogPublish';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   const { id } = await params;
@@ -52,9 +53,17 @@ export async function PUT(req: NextRequest, { params }: Params) {
       body.content = sanitizeBlogHtml(body.content);
     }
 
-    // Set published_at when publishing for the first time
-    if (body.published === true) {
-      body.published_at = new Date().toISOString();
+    // Set published_at on first publish only — editing a live post keeps its date
+    if ('published' in body) {
+      const { data: current, error: curErr } = await supabaseAdmin
+        .from('blogs')
+        .select('published_at')
+        .eq('id', id)
+        .maybeSingle();
+      if (curErr) throw curErr;
+      if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      const publishedAt = resolvePublishedAt(current.published_at, body.published);
+      if (publishedAt !== undefined) body.published_at = publishedAt;
     }
 
     const { data, error } = await supabaseAdmin
@@ -77,7 +86,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   const { id } = await params;

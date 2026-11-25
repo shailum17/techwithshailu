@@ -20,20 +20,37 @@ interface Window {
 const store = new Map<string, Window>();
 
 // Clean up expired entries every 5 minutes to avoid memory leaks
-setInterval(() => {
+const sweeper = setInterval(() => {
   const now = Date.now();
   store.forEach((win, key) => {
     if (now > win.resetAt) store.delete(key);
   });
 }, 5 * 60 * 1000);
+// Don't keep the process alive just for cleanup (tests, scripts)
+sweeper.unref?.();
 
-interface RateLimitOptions {
+/** Best-effort client IP (Vercel sets x-forwarded-for; first entry is the client). */
+export function clientIp(req: NextRequest): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    req.headers.get('x-real-ip') ||
+    'anonymous'
+  );
+}
+
+export interface RateLimitOptions {
   /** Max requests per window. Default: 60 */
   limit?: number;
   /** Window duration in ms. Default: 60 000 (1 minute) */
   windowMs?: number;
   /** Identifier prefix to namespace separate limiters. Default: '' */
   prefix?: string;
+  /**
+   * Only check whether the caller is already over the limit, without
+   * counting this request. Lets callers count just *failed* attempts
+   * (check with peek, then call again without peek on failure).
+   */
+  peek?: boolean;
 }
 
 /**
@@ -42,12 +59,9 @@ interface RateLimitOptions {
  */
 export function rateLimit(
   req: NextRequest,
-  { limit = 60, windowMs = 60_000, prefix = '' }: RateLimitOptions = {},
+  { limit = 60, windowMs = 60_000, prefix = '', peek = false }: RateLimitOptions = {},
 ): NextResponse | null {
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-    req.headers.get('x-real-ip') ??
-    'anonymous';
+  const ip = clientIp(req);
 
   const key = `${prefix}:${ip}`;
   const now = Date.now();
@@ -58,12 +72,12 @@ export function rateLimit(
     store.set(key, win);
   }
 
-  win.count++;
+  if (!peek) win.count++;
 
   const remaining = Math.max(0, limit - win.count);
   const reset      = Math.ceil(win.resetAt / 1000); // Unix seconds
 
-  if (win.count > limit) {
+  if (peek ? win.count >= limit : win.count > limit) {
     return new NextResponse(
       JSON.stringify({ error: 'Too many requests. Please slow down.' }),
       {

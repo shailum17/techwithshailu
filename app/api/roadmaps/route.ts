@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
 /* ── POST ─────────────────────────────────────────────────────── */
 export async function POST(req: NextRequest) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   try {

@@ -17,6 +17,7 @@ import { marked } from 'marked';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
+import { resolvePublishedAt } from '@/lib/blogPublish';
 
 marked.setOptions({ gfm: true, breaks: false });
 
@@ -33,7 +34,7 @@ interface FrontMatter {
 }
 
 export async function POST(req: NextRequest) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   // ── 1. Parse multipart form ─────────────────────────────────
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
   // ── 5. Check if slug already exists ────────────────────────
   const { data: existing } = await supabaseAdmin
     .from('blogs')
-    .select('id')
+    .select('id, published_at')
     .eq('slug', data.slug)
     .maybeSingle();
 
@@ -106,7 +107,8 @@ export async function POST(req: NextRequest) {
     author:       data.author    ?? 'Shailu',
     tags,
     published:    isPublished,
-    published_at: isPublished ? now : null,
+    // Re-uploading an already-published post keeps its original date
+    published_at: resolvePublishedAt(existing?.published_at, isPublished),
     updated_at:   now,
   };
 

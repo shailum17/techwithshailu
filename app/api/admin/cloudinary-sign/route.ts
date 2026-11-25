@@ -19,7 +19,7 @@ import { checkAdminAuth } from '@/lib/adminAuth';
 const UPLOAD_FOLDER = 'techwithshailu';
 
 export async function POST(req: NextRequest) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;

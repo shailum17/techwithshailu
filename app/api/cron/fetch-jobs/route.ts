@@ -24,6 +24,10 @@ import { checkAdminAuth, safeEqual } from '@/lib/adminAuth';
 import { formatJobDescription } from '@/lib/formatJobDescription';
 import { safeHttpUrl } from '@/lib/validate';
 import { SITE_URL } from '@/lib/site';
+import { getAutoFetchEnabled } from '@/lib/settings';
+import {
+  applyFetchFilters, chunk, dedupeKey, jsearchDatePosted, normalizeJobType, parseFetchFilters,
+} from '@/lib/jobPipeline';
 
 export const dynamic  = 'force-dynamic';
 export const maxDuration = 60; // allow up to 60s on Vercel Pro / increase if needed
@@ -198,7 +202,7 @@ async function fetchUnstop(query: string): Promise<Job[]> {
         title:       (i.title ?? '').trim(),
         company:     (i.organisation?.name ?? 'Unknown').trim(),
         location:    i.region === 'online' ? 'Remote' : (i.region ?? 'India'),
-        type:        i.subtype === 'internships' ? 'Internship' : 'Job',
+        type:        i.subtype === 'internships' ? 'Internship' : normalizeJobType('', i.title ?? ''),
         description: formatJobDescription(i.details ?? ''),
         apply_link:  safeHttpUrl(i.seo_url) ?? `https://unstop.com/${i.type ?? 'internships'}/${i.id}`,
         salary,
@@ -218,7 +222,7 @@ async function fetchUnstop(query: string): Promise<Job[]> {
    Aggregates: Naukri, TimesJobs, Shine, Monster India, company pages
    Env vars: ADZUNA_APP_ID, ADZUNA_APP_KEY
 ═════════════════════════════════════════════════════════════ */
-async function fetchAdzuna(query: string): Promise<Job[]> {
+async function fetchAdzuna(query: string, maxDays = 30): Promise<Job[]> {
   const appId  = process.env.ADZUNA_APP_ID;
   const appKey = process.env.ADZUNA_APP_KEY;
   if (!appId || !appKey) {
@@ -234,7 +238,7 @@ async function fetchAdzuna(query: string): Promise<Job[]> {
     url.searchParams.set('what',             query);
     url.searchParams.set('what_or',          'fresher intern internship graduate entry-level');
     url.searchParams.set('sort_by',          'date');
-    url.searchParams.set('max_days_old',     '30');
+    url.searchParams.set('max_days_old',     String(maxDays));
     url.searchParams.set('content-type',     'application/json');
 
     const res = await fetchWithTimeout(url.toString(), {});
@@ -255,9 +259,10 @@ async function fetchAdzuna(query: string): Promise<Job[]> {
       const title = (j.title ?? '').trim();
       const loc   = [j.location?.display_name, j.location?.area?.slice(-2, -1)?.[0]]
         .filter(Boolean).join(', ') || 'India';
-      const type  = title.toLowerCase().includes('intern')
-        || (j.category?.label ?? '').toLowerCase().includes('intern')
-        ? 'Internship' : 'Job';
+      const type  = normalizeJobType(
+        `${j.contract_time ?? ''} ${(j.category?.label ?? '').toLowerCase().includes('intern') ? 'intern' : ''}`,
+        title,
+      );
       let salary: string | null = null;
       if (j.salary_min) {
         const min = Number(j.salary_min);
@@ -343,10 +348,10 @@ const COMPANY_QUERIES = [
   'Paytm software engineer fresher India',
 ];
 
-async function fetchOneRapidQuery(query: string, key: string): Promise<Job[]> {
+async function fetchOneRapidQuery(query: string, key: string, datePosted: string): Promise<Job[]> {
   try {
     const res = await fetchWithTimeout(
-      `https://jsearch.p.rapidapi.com/search-v2?query=${encodeURIComponent(query)}&num_pages=1&date_posted=all`,
+      `https://jsearch.p.rapidapi.com/search-v2?query=${encodeURIComponent(query)}&num_pages=1&date_posted=${datePosted}`,
       {
         method:  'GET',
         headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': 'jsearch.p.rapidapi.com' },
@@ -407,7 +412,8 @@ async function fetchOneRapidQuery(query: string, key: string): Promise<Job[]> {
         title:       (j.job_title ?? '').trim(),
         company:     (j.employer_name ?? 'Unknown').trim(),
         location:    j.job_city ?? j.job_country ?? 'Remote',
-        type:        j.job_employment_type ?? 'Internship',
+        // JSearch uses FULLTIME / PARTTIME / INTERN / CONTRACTOR — map to site types
+        type:        normalizeJobType(j.job_employment_type ?? j.job_employment_types?.[0], j.job_title ?? ''),
         description: formatJobDescription(j.job_description ?? ''),
         apply_link:  safeHttpUrl(j.job_apply_link) ?? '',
         salary,
@@ -421,7 +427,10 @@ async function fetchOneRapidQuery(query: string, key: string): Promise<Job[]> {
   }
 }
 
-async function fetchRapidAPI(query: string): Promise<Job[]> {
+async function fetchRapidAPI(
+  query: string,
+  { includeCompanyQueries, maxDays }: { includeCompanyQueries: boolean; maxDays?: number },
+): Promise<Job[]> {
   const key = process.env.RAPIDAPI_KEY;
   if (!key) { console.warn('[RapidAPI] RAPIDAPI_KEY not set'); return []; }
 
@@ -442,16 +451,18 @@ async function fetchRapidAPI(query: string): Promise<Job[]> {
     ...COMPANY_QUERIES.slice(0, Math.max(0, (start + batchSz) - COMPANY_QUERIES.length)),
   ];
 
-  // Manual search: only run base queries to save quota
-  const isManual = !query.toLowerCase().includes('india');
+  // Manual (admin) searches only run the base queries to save API quota;
+  // the daily cron also runs today's rotating company queries.
+  const isManual   = !includeCompanyQueries;
+  const datePosted = jsearchDatePosted(maxDays);
   const toRun    = isManual ? baseQueries : [...baseQueries, ...todaySet];
 
   console.log(`[RapidAPI] ${toRun.length} queries (${baseQueries.length} base + ${isManual ? 0 : todaySet.length} company)`);
 
   // Run base queries in parallel, company queries in parallel separately
   const [baseResults, companyResults] = await Promise.all([
-    Promise.all(baseQueries.map(q => fetchOneRapidQuery(q, key))),
-    isManual ? Promise.resolve([]) : Promise.all(todaySet.map(q => fetchOneRapidQuery(q, key))),
+    Promise.all(baseQueries.map(q => fetchOneRapidQuery(q, key, datePosted))),
+    isManual ? Promise.resolve([]) : Promise.all(todaySet.map(q => fetchOneRapidQuery(q, key, datePosted))),
   ]);
 
   const all = [...baseResults.flat(), ...(Array.isArray(companyResults) ? companyResults.flat() : [])];
@@ -475,28 +486,42 @@ export async function GET(req: NextRequest) {
   const isCron     = !!cronSecret && safeEqual(authHeader, `Bearer ${cronSecret}`);
 
   if (!isCron) {
-    const authError = checkAdminAuth(req);
+    const authError = await checkAdminAuth(req);
     if (authError) return authError;
   }
 
   const trigger  = isCron ? 'cron' : 'manual';
-  const rawQuery = new URL(req.url).searchParams.get('q') ?? 'software developer internship india';
+  const params   = new URL(req.url).searchParams;
+  const rawQuery = (params.get('q') ?? 'software developer internship india').slice(0, 200);
+  // Admin panel filters (type / source / location / max_days). The cron sends none.
+  const filters  = parseFetchFilters(params);
 
-  console.log(`[cron] START trigger=${trigger} query="${rawQuery}"`);
+  // Scheduled runs respect the admin panel's pause switch; manual runs always go ahead
+  if (trigger === 'cron' && !(await getAutoFetchEnabled())) {
+    console.log('[cron] auto-fetch is paused in admin settings — skipping');
+    await saveLog({ trigger_type: trigger, query: rawQuery, status: 'skipped',
+                    fetched: 0, error_message: 'Auto-fetch paused in admin settings' });
+    return Response.json({ success: true, skipped: true, reason: 'Auto-fetch is paused' });
+  }
 
-  // ── Fetch all sources in parallel ────────────────────────
+  console.log(`[cron] START trigger=${trigger} query="${rawQuery}" filters=${JSON.stringify(filters)}`);
+
+  // ── Fetch the selected sources in parallel ───────────────
+  const wants = (src: 'unstop' | 'adzuna' | 'rapidapi') => !filters.source || filters.source === src;
   const [unstopJobs, adzunaJobs, rapidJobs] = await Promise.all([
-    fetchUnstop(rawQuery),
-    fetchAdzuna(rawQuery),
-    fetchRapidAPI(rawQuery),
+    wants('unstop')   ? fetchUnstop(rawQuery) : Promise.resolve([] as Job[]),
+    wants('adzuna')   ? fetchAdzuna(rawQuery, filters.maxDays ?? 30) : Promise.resolve([] as Job[]),
+    wants('rapidapi')
+      ? fetchRapidAPI(rawQuery, { includeCompanyQueries: trigger === 'cron', maxDays: filters.maxDays })
+      : Promise.resolve([] as Job[]),
   ]);
 
-  // ── Merge + global dedupe by title+company ────────────────
+  // ── Merge + global dedupe by title+company, then apply filters ──
   const seen    = new Set<string>();
   const allJobs: Job[] = [];
-  for (const job of [...unstopJobs, ...adzunaJobs, ...rapidJobs]) {
+  for (const job of applyFetchFilters([...unstopJobs, ...adzunaJobs, ...rapidJobs], filters)) {
     if (!job.title.trim() || !job.company.trim()) continue;
-    const key = `${job.title.toLowerCase().slice(0, 60)}||${job.company.toLowerCase().slice(0, 40)}`;
+    const key = dedupeKey(job.title, job.company);
     if (!seen.has(key)) { seen.add(key); allJobs.push(job); }
   }
 
@@ -511,30 +536,36 @@ export async function GET(req: NextRequest) {
   if (allJobs.length === 0) {
     await saveLog({ trigger_type: trigger, query: rawQuery, status: 'success',
                     fetched: 0, raw_response: JSON.stringify(summary) });
-    return Response.json({ success: true, ...summary,
-      note: 'No results. RapidAPI & Unstop have no new listings, or check env vars.' });
+    // Same shape as the normal response so the admin panel can read `sources`
+    return Response.json({
+      success: true, query: rawQuery, trigger, sources: summary,
+      fetched: 0, added_to_pending: 0, skipped_duplicates: 0, telegram: 'skipped',
+      note: 'No results from the selected sources (or their API keys are not set).',
+    });
   }
 
   // ── Insert non-duplicates into pending_jobs ───────────────
+  // Batched: one lookup per 50 titles + one bulk insert, instead of a
+  // SELECT and an INSERT per job (which could approach maxDuration).
   let newCount  = 0;
   let dupeCount = 0;
   const errors: string[] = [];
 
-  for (const job of allJobs) {
-    const { data: existing, error: checkErr } = await supabaseAdmin
+  const existingKeys = new Set<string>();
+  const titles = Array.from(new Set(allJobs.map(j => j.title)));
+  for (const batch of chunk(titles, 50)) {
+    const { data, error } = await supabaseAdmin
       .from('pending_jobs')
-      .select('id')
-      .eq('title',   job.title)
-      .eq('company', job.company)
-      .maybeSingle();
+      .select('title, company')
+      .in('title', batch);
+    if (error) { errors.push(`check: ${error.message}`); continue; }
+    for (const row of data ?? []) existingKeys.add(dedupeKey(row.title ?? '', row.company ?? ''));
+  }
 
-    if (checkErr)  { errors.push(`check: ${checkErr.message}`); continue; }
-    if (existing)  { dupeCount++; continue; }
-
-    // Build insert (pending_jobs.deadline is added by
-    // supabase/migrations/20261124000000_schema_sync.sql)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const insertRow: Record<string, any> = {
+  const rows = [];
+  for (const job of allJobs) {
+    if (existingKeys.has(dedupeKey(job.title, job.company))) { dupeCount++; continue; }
+    rows.push({
       title:       job.title,
       company:     job.company,
       location:    job.location,
@@ -543,13 +574,24 @@ export async function GET(req: NextRequest) {
       apply_link:  job.apply_link,
       salary:      job.salary,
       source:      job.source,
-    };
-    if (job.deadline) insertRow.deadline = job.deadline;
+      deadline:    job.deadline,   // column added by migrations/20261124000000_schema_sync.sql
+    });
+  }
 
-    const { error: insertErr } = await supabaseAdmin.from('pending_jobs').insert(insertRow);
-
-    if (insertErr) errors.push(insertErr.message);
-    else           newCount++;
+  if (rows.length > 0) {
+    const { error: bulkErr } = await supabaseAdmin.from('pending_jobs').insert(rows);
+    if (!bulkErr) {
+      newCount = rows.length;
+    } else {
+      // One bad row fails the whole statement — retry individually so the
+      // good rows still land and the bad ones are reported.
+      console.warn('[cron] bulk insert failed, retrying per row:', bulkErr.message);
+      for (const row of rows) {
+        const { error } = await supabaseAdmin.from('pending_jobs').insert(row);
+        if (error) errors.push(error.message);
+        else       newCount++;
+      }
+    }
   }
 
   // ── Log to DB ─────────────────────────────────────────────
@@ -565,19 +607,32 @@ export async function GET(req: NextRequest) {
   });
 
   // ── Telegram notification ─────────────────────────────────
+  // Awaited (with a timeout) so the serverless function isn't frozen before
+  // the request is sent. Plain text: legacy Markdown rejects stray brackets.
+  let telegram: 'sent' | 'failed' | 'skipped' = 'skipped';
   if (newCount > 0 && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-    fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id:    process.env.TELEGRAM_CHAT_ID,
-        text: `[techwithshailu] *techwithshailu*\n\n` +
-              `[ok] *${newCount}* new opportunities added!\n` +
-              `[stats] Sources: Unstop(${unstopJobs.length}) Adzuna(${adzunaJobs.length}) RapidAPI(${rapidJobs.length})\n` +
-              `Approve: ${SITE_URL}/admin`,
-        parse_mode: 'Markdown',
-      }),
-    }).catch(() => {/* non-fatal */});
+    try {
+      const tgRes = await fetchWithTimeout(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+        {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: process.env.TELEGRAM_CHAT_ID,
+            text:    `techwithshailu: ${newCount} new ${newCount === 1 ? 'opportunity' : 'opportunities'} waiting for review\n` +
+                     `Sources: Unstop ${unstopJobs.length} · Adzuna ${adzunaJobs.length} · RapidAPI ${rapidJobs.length}\n` +
+                     `Review: ${SITE_URL}/admin`,
+            disable_web_page_preview: true,
+          }),
+        },
+        5000,
+      );
+      telegram = tgRes.ok ? 'sent' : 'failed';
+      if (!tgRes.ok) console.error('[cron] Telegram HTTP', tgRes.status, (await tgRes.text()).slice(0, 200));
+    } catch (err) {
+      telegram = 'failed';
+      console.error('[cron] Telegram error:', err instanceof Error ? err.message : err);
+    }
   }
 
   console.log(`[cron] DONE added=${newCount} dupes=${dupeCount} errors=${errors.length}`);
@@ -591,5 +646,6 @@ export async function GET(req: NextRequest) {
     added_to_pending:   newCount,
     skipped_duplicates: dupeCount,
     insert_errors:      errors.length > 0 ? errors : undefined,
+    telegram,
   });
 }

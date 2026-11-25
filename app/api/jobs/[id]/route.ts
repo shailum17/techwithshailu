@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 /* ── PUT ──────────────────────────────────────────────────────── */
 export async function PUT(req: NextRequest, { params }: Params) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   const { id } = await params;
@@ -75,7 +75,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
 /* ── DELETE ───────────────────────────────────────────────────── */
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   const { id } = await params;
