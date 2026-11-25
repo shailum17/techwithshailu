@@ -4,7 +4,7 @@ _Static review of the server side (Next.js API routes in `app/api/**`, `lib/**`,
 
 Defensive review only. Nothing was run against production; findings were checked by reading the code, running the local tool chain, and small local reproductions where noted.
 
-**Progress (2026-11-26): 24 of 24 issues fixed**: the 18 from the first review plus 6 from a [second pass](#second-pass-2026-11-26). Both batches were worked from lowest to highest severity, one commit per issue, each named `Fix #N: <issue title>`. Tests went from 96 to 196; `npm audit --omit=dev` went from 8 advisories to **0**. See the [Resolution log](#resolution-log) at the end.
+**Progress (2026-11-26): 27 of 27 issues fixed**: the 18 from the first review plus 9 from later passes ([second pass](#second-pass-2026-11-26), including #25–#27). Both batches were worked from lowest to highest severity, one commit per issue, each named `Fix #N: <issue title>`. Tests went from 96 to 205; `npm audit --omit=dev` went from 8 advisories to **0**. See the [Resolution log](#resolution-log) at the end.
 
 **Deployment checklist** (these fixes only take full effect in production after this):
 
@@ -13,6 +13,7 @@ Defensive review only. Nothing was run against production; findings were checked
    - `20261126000000_jobs_value_checks.sql` (#7)
    - `20261126000100_job_dedupe_key.sql` (#5): **deletes duplicate `pending_jobs` rows** before adding the unique index (keeps approved, then rejected, then the oldest pending; `jobs` is untouched)
    - `20261126000200_jobs_live_only_policy.sql` (#2)
+   - `20261126000300_blog_first_image.sql` (#25): adds a generated column and fills it for existing posts automatically
 3. After migrating, run the `pg_policies` check in `supabase/README.md`. On `jobs`, the only anon `SELECT` policy should be `status = 'live'`.
 4. Log in to `/admin` again after the deploy. The session token format changed (#10).
 5. Self-hosting only (not Vercel): set `TRUSTED_PROXY_HOPS` to the number of reverse proxies in front of the app (#12).
@@ -21,6 +22,7 @@ Defensive review only. Nothing was run against production; findings were checked
 **Behaviour changes to be aware of**
 
 - **Jobs disappear from the site after their deadline day ends (India time)** (#19): from listings, `/api/jobs`, the sitemap and their detail page (404). The daily cron also sets them to `expired` in the database. Jobs with no deadline are unaffected.
+- Admins can no longer approve a pending job whose deadline has passed (#26). The approve drawer shows "deadline has passed" and asks for a new deadline.
 - Job descriptions keep bullet lists, short lines and ₹ amounts (#24). This applies to **newly fetched** listings only: jobs already stored lost that text before the fix, and the original source text isn't kept.
 
 - `/api/jobs`, `/api/tools`, `/api/blogs` and `/api/roadmaps` now return one page (default 50, max 100; use `?limit` and `?offset`). `/api/blogs` list rows no longer include `content`. The admin panel reads tools from the new `/api/admin/tools`.
@@ -422,9 +424,9 @@ After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmap
 | 22 | 🟡 | Input limits | Third-party job descriptions are unbounded in size | CONFIRMED | ✅ Fixed |
 | 23 | 🟡 | Reliability | Admin `debug-fetch` has no timeouts and an unbounded query | CONFIRMED | ✅ Fixed |
 | 24 | 🟠 | Data integrity | Job-description formatter drops short list items, deletes `&#…;` entities (₹) and re-parses text as HTML | CONFIRMED (local repro) | ✅ Fixed |
-| 25 | 🟡 | Performance | Blog list page loads every post's full HTML to find a fallback cover image | CONFIRMED | ⏳ Open |
-| 26 | 🟡 | Job lifecycle | Admin can approve a pending job whose deadline has passed — it is published and immediately hidden | CONFIRMED | ⏳ Open |
-| 27 | ⚪ | Job lifecycle | Client-side "Deadline soon" sort puts jobs without a deadline first | CONFIRMED | ⏳ Open |
+| 25 | 🟡 | Performance | Blog list page loads every post's full HTML to find a fallback cover image | CONFIRMED | ✅ Fixed |
+| 26 | 🟡 | Job lifecycle | Admin can approve a pending job whose deadline has passed — it is published and immediately hidden | CONFIRMED | ✅ Fixed |
+| 27 | ⚪ | Job lifecycle | Client-side "Deadline soon" sort puts jobs without a deadline first | CONFIRMED | ✅ Fixed |
 
 ### 19. Jobs past their deadline are never expired
 
@@ -543,5 +545,9 @@ Fixed 2026-11-26, from lowest to highest severity. Each fix has its own commit a
 | 20 | `d273536` | New `lib/data/blog.ts`: the post is fetched by slug (shared with `generateMetadata` via React `cache`), plus up to 4 related posts and the 10 newest others, instead of every post with full HTML. |
 | 19 | `056c85d` | `todayInIndia()` / `openDeadlineFilter()` in `lib/jobPipeline.ts`. Public job queries and the sitemap hide past-deadline jobs. The cron marks them `expired` on every run and reports `expired_jobs`. |
 
-**Final checks:** 196 tests pass, `tsc --noEmit` and `eslint` are clean, `next build` succeeds, and `npm audit --omit=dev` finds **0 vulnerabilities**.
+| 27 | `d95cf66` | `compareByDeadline()` in `lib/jobPipeline.ts`: the jobs page's "Deadline soon" sort orders dated jobs by date and puts undated jobs last. |
+| 26 | `5f48941` | The approve route works out the effective deadline (the override, else the pending row's) and returns 409 if it is before today (India date). Nothing is published, and the approve drawer shows the message. |
+| 25 | `aa65322` | Generated `blogs.first_image_url` (migration). The `/blog` list and post sidebar select summaries without `content`, falling back until the migration is applied. Verified on local Postgres 16: existing posts are backfilled, the column updates on edit, and anon can read it. |
+
+**Final checks:** 205 tests pass, `tsc --noEmit` and `eslint` are clean, `next build` succeeds, and `npm audit --omit=dev` finds **0 vulnerabilities**.
 
