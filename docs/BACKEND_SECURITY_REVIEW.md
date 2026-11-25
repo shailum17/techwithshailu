@@ -422,6 +422,9 @@ After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmap
 | 22 | 🟡 | Input limits | Third-party job descriptions are unbounded in size | CONFIRMED | ✅ Fixed |
 | 23 | 🟡 | Reliability | Admin `debug-fetch` has no timeouts and an unbounded query | CONFIRMED | ✅ Fixed |
 | 24 | 🟠 | Data integrity | Job-description formatter drops short list items, deletes `&#…;` entities (₹) and re-parses text as HTML | CONFIRMED (local repro) | ✅ Fixed |
+| 25 | 🟡 | Performance | Blog list page loads every post's full HTML to find a fallback cover image | CONFIRMED | ⏳ Open |
+| 26 | 🟡 | Job lifecycle | Admin can approve a pending job whose deadline has passed — it is published and immediately hidden | CONFIRMED | ⏳ Open |
+| 27 | ⚪ | Job lifecycle | Client-side "Deadline soon" sort puts jobs without a deadline first | CONFIRMED | ⏳ Open |
 
 ### 19. Jobs past their deadline are never expired
 
@@ -481,6 +484,30 @@ Causes:
 3. Entities are decoded to `<`/`>` and the text is then put back into HTML unescaped, so text like "&lt;3 years" is re-parsed as markup and stripped. `&amp;lt;` is decoded twice.
 
 **Fix:** mark `<li>` as bullet lines; treat bullet lines as list items before heading detection; keep short lines instead of dropping them; decode entities (named, decimal, hex) in a single pass; HTML-escape all text when rendering. `sanitizeJobHtml()` still runs last.
+
+### 25. Blog list page loads every post's full HTML
+
+**Where:** `app/blog/page.tsx` (`getPosts`), `lib/data/blog.ts` (sidebar)
+
+The `/blog` page selects `content` (full post HTML) for **every** published post, only so it can use the first `<img>` as a thumbnail when `cover_url` is empty. This is the same pattern #20 fixed for the post page, and the post-page sidebar still does it in a bounded way.
+
+**Fix:** a generated column `blogs.first_image_url` (the first `<img src>` in `content`, computed by Postgres when a post is saved). The list and sidebar select it instead of `content`, and fall back to the old query until the migration is applied.
+
+### 26. Approving a pending job whose deadline has passed
+
+**Where:** `app/api/admin/jobs/approve/route.ts`
+
+Pending jobs can sit in the review queue past their deadline. Approving one publishes it with `status = 'live'`, but since #19 the site hides past-deadline jobs (and the cron marks them expired), so the admin gets "approved" and the job never appears.
+
+**Fix:** before publishing, the route works out the effective deadline (the admin's override, else the pending row's). If it is before today (India date), it returns **409** with a message asking for a new deadline, and nothing is published.
+
+### 27. Client-side "Deadline soon" sort puts undated jobs first
+
+**Where:** `app/jobs/JobsClient.tsx`
+
+The jobs page re-sorts the server's list in the browser with `(a.deadline || '').localeCompare(b.deadline || '')`. An empty string sorts before any date, so jobs **without** a deadline come first under "Deadline soon", which undoes the server order (#19 sorts them last).
+
+**Fix:** under the deadline sort, jobs without a deadline go last, and dated jobs are ordered by date.
 
 ---
 
