@@ -11,7 +11,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
-import { pick, BLOG_FIELDS } from '@/lib/validate';
+import { pick, BLOG_FIELDS, isUuid } from '@/lib/validate';
 import { resolvePublishedAt } from '@/lib/blogPublish';
 
 type Params = { params: Promise<{ id: string }> };
@@ -21,6 +21,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   if (limited) return limited;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
     // Use anon client — respects Supabase RLS (published = true policy).
     // Also enforce the filter here as defense-in-depth in case RLS is
@@ -44,6 +45,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
     const body: Record<string, unknown> = pick(await req.json(), BLOG_FIELDS);
@@ -93,13 +95,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('blogs')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
     if (error) throw error;
+    if (!data?.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[DELETE /api/blogs/:id]', err);
