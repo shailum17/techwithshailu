@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { fetchWithTimeout, isTimeout } from '@/lib/http';
 
 export async function GET(req: NextRequest) {
   const authError = await checkAdminAuth(req);
@@ -17,7 +18,21 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const source = searchParams.get('source') ?? 'unstop';
-  const query  = searchParams.get('q')      ?? 'software developer internship india';
+  // Same cap as the cron route: the query is sent to third-party APIs
+  const query  = (searchParams.get('q') || 'software developer internship india').slice(0, 200);
+
+  try {
+    return await debugSource(source, query);
+  } catch (err) {
+    if (isTimeout(err)) {
+      return NextResponse.json({ source, error: 'Upstream source timed out after 8s' }, { status: 504 });
+    }
+    console.error('[debug-fetch]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ source, error: 'Upstream request failed' }, { status: 502 });
+  }
+}
+
+async function debugSource(source: string, query: string): Promise<NextResponse> {
 
   // ── Unstop ──────────────────────────────────────────────
   if (source === 'unstop') {
@@ -27,7 +42,7 @@ export async function GET(req: NextRequest) {
     url.searchParams.set('oppstatus',  'recent');
     url.searchParams.set('searchTerm', query);
 
-    const res  = await fetch(url.toString(), {
+    const res  = await fetchWithTimeout(url.toString(), {
       headers: { 'Accept': 'application/json', 'Referer': 'https://unstop.com/', 'User-Agent': 'Mozilla/5.0' },
       cache: 'no-store',
     });
@@ -74,7 +89,7 @@ export async function GET(req: NextRequest) {
     const key = process.env.RAPIDAPI_KEY;
     if (!key) return NextResponse.json({ error: 'RAPIDAPI_KEY not set' }, { status: 500 });
 
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://jsearch.p.rapidapi.com/search-v2?query=${encodeURIComponent(query)}&num_pages=1&date_posted=all`,
       { headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': 'jsearch.p.rapidapi.com' }, cache: 'no-store' }
     );
@@ -123,7 +138,7 @@ export async function GET(req: NextRequest) {
     url.searchParams.set('sort_by',          'date');
     url.searchParams.set('content-type',     'application/json');
 
-    const res  = await fetch(url.toString(), { cache: 'no-store' });
+    const res  = await fetchWithTimeout(url.toString(), { cache: 'no-store' });
     const text = await res.text();
     let parsed;
     try { parsed = JSON.parse(text); } catch { return NextResponse.json({ error: 'invalid JSON', raw: text.slice(0, 500) }); }
