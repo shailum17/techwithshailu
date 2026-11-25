@@ -84,3 +84,50 @@ describe('formatJobDescription input cap (#22)', () => {
     expect(formatJobDescription(normal)).toContain('<li>Node</li>');
   });
 });
+
+describe('formatJobDescription keeps content (#24)', () => {
+  it('keeps short HTML list items as a list', () => {
+    const out = formatJobDescription('<p>Build features.</p><ul><li>React</li><li>Node</li></ul>');
+    expect(out).toContain('<li>React</li>');
+    expect(out).toContain('<li>Node</li>');
+  });
+
+  it('keeps long HTML list items as list items, not paragraphs', () => {
+    const out = formatJobDescription('<ul><li>Strong knowledge of React and TypeScript</li><li>Experience with Node.js</li></ul>');
+    expect(out).toMatch(/<ul><li>Strong knowledge of React and TypeScript<\/li><li>Experience with Node\.js<\/li><\/ul>/);
+  });
+
+  it('does not mistake an all-caps bullet for a heading', () => {
+    const out = formatJobDescription('<h3>Requirements</h3><ul><li>SQL</li><li>AWS</li></ul>');
+    expect(out).toContain('<h2>Requirements</h2>');
+    expect(out).toContain('<li>SQL</li>');
+    expect(out).not.toContain('<h2>Sql</h2>');
+  });
+
+  it('keeps short paragraphs', () => {
+    expect(formatJobDescription('<p>Location</p><p>Pune</p>')).toContain('Pune');
+  });
+
+  it('decodes numeric entities instead of deleting them (₹)', () => {
+    const out = formatJobDescription('<p>Stipend: &#8377;15,000/month &#x20B9;</p>');
+    expect(out).toContain('₹15,000/month ₹');
+  });
+
+  it('keeps "<" in text as text, and decodes entities only once', () => {
+    const out = formatJobDescription('<p>Experience &lt;3 years with C++ &amp; Rust</p><p>Show &amp;lt;b&amp;gt; literally</p>');
+    expect(out).toContain('Experience &lt;3 years with C++ &amp; Rust');
+    expect(out).toContain('Show &amp;lt;b&amp;gt; literally');
+    expect(out).not.toContain('<b>');
+  });
+
+  it('encoded markup in text never becomes a tag', () => {
+    const out = formatJobDescription('<p>&lt;img src=x onerror=alert(1)&gt; hello</p>').toLowerCase();
+    expect(out).not.toMatch(/<img|onerror=alert\(1\)>/);
+    expect(out).toContain('&lt;img');
+  });
+
+  it('is stable when re-run on its own output (job pages format stored HTML again)', () => {
+    const once  = formatJobDescription('<p>Intro text here.</p><h3>Requirements</h3><ul><li>React</li><li>C++ &amp; Go &lt;3 yrs</li></ul>');
+    expect(formatJobDescription(once)).toBe(once);
+  });
+});

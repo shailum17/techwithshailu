@@ -409,7 +409,7 @@ GHSA-8r88-6cj9-9fh5 (low, `auth-js` path routing). This app doesn't use Supabase
 
 ## Second pass (2026-11-26)
 
-After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmaps.ts`, the job pipeline's handling of third-party text, and the admin debug route found five more issues.
+After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmaps.ts`, the job pipeline's handling of third-party text, and the admin debug route found five more issues. A sixth (#24) turned up while writing the test for #22.
 
 | # | Sev | Area | Title | Finding | Status |
 |---|---|---|---|---|---|
@@ -418,6 +418,7 @@ After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmap
 | 21 | 🟡 | Least privilege | Public roadmap pages use the service-role key; one malformed row hides all roadmaps; resource links aren't scheme-checked | CONFIRMED | ⏳ Open |
 | 22 | 🟡 | Input limits | Third-party job descriptions are unbounded in size | CONFIRMED | ⏳ Open |
 | 23 | 🟡 | Reliability | Admin `debug-fetch` has no timeouts and an unbounded query | CONFIRMED | ⏳ Open |
+| 24 | 🟠 | Data integrity | Job-description formatter drops short list items, deletes `&#…;` entities (₹) and re-parses text as HTML | CONFIRMED (local repro) | ⏳ Open |
 
 ### 19. Jobs past their deadline are never expired
 
@@ -458,6 +459,25 @@ Descriptions from Unstop/Adzuna/JSearch are stored and formatted at whatever siz
 Unlike the cron route, the three source calls use bare `fetch()` without a timeout. A slow source holds the function until the platform kills it. The `q` parameter is also passed upstream without a length cap.
 
 **Fix:** reuse an 8-second timeout (answering with a clear 504 when it fires) and cap `q` at 200 characters, like the cron route.
+
+### 24. Job-description formatter loses content
+
+**Where:** `lib/formatJobDescription.ts` (runs on every fetched listing, and again when a job page renders)
+
+Found while testing #22. Reproduced with the code at `9f7d9cc`:
+
+| Input | Output |
+|---|---|
+| `<p>Build features.</p><ul><li>React</li><li>Node</li></ul>` | `<p>Build features.</p>` — both skills gone |
+| `<ul><li>Strong knowledge of React and TypeScript</li>…</ul>` | two `<p>` paragraphs — list structure lost |
+
+Causes:
+
+1. `</li>` is turned into a line break but `<li>` is never marked as a bullet. Items of 10 characters or fewer then fail the `line.length > 10` paragraph rule and are **discarded**, and longer ones become paragraphs. A short bullet in capitals (`• SQL`) is also mistaken for a section heading.
+2. Numeric entities are replaced with `''` (`/&#\d+;/g`), so `&#8377;` (₹) disappears from stipend and salary text.
+3. Entities are decoded to `<`/`>` and the text is then put back into HTML unescaped, so text like "&lt;3 years" is re-parsed as markup and stripped. `&amp;lt;` is decoded twice.
+
+**Fix:** mark `<li>` as bullet lines; treat bullet lines as list items before heading detection; keep short lines instead of dropping them; decode entities (named, decimal, hex) in a single pass; HTML-escape all text when rendering. `sanitizeJobHtml()` still runs last.
 
 ---
 
