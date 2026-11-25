@@ -39,12 +39,22 @@ describe('session tokens', () => {
     const afterExpiry = now + (ADMIN_SESSION_TTL_SECONDS + 1) * 1000;
     expect(verifySessionToken(token, SECRET, afterExpiry)).toBe(false);
 
-    const [exp, sig] = token.split('.');
-    expect(verifySessionToken(`${Number(exp) + 9999}.${sig}`, SECRET)).toBe(false);
-    expect(verifySessionToken(`${exp}.${sig}x`, SECRET)).toBe(false);
+    const [exp, epoch, sig] = token.split('.');
+    expect(verifySessionToken(`${Number(exp) + 9999}.${epoch}.${sig}`, SECRET)).toBe(false);
+    expect(verifySessionToken(`${exp}.${epoch}.${sig}x`, SECRET)).toBe(false);
+    expect(verifySessionToken(`${exp}.${sig}`, SECRET)).toBe(false); // old 2-part format
     expect(verifySessionToken('garbage', SECRET)).toBe(false);
     expect(verifySessionToken(undefined, SECRET)).toBe(false);
     expect(verifySessionToken(token, 'rotated-secret')).toBe(false);
+  });
+
+  it('is only valid in the epoch it was issued for', () => {
+    const now = Date.now();
+    const token = createSessionToken(SECRET, now, 3);
+    expect(verifySessionToken(token, SECRET, now, 3)).toBe(true);
+    expect(verifySessionToken(token, SECRET, now, 4)).toBe(false); // revoked by logout
+    const [exp, , sig] = token.split('.');
+    expect(verifySessionToken(`${exp}.4.${sig}`, SECRET, now, 4)).toBe(false); // epoch is signed
   });
 });
 

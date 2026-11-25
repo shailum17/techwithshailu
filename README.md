@@ -120,11 +120,12 @@ techwithshailu/
 
 1. Go to `/admin`.
 2. Enter the `ADMIN_SECRET` value. The server checks it and sets an 8-hour httpOnly, `SameSite=Strict` session cookie, so the key isn't kept in the page.
-3. Manage jobs, pending jobs, tools, roadmaps and blogs. Use **Logout** to clear the session.
+3. Manage jobs, pending jobs, tools, roadmaps and blogs. **Logout** ends *every* admin session (all browsers, and any copied cookie), not just this one.
 
 Admin API routes accept either that session cookie or an `x-admin-key` header matching `ADMIN_SECRET`, which is useful for scripts.
-Comparisons are constant-time, and failed attempts are rate-limited to 20 per minute per IP.
-Changing `ADMIN_SECRET` signs out every session.
+Comparisons are constant-time. Failed attempts are rate-limited to 20 per minute per IP, and admin-key checks to 60 per minute per IP.
+In production `ADMIN_SECRET` must be at least 32 characters, or admin login is refused.
+Changing `ADMIN_SECRET` also signs out every session.
 `/api/cron/fetch-jobs` also accepts `Authorization: Bearer <CRON_SECRET>`, which is what Vercel Cron sends.
 
 ---
