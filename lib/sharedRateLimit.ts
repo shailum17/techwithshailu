@@ -15,10 +15,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { clientIp, rateLimit, type RateLimitOptions } from '@/lib/rateLimit';
 
+/**
+ * Key for hashing client IPs. Uses RATE_LIMIT_SALT when set; otherwise a key
+ * *derived* from ADMIN_SECRET (never the secret itself), so the admin secret
+ * isn't reused directly as an HMAC key for a second purpose.
+ */
+export function rateLimitSalt(): string {
+  if (process.env.RATE_LIMIT_SALT) return process.env.RATE_LIMIT_SALT;
+  const admin = process.env.ADMIN_SECRET;
+  if (admin) return createHmac('sha256', admin).update('rate-limit-salt-v1').digest('base64url');
+  return 'techwithshailu-dev-salt'; // dev/test only — ADMIN_SECRET is required in production
+}
+
 /** HMAC of the IP so raw addresses are never stored in the database. */
 function hashedKey(prefix: string, ip: string): string {
-  const salt = process.env.RATE_LIMIT_SALT || process.env.ADMIN_SECRET || 'techwithshailu';
-  return `${prefix}:${createHmac('sha256', salt).update(ip).digest('base64url').slice(0, 32)}`;
+  return `${prefix}:${createHmac('sha256', rateLimitSalt()).update(ip).digest('base64url').slice(0, 32)}`;
 }
 
 function tooMany(limit: number, resetAt: Date): NextResponse {
