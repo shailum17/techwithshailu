@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { isUuid, pick, validateJob } from '@/lib/validate';
+import { todayInIndia } from '@/lib/jobPipeline';
 
 const OVERRIDE_FIELDS = [
   'title', 'company', 'location', 'type', 'salary', 'apply_link', 'description',
@@ -36,6 +37,29 @@ function validateOverrides(o: Overrides): string | null {
   const checked = validateJob(o as Record<string, unknown>, true);
   if (!checked.ok) return checked.error;
   Object.assign(o, checked.value);
+  return null;
+}
+
+/**
+ * The deadline the published job would have: the admin's override, else
+ * the pending row's. Returns an error response when it has already passed
+ * (India date) — such a job would be published and immediately hidden.
+ */
+async function rejectPastDeadline(jobId: string, overrides: Overrides): Promise<NextResponse | null> {
+  let deadline: string | null = typeof overrides.deadline === 'string' ? overrides.deadline : null;
+  if (deadline === null) {
+    const { data, error } = await supabaseAdmin
+      .from('pending_jobs').select('deadline').eq('id', jobId).maybeSingle();
+    if (error || !data) return null;          // missing row → the approve call reports 404
+    deadline = typeof data.deadline === 'string' ? data.deadline.slice(0, 10) : null;
+  }
+  const today = todayInIndia();
+  if (deadline && deadline < today) {
+    return NextResponse.json(
+      { error: `This job's deadline (${deadline}) has passed. Set a new deadline to publish it.`, deadline },
+      { status: 409 },
+    );
+  }
   return null;
 }
 
@@ -98,6 +122,9 @@ export async function POST(req: NextRequest) {
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
   try {
+    const expired = await rejectPastDeadline(jobId, overrides);
+    if (expired) return expired;
+
     const { data: newId, error } = await supabaseAdmin.rpc('approve_pending_job', {
       p_id:        jobId,
       p_overrides: overrides,
