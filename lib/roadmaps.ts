@@ -4,6 +4,11 @@
  * Fetches roadmap data DIRECTLY from Supabase — no static fallback.
  * Only used server-side (Server Components / API routes).
  *
+ * Roadmaps are public, so this uses the anon client (RLS applies), not the
+ * service-role key. Each row is parsed on its own: a row with malformed
+ * `content` is logged and skipped instead of hiding every roadmap, and
+ * resource links that aren't http(s) are dropped.
+ *
  * DB schema used:
  *   roadmaps.title       — display title
  *   roadmaps.slug        — route param (e.g. "frontend")
@@ -13,8 +18,10 @@
  *       content.<nodeId> — { title, yt: [], web: [] }  (node resources)
  */
 
-import { supabaseAdmin } from './supabase';
+import { supabase } from './supabase';
+import { safeHttpUrl } from './validate';
 import type { RoadmapCategory, NodeResources } from '@/app/resources/roadmaps/data';
+import type { Link } from '@/app/resources/roadmaps/[category]/resources-data';
 
 /* ── DB row shape ───────────────────────────────────────────── */
 interface RoadmapRow {
@@ -30,7 +37,19 @@ interface RoadmapRow {
   order: number;
 }
 
-/* ── Map a DB row → RoadmapCategory ─────────────────────────── */
+/** Keeps only well-formed links with an http(s) URL. */
+function safeLinks(value: unknown): Link[] {
+  if (!Array.isArray(value)) return [];
+  const out: Link[] = [];
+  for (const l of value) {
+    if (!l || typeof l !== 'object') continue;
+    const url = safeHttpUrl((l as Link).url);
+    if (url) out.push({ label: String((l as Link).label ?? ''), url });
+  }
+  return out;
+}
+
+/* ── Map a DB row → RoadmapCategory (throws on malformed content) ── */
 function toCategory(row: RoadmapRow): RoadmapCategory {
   // Supabase may return JSONB as a string — parse it if needed
   const content = typeof row.content === 'string'
@@ -41,10 +60,11 @@ function toCategory(row: RoadmapRow): RoadmapCategory {
 
   // Separate _meta from node resources
   const nodeResources: Record<string, NodeResources> = {};
-  if (content) {
+  if (content && typeof content === 'object') {
     for (const [key, val] of Object.entries(content)) {
       if (key !== '_meta' && val && typeof val === 'object' && 'title' in val && 'yt' in val) {
-        nodeResources[key] = val as NodeResources;
+        const node = val as NodeResources;
+        nodeResources[key] = { title: String(node.title ?? ''), yt: safeLinks(node.yt), web: safeLinks(node.web) };
       }
     }
   }
@@ -61,10 +81,20 @@ function toCategory(row: RoadmapRow): RoadmapCategory {
   };
 }
 
+/** toCategory for one row; logs and returns null instead of failing the whole list. */
+function toCategorySafe(row: RoadmapRow): RoadmapCategory | null {
+  try {
+    return toCategory(row);
+  } catch (err) {
+    console.error(`[roadmaps] skipping "${row.slug}": malformed content —`, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 /* ── Fetch all roadmap categories (ordered) ─────────────────── */
 export async function getRoadmapCategories(): Promise<RoadmapCategory[]> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('roadmaps')
       .select('id, title, slug, description, content, tags, order')
       .order('order', { ascending: true });
@@ -75,7 +105,7 @@ export async function getRoadmapCategories(): Promise<RoadmapCategory[]> {
     }
     if (!data?.length) return [];
 
-    return (data as RoadmapRow[]).map(toCategory);
+    return (data as RoadmapRow[]).map(toCategorySafe).filter((c): c is RoadmapCategory => c !== null);
   } catch (err) {
     console.error('[getRoadmapCategories] fetch failed:', err instanceof Error ? err.message : err);
     return [];
@@ -85,15 +115,15 @@ export async function getRoadmapCategories(): Promise<RoadmapCategory[]> {
 /* ── Fetch a single roadmap category by slug ────────────────── */
 export async function getRoadmapCategory(slug: string): Promise<RoadmapCategory | null> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('roadmaps')
       .select('id, title, slug, description, content, tags, order')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return null;
 
-    return toCategory(data as RoadmapRow);
+    return toCategorySafe(data as RoadmapRow);
   } catch (err) {
     console.error('[getRoadmapCategory] fetch failed:', err instanceof Error ? err.message : err);
     return null;
