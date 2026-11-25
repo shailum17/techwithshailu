@@ -23,6 +23,18 @@ import { isMissingColumnError, isSlug, safeHttpUrl } from '@/lib/validate';
 /** Largest accepted .md file. Blog posts are text; 512 KB is generous. */
 const MAX_MD_BYTES = 512 * 1024;
 
+/**
+ * gray-matter ships a JavaScript front-matter engine that runs `---js`
+ * blocks through eval() — uploading a document must never execute it.
+ * Only YAML front-matter is accepted, and the code-executing engines are
+ * replaced with ones that throw, as a second layer.
+ */
+const ALLOWED_FRONTMATTER = new Set(['', 'yaml', 'yml']);
+const refuse = () => { throw new Error('Only YAML front-matter is allowed'); };
+const SAFE_MATTER_OPTIONS = {
+  engines: { js: refuse, javascript: refuse, coffee: refuse, coffeescript: refuse, cson: refuse },
+};
+
 marked.setOptions({ gfm: true, breaks: false });
 
 interface FrontMatter {
@@ -65,7 +77,17 @@ export async function POST(req: NextRequest) {
   const raw = await (file as File).text();
 
   // ── 2. Parse frontmatter ────────────────────────────────────
-  const { data, content: mdBody } = matter(raw) as { data: FrontMatter; content: string };
+  const lang = matter.language(raw).name.toLowerCase();
+  if (!ALLOWED_FRONTMATTER.has(lang)) {
+    return NextResponse.json({ error: 'Only YAML front-matter is allowed.' }, { status: 422 });
+  }
+  let data: FrontMatter;
+  let mdBody: string;
+  try {
+    ({ data, content: mdBody } = matter(raw, SAFE_MATTER_OPTIONS) as unknown as { data: FrontMatter; content: string });
+  } catch {
+    return NextResponse.json({ error: 'Invalid front-matter (YAML only).' }, { status: 422 });
+  }
 
   if (typeof data.title !== 'string' || !data.title.trim()) {
     return NextResponse.json({ error: 'Missing required frontmatter: title' }, { status: 422 });

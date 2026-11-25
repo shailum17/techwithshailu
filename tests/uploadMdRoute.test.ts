@@ -61,4 +61,17 @@ describe('POST /api/admin/blogs/upload-md', () => {
     expect(res.status).toBe(500);
     expect(db.of('upsert')).toHaveLength(1); // no blind retry
   });
+
+  it.each(['js', 'JS', 'javascript', 'coffee'])('refuses ---%s front-matter without executing it (#3)', async lang => {
+    const g = globalThis as { __uploadMdExecuted?: boolean };
+    delete g.__uploadMdExecuted;
+    const res = await upload(`---${lang}\n{ title: (globalThis.__uploadMdExecuted = true, "T"), slug: "x" }\n---\nbody`);
+    expect(res.status).toBe(422);
+    expect(g.__uploadMdExecuted).toBeUndefined();
+    expect(db.of('upsert')).toHaveLength(0);
+  });
+
+  it('returns 422 for malformed YAML', async () => {
+    expect((await upload('---\ntitle: [unclosed\n---\nbody')).status).toBe(422);
+  });
 });
