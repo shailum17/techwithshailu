@@ -56,3 +56,17 @@ describe('GET /api/db-check', () => {
     expect((await res.json()).ok).toBe(true);
   });
 });
+
+import { GET as logs } from '@/app/api/admin/logs/route';
+
+describe('GET /api/admin/logs', () => {
+  it.each([['abc', 100], ['-5', 100], ['0', 100], ['9999', 500], ['25', 25]])(
+    'limit=%s is clamped to %d',
+    async (raw, expected) => {
+      db.queue({ data: [], error: null });
+      const res = await logs(get(`/api/admin/logs?limit=${raw}`, { 'x-admin-key': 'admin-secret' }));
+      expect(res.status).toBe(200);
+      expect(db.of('limit').at(-1)?.args[0]).toBe(expected);
+    },
+  );
+});

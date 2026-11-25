@@ -8,13 +8,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { clampLimit } from '@/lib/validate';
 
 export async function GET(req: NextRequest) {
   const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   const { searchParams } = new URL(req.url);
-  const limit = Math.min(Number(searchParams.get('limit') ?? '100'), 500);
+  // Non-numeric / negative values fall back to 100 instead of reaching PostgREST
+  const limit = clampLimit(searchParams.get('limit'), 100, 500);
 
   try {
     const { data, error } = await supabaseAdmin
