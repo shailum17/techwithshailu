@@ -44,3 +44,24 @@ describe('formatJobDescription', () => {
     expect(out).not.toMatch(/<script|onmouseover/i);
   });
 });
+
+describe('known sanitize-html bypass classes (upgraded to 2.18.2)', () => {
+  const payloads = [
+    '<textarea/></textarea/><img src=x onerror=alert(1)>',
+    '<noscript><p title="</noscript><img src=x onerror=alert(1)>"></noscript>',
+    '<svg><animate attributeName="href" values="javascript:alert(1)"/></svg>',
+    '<meta http-equiv="refresh" content="0;url=javascript:alert(1)">',
+    '<form action="javascript:alert(1)"><button formaction="javascript:alert(1)">x</button></form>',
+    '<a href="jav&#x09;ascript:alert(1)">x</a>',
+  ];
+
+  it.each(payloads)('blog preset neutralises %s', payload => {
+    const out = sanitizeBlogHtml(payload).toLowerCase();
+    expect(out).not.toMatch(/<script|onerror|javascript:|<meta|<svg|<form|formaction/);
+  });
+
+  it.each(payloads)('job preset neutralises %s', payload => {
+    const out = sanitizeJobHtml(payload).toLowerCase();
+    expect(out).not.toMatch(/<script|onerror|javascript:|<meta|<svg|<form|formaction|<a /);
+  });
+});

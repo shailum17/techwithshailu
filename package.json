@@ -35,7 +35,7 @@
     "next": "^15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sanitize-html": "2.13.1"
+    "sanitize-html": "2.18.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
@@ -43,7 +43,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/sanitize-html": "2.13.0",
+    "@types/sanitize-html": "2.16.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.19",
