@@ -88,8 +88,16 @@ function cleanBullet(text: string): string {
   return text.replace(/^[\s•·▪▸\-–—*]+/, '').replace(/^\d+[.)]\s*/, '').trim();
 }
 
+/**
+ * Longest raw description processed (characters). Real listings are a few
+ * thousand characters; the cap bounds storage and the regex passes below,
+ * some of which are quadratic on hostile input (e.g. many unclosed <script).
+ */
+export const MAX_RAW_DESCRIPTION_CHARS = 20_000;
+
 export function formatJobDescription(raw: string): string {
   if (!raw || !raw.trim()) return '<p>No description available.</p>';
+  if (raw.length > MAX_RAW_DESCRIPTION_CHARS) raw = raw.slice(0, MAX_RAW_DESCRIPTION_CHARS);
 
   // ── 1. Remove script/style/noscript entirely ──────────────
   let html = raw

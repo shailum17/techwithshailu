@@ -21,7 +21,7 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth, safeEqual } from '@/lib/adminAuth';
-import { formatJobDescription } from '@/lib/formatJobDescription';
+import { formatJobDescription, MAX_RAW_DESCRIPTION_CHARS } from '@/lib/formatJobDescription';
 import { isMissingColumnError, safeHttpUrl } from '@/lib/validate';
 import { SITE_URL } from '@/lib/site';
 import { fetchWithTimeout } from '@/lib/http';
@@ -60,8 +60,8 @@ interface Job {
 ───────────────────────────────────────────────────────────── */
 function extractSalaryFromText(text: string): string | null {
   if (!text) return null;
-  // Strip HTML tags first
-  const plain = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  // Same bound as the description formatter, then strip HTML tags
+  const plain = text.slice(0, MAX_RAW_DESCRIPTION_CHARS).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
   const patterns: RegExp[] = [
     // ₹15,000 - ₹20,000 per month | ₹15000/month
