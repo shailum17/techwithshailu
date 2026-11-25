@@ -26,7 +26,6 @@ function RoadmapFlowView({
   chart,
   dotColor,
   isFrontend,
-  onNodeClick,
 }: {
   chart: React.ReactNode;
   dotColor: string;
@@ -59,7 +58,7 @@ function RoadmapFlowView({
       el.scrollLeft = spinePixel - viewWidth / 2;
     });
     return () => cancelAnimationFrame(id);
-  }, []);
+  }, [isFrontend]);
 
   /* ── Scroll to show / hide optional branch ───────────── */
   const toggleOptional = useCallback(() => {

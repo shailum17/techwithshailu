@@ -1,22 +1,32 @@
 import type { Metadata } from 'next';
-import { Poppins, Outfit } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import RootShell from '@/components/RootShell';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import VisitorPing from '@/components/VisitorPing';
 import { SITE_URL } from '@/lib/site';
 
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+// Fonts are self-hosted (app/fonts/, SIL Open Font License) instead of
+// next/font/google, so `next build` never downloads from Google Fonts. Builds on
+// CI runners failed when Google returned font URLs the loader can't parse.
+const poppins = localFont({
+  src: [
+    { path: './fonts/poppins-400-latin.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/poppins-500-latin.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/poppins-600-latin.woff2', weight: '600', style: 'normal' },
+    { path: './fonts/poppins-700-latin.woff2', weight: '700', style: 'normal' },
+    { path: './fonts/poppins-800-latin.woff2', weight: '800', style: 'normal' },
+  ],
   variable: '--font-poppins',
   display: 'swap',
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
 });
-const outfit = Outfit({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
+const outfit = localFont({
+  // Outfit is a variable font: one file covers every weight we use (300–600)
+  src: [{ path: './fonts/outfit-variable-latin.woff2', weight: '300 600', style: 'normal' }],
   variable: '--font-outfit',
   display: 'swap',
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
 });
 
 export const metadata: Metadata = {

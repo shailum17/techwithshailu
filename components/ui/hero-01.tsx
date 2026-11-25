@@ -96,6 +96,8 @@ export function Hero01({
         maskComposite: 'intersect',
       }}
     >
+      {/* Decorative full-bleed background; next/image adds nothing here */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={washImage}
         alt=""

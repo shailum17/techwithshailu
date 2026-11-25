@@ -92,13 +92,6 @@ const socialLinks = [
   },
 ];
 
-/* ─── Marquee items ─────────────────────────────────────────── */
-const marqueeItems = [
-  'Jobs', '✦', 'AI Tools', '✦', 'Roadmaps', '✦',
-  'Resources', '✦', 'Interview Prep', '✦', 'Blog',
-  '✦', 'CS Careers', '✦', 'DSA', '✦', 'System Design',
-];
-
 /* ─── Component ─────────────────────────────────────────────── */
 export default function Footer() {
   const [email, setEmail] = useState('');
