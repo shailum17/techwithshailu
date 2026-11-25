@@ -40,3 +40,19 @@ describe('public list routes on database failure', () => {
     expect(res.status).toBe(503);
   });
 });
+
+import { GET as dbCheck } from '@/app/api/db-check/route';
+
+describe('GET /api/db-check', () => {
+  it('requires admin auth', async () => {
+    expect((await dbCheck(get('/api/db-check'))).status).toBe(401);
+    expect(db.of('from')).toHaveLength(0);
+  });
+
+  it('pings the database for an admin', async () => {
+    db.queue({ data: null, error: null, count: 3 });
+    const res = await dbCheck(get('/api/db-check', { 'x-admin-key': 'admin-secret' }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
+  });
+});
