@@ -11,7 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getLiveJob } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { pick, safeHttpUrl, JOB_FIELDS, isUuid } from '@/lib/validate';
+import { pick, validateJob, writeErrorStatus, JOB_FIELDS, isUuid } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -42,24 +42,27 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
-    // Only allow-listed columns can be written (no id / timestamps / fts)
-    const body = pick(await req.json(), JOB_FIELDS);
-    if (body.apply_link) {
-      const link = safeHttpUrl(body.apply_link);
-      if (!link) return NextResponse.json({ error: 'apply_link must be an http(s) URL' }, { status: 400 });
-      body.apply_link = link;
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
+    // Only allow-listed columns can be written (no id / timestamps / fts)
+    const checked = validateJob(pick(raw, JOB_FIELDS), true);
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
 
     const { data, error } = await supabaseAdmin
       .from('jobs')
-      .update(body)
+      .update(checked.value)
       .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      console.error('[PUT /api/jobs/:id] Supabase error:', error.message, error.details);
-      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      // .single() on zero rows → PGRST116: the id doesn't exist
+      if (error.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      console.error('[PUT /api/jobs/:id]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);

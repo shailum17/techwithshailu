@@ -11,7 +11,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
-import { pick, BLOG_FIELDS, isUuid } from '@/lib/validate';
+import { pick, checkBlogSlug, validateBlog, BLOG_FIELDS, isUuid, writeErrorStatus } from '@/lib/validate';
 import { resolvePublishedAt } from '@/lib/blogPublish';
 
 type Params = { params: Promise<{ id: string }> };
@@ -48,9 +48,30 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
-    const body: Record<string, unknown> = pick(await req.json(), BLOG_FIELDS);
-    if (body.published !== undefined && typeof body.published !== 'boolean') {
-      return NextResponse.json({ error: '`published` must be true or false' }, { status: 400 });
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const checked = validateBlog(pick(raw, BLOG_FIELDS), true);
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
+    const body = checked.value;
+
+    // Current row: needed to keep published_at on re-publish, and to allow
+    // re-saving a legacy slug that predates the slug format rules.
+    let current: { published_at: string | null; slug: string } | null = null;
+    if ('published' in body || 'slug' in body) {
+      const { data, error: curErr } = await supabaseAdmin
+        .from('blogs')
+        .select('published_at, slug')
+        .eq('id', id)
+        .maybeSingle();
+      if (curErr) throw curErr;
+      if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      current = data;
+    }
+    if ('slug' in body) {
+      const slugError = checkBlogSlug(body.slug, current?.slug);
+      if (slugError) return NextResponse.json({ error: slugError }, { status: 400 });
     }
 
     // Sanitize HTML content before storing to prevent XSS
@@ -59,14 +80,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
 
     // Set published_at on first publish only — editing a live post keeps its date
-    if ('published' in body) {
-      const { data: current, error: curErr } = await supabaseAdmin
-        .from('blogs')
-        .select('published_at')
-        .eq('id', id)
-        .maybeSingle();
-      if (curErr) throw curErr;
-      if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (current && 'published' in body) {
       const publishedAt = resolvePublishedAt(current.published_at, body.published);
       if (publishedAt !== undefined) body.published_at = publishedAt;
     }
@@ -79,8 +93,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .single();
 
     if (error) {
-      console.error('[PUT /api/blogs/:id] Supabase error:', error.message);
-      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      // .single() on zero rows → PGRST116: the id doesn't exist
+      if (error.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      console.error('[PUT /api/blogs/:id]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);
