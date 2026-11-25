@@ -48,3 +48,6 @@ export function createFakeSupabase() {
     of: (method: string) => calls.filter(c => c.method === method),
   };
 }
+
+/** One shared instance, so a vi.mock factory and the test file see the same fake. */
+export const fakeDb = createFakeSupabase();

@@ -1,8 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { fakeDb as db } from './helpers/fakeSupabase';
 
-const db = await vi.hoisted(async () => (await import('./helpers/fakeSupabase')).createFakeSupabase());
-vi.mock('@/lib/supabase', () => ({ supabase: db.client, supabaseAdmin: db.client }));
+vi.mock('@/lib/supabase', async () => {
+  const { fakeDb } = await import('./helpers/fakeSupabase');
+  return { supabase: fakeDb.client, supabaseAdmin: fakeDb.client };
+});
 
 import { POST } from '@/app/api/blogs/route';
 import { PUT } from '@/app/api/blogs/[id]/route';
