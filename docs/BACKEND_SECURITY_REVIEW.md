@@ -4,7 +4,7 @@ _Static review of the server side (Next.js API routes in `app/api/**`, `lib/**`,
 
 Defensive review only. Nothing was run against production; findings were checked by reading the code, running the local tool chain, and small local reproductions where noted.
 
-**Progress (2026-11-26): 18 of 18 issues fixed** on branch `claude/optimistic-johnson-8pnh5j`, worked from lowest to highest severity, one commit per issue. Tests went from 96 to 174; `npm audit --omit=dev` went from 8 advisories to **0**. See the [Resolution log](#resolution-log) at the end.
+**Progress (2026-11-26): 24 of 24 issues fixed**: the 18 from the first review plus 6 from a [second pass](#second-pass-2026-11-26). Both batches were worked from lowest to highest severity, one commit per issue, each named `Fix #N: <issue title>`. Tests went from 96 to 196; `npm audit --omit=dev` went from 8 advisories to **0**. See the [Resolution log](#resolution-log) at the end.
 
 **Deployment checklist** (these fixes only take full effect in production after this):
 
@@ -19,6 +19,9 @@ Defensive review only. Nothing was run against production; findings were checked
 6. Optional: set `RATE_LIMIT_SALT` (#17).
 
 **Behaviour changes to be aware of**
+
+- **Jobs disappear from the site after their deadline day ends (India time)** (#19): from listings, `/api/jobs`, the sitemap and their detail page (404). The daily cron also sets them to `expired` in the database. Jobs with no deadline are unaffected.
+- Job descriptions keep bullet lists, short lines and ₹ amounts (#24). This applies to **newly fetched** listings only: jobs already stored lost that text before the fix, and the original source text isn't kept.
 
 - `/api/jobs`, `/api/tools`, `/api/blogs` and `/api/roadmaps` now return one page (default 50, max 100; use `?limit` and `?offset`). `/api/blogs` list rows no longer include `content`. The admin panel reads tools from the new `/api/admin/tools`.
 - Public list endpoints return **503** (not `200 []`) when the database is down. Server-rendered pages are unaffected; they query Supabase directly.
@@ -413,12 +416,12 @@ After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmap
 
 | # | Sev | Area | Title | Finding | Status |
 |---|---|---|---|---|---|
-| 19 | 🟠 | Job lifecycle | Jobs past their deadline are never expired — they stay live, top the "deadline" sort and stay in the sitemap | CONFIRMED | ⏳ Open |
-| 20 | 🟡 | Performance | Blog post page loads every published post (full HTML) on each request | CONFIRMED | ⏳ Open |
-| 21 | 🟡 | Least privilege | Public roadmap pages use the service-role key; one malformed row hides all roadmaps; resource links aren't scheme-checked | CONFIRMED | ⏳ Open |
-| 22 | 🟡 | Input limits | Third-party job descriptions are unbounded in size | CONFIRMED | ⏳ Open |
-| 23 | 🟡 | Reliability | Admin `debug-fetch` has no timeouts and an unbounded query | CONFIRMED | ⏳ Open |
-| 24 | 🟠 | Data integrity | Job-description formatter drops short list items, deletes `&#…;` entities (₹) and re-parses text as HTML | CONFIRMED (local repro) | ⏳ Open |
+| 19 | 🟠 | Job lifecycle | Jobs past their deadline are never expired — they stay live, top the "deadline" sort and stay in the sitemap | CONFIRMED | ✅ Fixed |
+| 20 | 🟡 | Performance | Blog post page loads every published post (full HTML) on each request | CONFIRMED | ✅ Fixed |
+| 21 | 🟡 | Least privilege | Public roadmap pages use the service-role key; one malformed row hides all roadmaps; resource links aren't scheme-checked | CONFIRMED | ✅ Fixed |
+| 22 | 🟡 | Input limits | Third-party job descriptions are unbounded in size | CONFIRMED | ✅ Fixed |
+| 23 | 🟡 | Reliability | Admin `debug-fetch` has no timeouts and an unbounded query | CONFIRMED | ✅ Fixed |
+| 24 | 🟠 | Data integrity | Job-description formatter drops short list items, deletes `&#…;` entities (₹) and re-parses text as HTML | CONFIRMED (local repro) | ✅ Fixed |
 
 ### 19. Jobs past their deadline are never expired
 
@@ -506,5 +509,12 @@ Fixed 2026-11-26, from lowest to highest severity. Each fix has its own commit a
 | 2 | `48ed3a3` | Migration drops the `using (true)` job read policies and recreates the live-only one. `schema.sql` and `rls_policies.sql` were corrected too. **Verified on local Postgres 16** with Supabase-like roles: before the fix, `anon` could read a draft job; after it, only live jobs, on an upgraded DB, a fresh DB, and with `rls_policies.sql` run afterwards. |
 | 1 | `6e0faa4` | `next` 15.5.19 → 15.5.29 (and `eslint-config-next`). `npm audit fix` updated sharp, postcss, nanoid and source-map-js. An `overrides` entry moves Next's pinned `postcss@8.4.31` to 8.5.33, since the upstream fix is only in Next 16. A clean `npm ci` + `next build` passes and the production server was smoke-tested. |
 
-**Final checks:** 174 tests pass, `tsc --noEmit` and `eslint` are clean, `next build` succeeds, and `npm audit --omit=dev` finds **0 vulnerabilities**.
+| 23 | `7081d6f` | `debug-fetch` source calls use `fetchWithTimeout` (8 s; 504 on timeout, 502 on failure), and `q` is capped at 200 characters. The helper moved to `lib/http.ts`, shared with the cron route. |
+| 22 | `63319e5` | `formatJobDescription()` and the cron's salary extractor process at most 20,000 characters. Measured before the cap: 160 KB of unclosed `<script` took about 3 s and grew quadratically. |
+| 24 | `6e1c063` | `<li>` becomes a bullet; bullets are list items before heading detection; short lines are kept; entities are decoded in one pass (₹ kept); all text is HTML-escaped when rendered; the intro stays first, which makes the formatter stable when re-run on stored HTML. |
+| 21 | `59d0711` | `lib/roadmaps.ts` uses the anon client, parses each row on its own (a bad row is skipped and logged), and keeps only http(s) resource links. |
+| 20 | `d273536` | New `lib/data/blog.ts`: the post is fetched by slug (shared with `generateMetadata` via React `cache`), plus up to 4 related posts and the 10 newest others, instead of every post with full HTML. |
+| 19 | `056c85d` | `todayInIndia()` / `openDeadlineFilter()` in `lib/jobPipeline.ts`. Public job queries and the sitemap hide past-deadline jobs. The cron marks them `expired` on every run and reports `expired_jobs`. |
+
+**Final checks:** 196 tests pass, `tsc --noEmit` and `eslint` are clean, `next build` succeeds, and `npm audit --omit=dev` finds **0 vulnerabilities**.
 
