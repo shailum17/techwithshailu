@@ -3,15 +3,20 @@ import { NextRequest } from 'next/server';
 
 const rpc = vi.fn();
 const legacy = { inserted: [] as unknown[], updated: [] as unknown[] };
+const pending: { row: { deadline: string | null } | null } = { row: { deadline: null } };
 
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: {
     rpc: (fn: string, args: unknown) =>
       fn === 'rate_limit_hit' ? Promise.resolve({ data: null, error: { message: 'no db' } }) : rpc(fn, args),
     from: (t: string) => ({
-      select: () => ({ eq: () => ({ eq: () => ({
-        single: async () => ({ data: { id: 'x', title: 'P', company: 'C', source: 'unstop' }, error: null }),
-      }) }) }),
+      select: () => ({ eq: () => ({
+        eq: () => ({
+          single: async () => ({ data: { id: 'x', title: 'P', company: 'C', source: 'unstop' }, error: null }),
+        }),
+        // deadline lookup before approving (#26)
+        maybeSingle: async () => ({ data: pending.row, error: null }),
+      }) }),
       insert: async (row: unknown) => { legacy.inserted.push({ t, row }); return { error: null }; },
       update: (patch: unknown) => ({
         eq: async (_c: string, id: string) => { legacy.updated.push({ t, id, patch }); return { error: null }; },
@@ -34,6 +39,7 @@ beforeEach(() => {
   rpc.mockReset();
   legacy.inserted.length = 0;
   legacy.updated.length = 0;
+  pending.row = { deadline: null };
 });
 
 describe('POST /api/admin/jobs/approve', () => {
@@ -72,5 +78,34 @@ describe('POST /api/admin/jobs/approve', () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain(field);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  describe('deadline already passed (#26)', () => {
+    it("refuses with 409 when the pending row's deadline has passed, and publishes nothing", async () => {
+      pending.row = { deadline: '2020-01-01' };
+      const res = await call({ jobId: ID });
+      expect(res.status).toBe(409);
+      expect((await res.json()).error).toMatch(/deadline \(2020-01-01\) has passed/);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it("refuses a past deadline given as an override", async () => {
+      const res = await call({ jobId: ID, overrides: { deadline: '2020-01-01' } });
+      expect(res.status).toBe(409);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it('a future override rescues an expired pending job', async () => {
+      pending.row = { deadline: '2020-01-01' };
+      rpc.mockResolvedValue({ data: 'new-id', error: null });
+      expect((await call({ jobId: ID, overrides: { deadline: '2099-12-31' } })).status).toBe(200);
+    });
+
+    it("today's deadline is still open (India date)", async () => {
+      const { todayInIndia } = await import('@/lib/jobPipeline');
+      pending.row = { deadline: todayInIndia() };
+      rpc.mockResolvedValue({ data: 'new-id', error: null });
+      expect((await call({ jobId: ID })).status).toBe(200);
+    });
   });
 });
