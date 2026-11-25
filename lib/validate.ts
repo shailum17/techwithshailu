@@ -35,6 +35,16 @@ export function clampLimit(value: string | null, fallback: number, max = 100): n
   return Math.min(n, max);
 }
 
+/** Default and maximum page size for public list endpoints. */
+export const LIST_DEFAULT_LIMIT = 50;
+export const LIST_MAX_LIMIT = 100;
+
+/** Parses `?offset=` into an integer in [0, max]; anything invalid → 0. */
+export function clampOffset(value: string | null, max = 10_000): number {
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 0;
+}
+
 /**
  * Returns a new object containing only the allow-listed keys that are
  * present on `body`. Prevents callers from writing arbitrary columns

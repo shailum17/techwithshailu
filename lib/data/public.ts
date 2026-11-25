@@ -32,6 +32,8 @@ export interface JobQuery {
   q?: string;
   sort?: 'newest' | 'deadline';
   limit?: number;
+  /** Rows to skip (used with limit for paging). */
+  offset?: number;
 }
 
 /** Live jobs matching the query. Throws on database errors. */
@@ -48,7 +50,10 @@ export async function listLiveJobs(opts: JobQuery = {}): Promise<JobRow[]> {
     ? query.order('deadline', { ascending: true })
     : query.order('created_at', { ascending: false });
 
-  if (opts.limit) query = query.limit(opts.limit);
+  if (opts.limit) {
+    const from = opts.offset ?? 0;
+    query = query.range(from, from + opts.limit - 1);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -79,6 +84,7 @@ export interface ToolQuery {
   featured?: boolean;
   q?: string;
   limit?: number;
+  offset?: number;
 }
 
 /** AI tools matching the query, newest first. Throws on database errors. */
@@ -90,7 +96,10 @@ export async function listTools(opts: ToolQuery = {}): Promise<ToolRow[]> {
   if (opts.q)        query = query.textSearch('fts', opts.q, { type: 'websearch' });
 
   query = query.order('created_at', { ascending: false });
-  if (opts.limit) query = query.limit(opts.limit);
+  if (opts.limit) {
+    const from = opts.offset ?? 0;
+    query = query.range(from, from + opts.limit - 1);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
