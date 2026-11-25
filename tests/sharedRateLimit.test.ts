@@ -43,3 +43,23 @@ describe('sharedRateLimit', () => {
     expect((await sharedRateLimit(req('192.0.2.1'), opts))?.status).toBe(429);
   });
 });
+
+describe('rateLimitSalt', () => {
+  it('prefers RATE_LIMIT_SALT, otherwise derives from ADMIN_SECRET without reusing it', async () => {
+    const { rateLimitSalt } = await import('@/lib/sharedRateLimit');
+    const saved = { s: process.env.RATE_LIMIT_SALT, a: process.env.ADMIN_SECRET };
+    try {
+      process.env.RATE_LIMIT_SALT = 'explicit-salt';
+      expect(rateLimitSalt()).toBe('explicit-salt');
+      delete process.env.RATE_LIMIT_SALT;
+      process.env.ADMIN_SECRET = 'the-admin-secret';
+      const derived = rateLimitSalt();
+      expect(derived).not.toBe('the-admin-secret');
+      expect(derived).not.toContain('the-admin-secret');
+      expect(rateLimitSalt()).toBe(derived); // stable
+    } finally {
+      if (saved.s === undefined) delete process.env.RATE_LIMIT_SALT; else process.env.RATE_LIMIT_SALT = saved.s;
+      if (saved.a === undefined) delete process.env.ADMIN_SECRET; else process.env.ADMIN_SECRET = saved.a;
+    }
+  });
+});
