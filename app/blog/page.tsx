@@ -1,23 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { listPublishedSummaries, type BlogSummaryRow } from '@/lib/data/blog';
 
 export const metadata: Metadata = {
   title: 'Blog — Tech Articles for CS Students & Freshers',
   description: 'Articles on tech jobs, interview prep, AI tools and study strategies for CS students in India.',
 };
 
-interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  content: string;
-  published_at: string;
-  read_time: string;
-  cover_url?: string;
-}
+type BlogPost = BlogSummaryRow;
 
 const categoryColor: Record<string, string> = {
   Jobs:             'text-lime border-lime/30',
@@ -51,29 +41,11 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-async function getPosts(): Promise<BlogPost[]> {
-  try {
-    const { data, error } = await supabase
-      .from('blogs')
-      .select('id,slug,title,excerpt,category,content,published_at,read_time,cover_url')
-      .eq('published', true)
-      .order('published_at', { ascending: false });
-    if (error) { console.error('[blog list]', error.message); return []; }
-    return (data ?? []) as BlogPost[];
-  } catch (err) {
-    console.error('[blog list]', err);
-    return [];
-  }
-}
 
-function extractFirstImage(html: string): string {
-  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  return match?.[1] ?? '';
-}
 
 function Thumbnail({ post }: { post: BlogPost }) {
   const cfg      = thumbConfig[post.category] ?? thumbConfig.General;
-  const coverSrc = post.cover_url || extractFirstImage(post.content ?? '');
+  const coverSrc = post.cover_url || post.first_image_url || '';
 
   if (coverSrc) {
     return (
@@ -100,7 +72,8 @@ function Thumbnail({ post }: { post: BlogPost }) {
 }
 
 export default async function BlogPage() {
-  const posts = await getPosts();
+  // Summaries only (no post HTML); thumbnails use first_image_url (#25)
+  const posts = await listPublishedSummaries();
 
   return (
     <div className="pt-20 min-h-screen pb-20" style={{ background: '#080808' }}>

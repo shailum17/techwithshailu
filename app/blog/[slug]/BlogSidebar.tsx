@@ -1,19 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import type { BlogSummaryRow } from '@/lib/data/blog';
 
-interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  content: string;
-  published_at: string;
-  read_time: string;
-  cover_url?: string;
-  tags?: string[];
-}
+// Summaries only: full post HTML is never sent to the browser for the sidebar
+type BlogPost = BlogSummaryRow;
 
 const categoryColor: Record<string, string> = {
   Jobs:             'text-lime',
@@ -55,7 +46,7 @@ function formatDate(iso: string) {
 
 /* ── PostRow ──────────────────────────────────────────────────── */
 function PostRow({ post, showThumb = false }: { post: BlogPost; showThumb?: boolean }) {
-  const coverSrc = post.cover_url || ((post.content ?? '').match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? '');
+  const coverSrc = post.cover_url || post.first_image_url || '';
   return (
     <Link href={`/blog/${post.slug}`} className="block group">
       <div className="flex gap-3 py-2.5 px-2 -mx-2 rounded-xl transition-colors duration-150 cursor-pointer hover:bg-white/[0.04]">

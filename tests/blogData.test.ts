@@ -6,7 +6,7 @@ vi.mock('@/lib/supabase', async () => {
   return { supabase: fakeDb.client, supabaseAdmin: fakeDb.client };
 });
 
-import { getPublishedPost, getSidebarPosts, RELATED_LIMIT, RECENT_POOL } from '@/lib/data/blog';
+import { getPublishedPost, getSidebarPosts, listPublishedSummaries, RELATED_LIMIT, RECENT_POOL } from '@/lib/data/blog';
 
 const post = (slug: string, category = 'Jobs') => ({ id: slug, slug, title: slug, category, content: '', published_at: '2026-01-01' });
 
@@ -39,5 +39,41 @@ describe('blog post page data (#20)', () => {
   it('sidebar degrades to empty lists on errors', async () => {
     db.queue({ data: null, error: { message: 'down' } }, { data: null, error: { message: 'down' } });
     expect(await getSidebarPosts('x', 'Jobs')).toEqual({ related: [], recent: [], otherPosts: [] });
+  });
+
+  it('sidebar and list rows carry first_image_url, never the post HTML (#25)', async () => {
+    db.queue({ data: [], error: null }, { data: [], error: null });
+    await getSidebarPosts('hello', 'Jobs');
+    const cols = db.of('select').map(c => String(c.args[0]));
+    expect(cols.every(c => c.includes('first_image_url') && !c.split(',').includes('content'))).toBe(true);
+  });
+});
+
+describe('blog list summaries (#25)', () => {
+  it('selects summary columns only, newest first', async () => {
+    db.queue({ data: [{ slug: 'a', first_image_url: 'https://img/a.png' }], error: null });
+    const rows = await listPublishedSummaries();
+    expect(rows[0]).toMatchObject({ slug: 'a', first_image_url: 'https://img/a.png' });
+    expect(String(db.of('select')[0].args[0]).split(',')).not.toContain('content');
+    expect(db.of('order')[0].args).toEqual(['published_at', { ascending: false, nullsFirst: false }]);
+  });
+
+  it('before the migration: falls back to content, extracts the image, and drops the HTML', async () => {
+    db.queue(
+      { data: null, error: { code: '42703', message: 'column blogs.first_image_url does not exist' } },
+      { data: [{ slug: 'a', content: '<p>x</p><IMG SRC="https://img/first.png"><img src="https://img/2.png">' },
+               { slug: 'b', content: '<p>no image</p>' }], error: null },
+    );
+    const rows = await listPublishedSummaries();
+    expect(rows).toEqual([
+      { slug: 'a', first_image_url: 'https://img/first.png' },
+      { slug: 'b', first_image_url: null },
+    ]);
+  });
+
+  it('other errors return an empty list without the fallback query', async () => {
+    db.queue({ data: null, error: { code: '57014', message: 'timeout' } });
+    expect(await listPublishedSummaries()).toEqual([]);
+    expect(db.of('select')).toHaveLength(1);
   });
 });
