@@ -14,6 +14,12 @@ Run these files in order (SQL Editor, or `psql`):
    - `20261124000000_schema_sync.sql` — columns the code relies on (`pending_jobs.deadline`,
      `tools.logo` / `votes` / unique `name`, `blogs.category` / `read_time`) and the
      `increment_stat()` RPC used by `/api/visitors`.
+   - `20261125000000_app_settings.sql` — `app_settings` key/value table (admin pause/resume of the
+     scheduled job fetch).
+   - `20261125000100_rate_limits.sql` — `rate_limits` table and `rate_limit_hit()` RPC used for
+     rate limits shared across serverless instances (admin auth failures, signups, visitor counter).
+   - `20261125000200_approve_pending_job.sql` — `approve_pending_job()` moves a pending job to `jobs`
+     in one transaction (used by the admin Approve button).
 3. `seed-roadmaps.sql` — optional roadmap content (safe to re-run).
 
 `rls_policies.sql` is an older, more detailed version of the RLS setup and overlaps with

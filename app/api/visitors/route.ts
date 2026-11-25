@@ -7,10 +7,17 @@
  * Returns the current visitor count (used by getSiteStats as fallback).
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { sharedRateLimit } from '@/lib/sharedRateLimit';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  // VisitorPing calls this once per browser session; anything much above
+  // that from one IP is someone inflating the counter. Shared across
+  // instances; increment_stat itself is only callable with the service role.
+  const limited = await sharedRateLimit(req, { limit: 10, windowMs: 60 * 60_000, prefix: 'visit' });
+  if (limited) return limited;
+
   try {
     const { data, error } = await supabaseAdmin.rpc('increment_stat', {
       stat_key: 'visitor_count',

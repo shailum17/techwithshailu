@@ -15,6 +15,7 @@ import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
 import { pick, BLOG_FIELDS } from '@/lib/validate';
+import { resolvePublishedAt } from '@/lib/blogPublish';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
 
 /* ── POST ─────────────────────────────────────────────────────── */
 export async function POST(req: NextRequest) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   try {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       // Sanitize HTML content before storing to prevent XSS
       content:      typeof body.content === 'string' ? sanitizeBlogHtml(body.content) : body.content,
       published:    body.published ?? false,
-      published_at: body.published ? new Date().toISOString() : null,
+      published_at: resolvePublishedAt(null, body.published === true),
     };
     const { data, error } = await supabaseAdmin
       .from('blogs')

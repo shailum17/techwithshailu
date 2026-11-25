@@ -96,7 +96,7 @@ techwithshailu/
 │   ├── ai-tools/              # AI tools directory
 │   ├── resources/             # Roadmaps, resume hub, cheat sheets, etc.
 │   ├── blog/                  # Blog list & posts
-│   ├── admin/                 # Admin panel (client-side, key-protected)
+│   ├── admin/                 # Admin panel shell; views in admin/_components/
 │   ├── api/                   # Route handlers (public + /api/admin/* + /api/cron/*)
 │   ├── layout.tsx, sitemap.ts, robots.ts
 ├── components/                # Shared React components
@@ -119,10 +119,12 @@ techwithshailu/
 ## 🔐 Admin Panel
 
 1. Go to `/admin`.
-2. Enter the `ADMIN_SECRET` value. It's checked against the server before the dashboard opens.
-3. Manage jobs, pending jobs, tools, roadmaps and blogs.
+2. Enter the `ADMIN_SECRET` value. The server checks it and sets an 8-hour httpOnly, `SameSite=Strict` session cookie, so the key isn't kept in the page.
+3. Manage jobs, pending jobs, tools, roadmaps and blogs. Use **Logout** to clear the session.
 
-Every write route requires the `x-admin-key` header to match `ADMIN_SECRET`. The comparison is constant-time and rate-limited.
+Admin API routes accept either that session cookie or an `x-admin-key` header matching `ADMIN_SECRET`, which is useful for scripts.
+Comparisons are constant-time, and failed attempts are rate-limited to 20 per minute per IP.
+Changing `ADMIN_SECRET` signs out every session.
 `/api/cron/fetch-jobs` also accepts `Authorization: Bearer <CRON_SECRET>`, which is what Vercel Cron sends.
 
 ---

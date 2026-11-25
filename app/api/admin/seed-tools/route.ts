@@ -15,7 +15,7 @@ import { checkAdminAuth } from '@/lib/adminAuth';
 import { TOOLS_SEED } from '@/scripts/seed-tools';
 
 export async function POST(req: NextRequest) {
-  const authError = checkAdminAuth(req);
+  const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   try {

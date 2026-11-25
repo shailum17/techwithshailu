@@ -2,41 +2,43 @@
 
 _Static review of the repository as of commit `df79927` (2026-11-24). The Status column and the "Resolution log" at the end track what has been fixed since._
 
+**Progress (2026-11-25): 26 of 29 issues completed.** All 🟡 low and 🟠 medium issues are done. Still open: 🔴 #2 and #3; 🔴 #4 is partly done. Items marked *needs migration* or *needs env* need the deployment steps in the Resolution log before they take effect in production.
+
 Severity scale: **🔴 High** (security hole or user-visible breakage) · **🟠 Medium** (wrong behaviour / reliability risk) · **🟡 Low** (hardening, hygiene, maintainability).
 
 ## Summary
 
 | # | Severity | Area | Issue | Status |
 |---|---|---|---|---|
-| 1 | 🔴 | Security | Cron endpoint auth bypass when `CRON_SECRET` is unset | ✅ Fixed (via #20) |
+| 1 | 🔴 | Security | Cron endpoint auth bypass when `CRON_SECRET` is unset | ✅ Completed (via #20) |
 | 2 | 🔴 | Jobs pipeline | Approved and rejected jobs come back into the pending queue on the next run | Open |
 | 3 | 🔴 | Reliability | SSR pages calling `/api/jobs` share a single rate-limit bucket → empty job lists under traffic | Open |
 | 4 | 🔴 | SEO | Sitemap advertises 5 URLs that all return 404 | 🟡 Partial: roadmap URLs fixed, dynamic entries still missing |
-| 5 | 🟠 | Admin | Admin lists use public endpoints → draft blogs / non-live jobs are invisible to the admin | Open |
-| 6 | 🟠 | Admin | Users view always fails (no admin key sent) | Open |
-| 7 | 🟠 | Blog | Every edit of a published post resets `published_at` | Open |
-| 8 | 🟠 | Jobs pipeline | Admin fetch filters (type/source/location/max_days) are ignored by the API | Open |
-| 9 | 🟠 | Jobs pipeline | Telegram alert is fire-and-forget and can be dropped | Open |
-| 10 | 🟠 | Jobs pipeline | Sequential N+1 DB queries in cron risk the 60 s timeout | Open |
-| 11 | 🟠 | Jobs pipeline | JSearch `type` values don't match the site's type filter | Open |
-| 12 | 🟠 | Admin | "Schedule" settings are cosmetic — saved only to localStorage | Open |
-| 13 | 🟠 | Abuse | `/api/visitors` and `/api/users` POST have no rate limiting | Open |
-| 14 | 🟠 | Rate limiting | In-memory limiter is per-instance and unreliable on serverless | Open |
-| 15 | 🟠 | Data | Approve flow is not atomic (insert then delete) | Open |
-| 16 | 🟡 | Admin | Login screen accepts any key without validating it | ✅ Fixed |
-| 17 | 🟡 | Security | Admin key stored in `sessionStorage` + CSP allows `unsafe-inline`/`unsafe-eval` | 🟡 Partial |
-| 18 | 🟡 | Security | Unsigned Cloudinary upload preset is public | ✅ Fixed (needs env + preset disabled) |
-| 19 | 🟡 | Security | Admin write routes insert/update the raw request body | ✅ Fixed |
-| 20 | 🟡 | Security | Cron route uses non-constant-time secret comparison and no rate limit | ✅ Fixed |
-| 21 | 🟡 | API | `limit` query param is unbounded / unvalidated | ✅ Fixed |
-| 22 | 🟡 | API | Internal DB error messages returned to clients | ✅ Fixed |
-| 23 | 🟡 | Config | Domain inconsistency: `.com` vs `.in` | ✅ Fixed |
-| 24 | 🟡 | Database | SQL files drift: `increment_stat` not defined in repo, duplicate migrations | ✅ Fixed |
-| 25 | 🟡 | Docs/Deps | README and package.json describe MongoDB; `mongoose` unused | ✅ Fixed |
-| 26 | 🟡 | Tooling | No ESLint installed, no tests, no CI, no `.env.example` | 🟡 Mostly: lint, CI, `.env.example` added; no test suite yet |
-| 27 | 🟡 | Maintainability | 3,700-line admin page and duplicated pending-jobs UI | 🟡 Partial: duplicate removed, file not split |
-| 28 | 🟡 | Dead code | `/resources/[slug]` route has an empty data map | ✅ Fixed |
-| 29 | 🟡 | Security | `apply_link` from third parties is never validated | ✅ Fixed |
+| 5 | 🟠 | Admin | Admin lists use public endpoints → draft blogs / non-live jobs are invisible to the admin | ✅ Completed |
+| 6 | 🟠 | Admin | Users view always fails (no admin key sent) | ✅ Completed (via #17) |
+| 7 | 🟠 | Blog | Every edit of a published post resets `published_at` | ✅ Completed |
+| 8 | 🟠 | Jobs pipeline | Admin fetch filters (type/source/location/max_days) are ignored by the API | ✅ Completed |
+| 9 | 🟠 | Jobs pipeline | Telegram alert is fire-and-forget and can be dropped | ✅ Completed |
+| 10 | 🟠 | Jobs pipeline | Sequential N+1 DB queries in cron risk the 60 s timeout | ✅ Completed |
+| 11 | 🟠 | Jobs pipeline | JSearch `type` values don't match the site's type filter | ✅ Completed |
+| 12 | 🟠 | Admin | "Schedule" settings are cosmetic — saved only to localStorage | ✅ Completed (needs migration) |
+| 13 | 🟠 | Abuse | `/api/visitors` and `/api/users` POST have no rate limiting | ✅ Completed (needs migration) |
+| 14 | 🟠 | Rate limiting | In-memory limiter is per-instance and unreliable on serverless | ✅ Completed (needs migration) |
+| 15 | 🟠 | Data | Approve flow is not atomic (insert then delete) | ✅ Completed (needs migration) |
+| 16 | 🟡 | Admin | Login screen accepts any key without validating it | ✅ Completed |
+| 17 | 🟡 | Security | Admin key stored in `sessionStorage` + CSP allows `unsafe-inline`/`unsafe-eval` | ✅ Completed (inline scripts accepted, see log) |
+| 18 | 🟡 | Security | Unsigned Cloudinary upload preset is public | ✅ Completed (needs env + preset disabled) |
+| 19 | 🟡 | Security | Admin write routes insert/update the raw request body | ✅ Completed |
+| 20 | 🟡 | Security | Cron route uses non-constant-time secret comparison and no rate limit | ✅ Completed |
+| 21 | 🟡 | API | `limit` query param is unbounded / unvalidated | ✅ Completed |
+| 22 | 🟡 | API | Internal DB error messages returned to clients | ✅ Completed |
+| 23 | 🟡 | Config | Domain inconsistency: `.com` vs `.in` | ✅ Completed |
+| 24 | 🟡 | Database | SQL files drift: `increment_stat` not defined in repo, duplicate migrations | ✅ Completed |
+| 25 | 🟡 | Docs/Deps | README and package.json describe MongoDB; `mongoose` unused | ✅ Completed |
+| 26 | 🟡 | Tooling | No ESLint installed, no tests, no CI, no `.env.example` | ✅ Completed |
+| 27 | 🟡 | Maintainability | 3,700-line admin page and duplicated pending-jobs UI | ✅ Completed |
+| 28 | 🟡 | Dead code | `/resources/[slug]` route has an empty data map | ✅ Completed |
+| 29 | 🟡 | Security | `apply_link` from third parties is never validated | ✅ Completed |
 
 ---
 
@@ -278,3 +280,21 @@ Third-party `apply_link` values (Unstop, JSearch) are rendered directly as `<a h
 Side effects worth knowing:
 - Home-page roadmap cards now show the real module count (`tags.length`) instead of always 6, because `tags` is now mapped from the DB.
 - The company-logo ring on job detail pages now uses the intended `#080808` colour; the old inline `ringColor` style was ignored.
+
+### Pass 2: remaining low items, then medium (2026-11-25)
+
+- **#26** — Added Vitest (`npm test`) with 27 unit tests covering `lib/validate`, `lib/adminAuth` (constant-time compare, 401/500/429 paths), `lib/rateLimit`, `lib/sanitize` and `formatJobDescription` (no scripts or handlers in output). CI now runs lint, typecheck, test and build. The rate limiter's cleanup timer no longer keeps processes alive (`unref`).
+- **#17** — The admin panel now logs in through `POST /api/admin/session`, which sets an 8-hour **httpOnly, SameSite=Strict, Secure** session cookie (HMAC-signed, `lib/adminSession.ts`). The key is no longer kept in page state or storage, and every `x-admin-key` header was removed from the panel. The session is restored on reload through `/api/admin/verify`, and Logout clears it. `checkAdminAuth` accepts the cookie or the header; cookie-authenticated non-GET requests from another origin get 403 (CSRF defence in depth). Only *failed* auth attempts count toward the 20/min limit, so a busy admin session can't lock itself out. Rotating `ADMIN_SECRET` invalidates all sessions. **CSP decision:** `'unsafe-inline'` stays. Removing it needs a per-request nonce, which would force every page, including today's static and ISR pages, to render dynamically on each request. With the key now unreadable by scripts, an XSS could no longer steal it, so the remaining risk didn't justify that cost. Covered by 6 new tests and a browser check (cookie not readable from JS, no key header sent, reload and logout work).
+- **#6** — The Users view now authenticates with the admin session cookie, so `/api/users` returns 200 and the subscriber count loads. Confirmed in the browser check.
+- **#27** — Split `app/admin/page.tsx` (about 3,700 lines) into a 360-line shell (auth, navigation, view switching) plus one module per view in `app/admin/_components/`: `LoginScreen`, `DashboardView`, `JobsView`, `ToolsView`, `DatabaseView`, `PendingJobsView`, `AutomationView`, `BlogView`, `MiscViews`, and `shared` (types, input style, small UI pieces). The code moved unchanged, apart from dropping an unused `SectionLabel` and stale lint disables. Verified with tsc, lint, build, and a browser pass that opens all 13 tabs with no runtime errors.
+- **#5** — Added admin-only `GET /api/admin/jobs` (every status) and `GET /api/admin/blogs` (including drafts), both using the service-role client. The admin panel loads its lists from these instead of the RLS-filtered public endpoints, and ignores error payloads instead of crashing on a non-array. Non-live jobs get a "Draft · not on site" or "Expired · not on site" badge; blogs already showed Live/Draft.
+- **#7** — New `lib/blogPublish.ts` `resolvePublishedAt()` sets `published_at` only on a post's **first** publish. Edits, re-uploads of the same `.md` (upload-md now reads the existing date) and unpublish/republish all keep the original date. `PUT /api/blogs/:id` only touches the column when `published` is in the request, and now returns 404 for a missing post. Covered by 4 tests.
+- **#8** — `/api/cron/fetch-jobs` now reads the admin filters through `parseFetchFilters()` (`lib/jobPipeline.ts`). `source` skips the unselected APIs, saving quota; `type` and `location` filter the merged results; `max_days` is passed to Adzuna (`max_days_old`) and JSearch (`date_posted`). Unstop has no posted-date parameter but only returns listings still open for registration. Whether the rotating company queries run is now decided by the trigger (cron yes, manual no) instead of whether the query text contains "india". Unknown filter values are ignored. Covered by tests.
+- **#11** — New `normalizeJobType()` maps every source onto the site's `Internship | Job | Full-time`: JSearch `FULLTIME`/`INTERN`/`PARTTIME`/`CONTRACTOR`, Adzuna `contract_time`, and Unstop. Anything with "intern" in the type or title is an Internship. Fetched jobs now match the public type filter without manual fixing at approval. Existing `pending_jobs` rows keep their old values until re-fetched or edited. Covered by 10 table tests.
+- **#9** — The Telegram alert is now awaited, with a 5-second timeout, before the handler returns, so Vercel can't freeze the function first. It is sent as plain text: the old legacy-Markdown message had stray `[ok]`/`[stats]` brackets that Telegram can reject with "can't parse entities". Failures are logged, and the response includes `telegram: sent | failed | skipped`.
+- **#10** — Cron dedupe and insert are batched: one `pending_jobs` lookup per 50 titles plus **one bulk insert**, instead of a SELECT and an INSERT per job. If the bulk insert fails, it retries row by row so good rows still land and bad ones are reported. Dedupe now ignores case and whitespace both within the batch and against the DB (`dedupeKey`). The zero-results response now has the same shape as a normal one. Covered by a route-level test with a fake Supabase client (one lookup, one insert, duplicates skipped, Telegram awaited, filters, 401s).
+- **#12** — Pause/resume is real now. New `app_settings` table (`supabase/migrations/20261125000000_app_settings.sql`) and admin API `GET/PUT /api/admin/settings/automation`. The cron route skips **scheduled** runs while paused and logs them as `skipped`; manual admin searches still run. The toggle saves immediately to the server, and the panel shows the schedule actually deployed in `vercel.json` instead of a value from browser storage. The frequency picker stays, but is labelled as a `vercel.json` snippet generator that needs a redeploy, because Vercel Cron schedules are fixed at deploy time. If the migration hasn't been applied, the cron keeps running as before (fail-open). **Action needed:** run the new migration. Covered by route tests (paused → skipped, manual still runs, missing setting → runs).
+- **#14** — Added a limiter shared across serverless instances: `rate_limits` table plus an atomic `rate_limit_hit()` Postgres function (`supabase/migrations/20261125000100_rate_limits.sql`, service-role only), wrapped by `lib/sharedRateLimit.ts`. It is used where abuse matters: failed admin auth (now `checkAdminAuth`/`checkAdminKey` are async), signups and the visitor counter. Clients are stored as HMAC hashes of the IP, never raw IPs (`RATE_LIMIT_SALT`, defaulting to `ADMIN_SECRET`). If the RPC is unavailable it falls back to the in-memory limiter rather than failing open or closed. Public read endpoints deliberately keep the per-instance limiter, to avoid a DB round-trip on every page load. **Action needed:** run the new migration. Covered by tests (allow/deny, Retry-After, hashed key, fallback).
+- **#13** — `POST /api/visitors` is limited to 10/hour per IP and `POST /api/users` to 5/hour per IP, both through the shared limiter. The `increment_stat` RPC was already restricted to the service role (Pass 1, #24). Signup now returns the **same** `200 { ok, message }` whether the email is new or already subscribed, never echoes the stored row, treats a concurrent duplicate (Postgres 23505) as success, and validates that `email` is a string of at most 254 characters. Covered by route tests (same response, `role` cannot be set, 429 after 5).
+- **#15** — Approval now runs through the new `approve_pending_job(p_id, p_overrides)` Postgres function (`supabase/migrations/20261125000200_approve_pending_job.sql`, service-role only). It locks the pending row (`FOR UPDATE`), inserts the live job and deletes the pending row in **one transaction**, so a failure can't leave a job both live and pending, and a double-click or retry can't publish it twice (the second call gets 404). The approve route validates the admin's edits first: a UUID `jobId`; allow-listed override fields only; http(s) `apply_link`; string-array `tags`; real dates; whole-number `batch_year`. The job's `source` now carries over instead of becoming `manual`. If the function isn't deployed yet, the route falls back to the old two-step path. Tested against a real PostgreSQL 16 database with all repo migrations applied (field merging, defaults, the second-approve error, rollback on a bad date, anon has no execute) and with route tests. **Action needed:** run the new migration.
+- **Database check:** `schema.sql`, every file in `migrations/`, `rls_policies.sql` and `seed-roadmaps.sql` were applied to a fresh PostgreSQL 16 database (with Supabase's `auth` schema and roles stubbed), and every migration was then re-run to confirm it is idempotent. `increment_stat`, `rate_limit_hit` (limits, peek, window reset) and `approve_pending_job` were exercised directly, and anon was confirmed unable to execute any of them or read `app_settings`/`rate_limits`.
