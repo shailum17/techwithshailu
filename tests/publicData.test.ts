@@ -6,7 +6,7 @@ let result: { data: unknown; error: unknown } = { data: [], error: null };
 
 function builder() {
   const b: Record<string, unknown> = {};
-  for (const m of ['select', 'eq', 'ilike', 'textSearch', 'order', 'limit', 'range']) {
+  for (const m of ['select', 'eq', 'or', 'ilike', 'textSearch', 'order', 'limit', 'range']) {
     b[m] = (...args: unknown[]) => { calls.push([m, ...args]); return b; };
   }
   b.maybeSingle = () => { calls.push(['maybeSingle']); return Promise.resolve(result); };
@@ -32,13 +32,19 @@ describe('listLiveJobs', () => {
     expect(calls).toContainEqual(['eq', 'batch_year', 2026]);
     expect(calls).toContainEqual(['eq', 'is_featured', true]);
     expect(calls).toContainEqual(['textSearch', 'fts', 'react', { type: 'websearch' }]);
-    expect(calls).toContainEqual(['order', 'deadline', { ascending: true }]);
+    expect(calls).toContainEqual(['order', 'deadline', { ascending: true, nullsFirst: false }]);
     expect(calls).toContainEqual(['range', 0, 5]);
   });
 
   it('pages with offset', async () => {
     await listLiveJobs({ limit: 50, offset: 100 });
     expect(calls).toContainEqual(['range', 100, 149]);
+  });
+
+  it('hides jobs whose deadline has passed (India date), keeps undated ones (#19)', async () => {
+    await listLiveJobs();
+    const or = calls.find(c => c[0] === 'or');
+    expect(or?.[1]).toMatch(/^deadline\.is\.null,deadline\.gte\.\d{4}-\d{2}-\d{2}$/);
   });
 
   it('ignores an invalid batch year instead of querying NaN', async () => {
@@ -57,6 +63,7 @@ describe('getLiveJob', () => {
     result = { data: { id: 'j1', title: 'T', company: 'C' }, error: null };
     expect(await getLiveJob('j1')).toMatchObject({ id: 'j1' });
     expect(calls).toContainEqual(['eq', 'status', 'live']);
+    expect(calls.some(c => c[0] === 'or' && String(c[1]).startsWith('deadline.is.null'))).toBe(true);
   });
 
   it('returns null for missing rows and query errors (e.g. malformed id)', async () => {

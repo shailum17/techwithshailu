@@ -27,7 +27,7 @@ import { SITE_URL } from '@/lib/site';
 import { fetchWithTimeout } from '@/lib/http';
 import { getAutoFetchEnabled } from '@/lib/settings';
 import {
-  applyFetchFilters, chunk, dedupeKey, jsearchDatePosted, normalizeJobType, parseFetchFilters,
+  applyFetchFilters, chunk, dedupeKey, jsearchDatePosted, normalizeJobType, parseFetchFilters, todayInIndia,
 } from '@/lib/jobPipeline';
 
 export const dynamic  = 'force-dynamic';
@@ -516,6 +516,26 @@ async function insertPending(rows: PendingRow[]): Promise<{ inserted: number; er
   return { inserted: 0, error: up.error.message };
 }
 
+/**
+ * Marks live jobs whose deadline has passed (India date) as expired.
+ * Public queries already hide them; this keeps the admin panel and the
+ * database in step. A job is open through its whole deadline day.
+ * Returns how many jobs were expired (0 on error, which is logged).
+ */
+async function expirePastDeadlineJobs(): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from('jobs')
+    .update({ status: 'expired' })
+    .eq('status', 'live')
+    .lt('deadline', todayInIndia())
+    .select('id');
+  if (error) {
+    console.warn('[cron] expiring past-deadline jobs failed:', error.message);
+    return 0;
+  }
+  return data?.length ?? 0;
+}
+
 /* ═════════════════════════════════════════════════════════════
    MAIN HANDLER
 ═════════════════════════════════════════════════════════════ */
@@ -552,6 +572,9 @@ export async function GET(req: NextRequest) {
 
   console.log(`[cron] START trigger=${trigger} query="${rawQuery}" filters=${JSON.stringify(filters)}`);
 
+  // Runs on every (non-paused) run, before the early return for "no results"
+  const expiredCount = await expirePastDeadlineJobs();
+
   // ── Fetch the selected sources in parallel ───────────────
   const wants = (src: 'unstop' | 'adzuna' | 'rapidapi') => !filters.source || filters.source === src;
   const [unstopJobs, adzunaJobs, rapidJobs] = await Promise.all([
@@ -585,7 +608,7 @@ export async function GET(req: NextRequest) {
     // Same shape as the normal response so the admin panel can read `sources`
     return Response.json({
       success: true, query: rawQuery, trigger, sources: summary,
-      fetched: 0, added_to_pending: 0, skipped_duplicates: 0, telegram: 'skipped',
+      fetched: 0, added_to_pending: 0, skipped_duplicates: 0, expired_jobs: expiredCount, telegram: 'skipped',
       note: 'No results from the selected sources (or their API keys are not set).',
     });
   }
@@ -706,6 +729,7 @@ export async function GET(req: NextRequest) {
     fetched:            allJobs.length,       // total before DB dedupe
     added_to_pending:   newCount,
     skipped_duplicates: dupeCount,
+    expired_jobs:       expiredCount,
     insert_errors:      errors.length > 0 ? errors : undefined,
     telegram,
   });
