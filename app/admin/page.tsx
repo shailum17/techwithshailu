@@ -75,7 +75,7 @@ export default function AdminPage() {
     };
     try {
       const [jr, tr, br] = await Promise.all([
-        fetch('/api/admin/jobs'), fetch('/api/tools'), fetch('/api/admin/blogs'),
+        fetch('/api/admin/jobs'), fetch('/api/admin/tools'), fetch('/api/admin/blogs'),
       ]);
       setJobs(await asList(jr));
       setTools(await asList(tr));

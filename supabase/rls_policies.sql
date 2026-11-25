@@ -52,7 +52,7 @@ alter table jobs enable row level security;
 create policy "jobs: public select"
   on jobs
   for select
-  using (true);
+  using (status = 'live');
 
 -- Only the server (service_role) can insert new jobs
 create policy "jobs: service_role insert"

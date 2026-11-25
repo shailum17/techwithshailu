@@ -34,9 +34,8 @@ export function JobsView({ jobs, loading, onRefresh }: {
                 is_featured:false,tags:'',logo_url:'',banner_url:'' });
     } else {
       const data = await res.json().catch(() => ({}));
-      if (res.status === 503) setMsg(`DB Error: ${data.detail ?? 'Supabase insert failed. Check your table schema.'}`);
-      else if (res.status === 401) setMsg('Wrong admin key');
-      else setMsg(`Failed (${res.status})`);
+      if (res.status === 401) setMsg('Session expired — log in again');
+      else setMsg(data.error ? `Error: ${data.error}` : `Failed (${res.status})`);
     }
     setTimeout(() => setMsg(''), 5000);
   }

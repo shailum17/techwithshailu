@@ -4,6 +4,7 @@
  * GET  /api/roadmaps  — list roadmaps (public, anon client, respects RLS)
  *   ?category=  filter by category
  *   ?q=         full-text search
+ *   ?limit= / ?offset=  paging (default 50, max 100)
  *
  * POST /api/roadmaps  — create roadmap (admin only)
  */
@@ -12,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { pick, ROADMAP_FIELDS } from '@/lib/validate';
+import { clampLimit, clampOffset, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, pick, validateRoadmap, writeErrorStatus, ROADMAP_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -32,14 +33,20 @@ export async function GET(req: NextRequest) {
     if (category) query = query.eq('category', category);
     if (search)   query = query.textSearch('fts', search, { type: 'websearch' });
 
-    query = query.order('order', { ascending: true }).order('created_at', { ascending: false });
+    const limit  = clampLimit(searchParams.get('limit'), LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT);
+    const offset = clampOffset(searchParams.get('offset'));
+    query = query
+      .order('order', { ascending: true })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     const { data, error } = await query;
     if (error) throw error;
     return NextResponse.json(data ?? []);
   } catch (err) {
     console.error('[GET /api/roadmaps]', err);
-    return NextResponse.json([]);
+    // 503 (not 200 []) so clients and monitoring can tell "no data" from "DB down"
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
   }
 }
 
@@ -49,13 +56,22 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), ROADMAP_FIELDS);
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const checked = validateRoadmap(pick(raw, ROADMAP_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
     const { data, error } = await supabaseAdmin
       .from('roadmaps')
-      .insert(body)
+      .insert(checked.value)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/roadmaps]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error('[POST /api/roadmaps]', err instanceof Error ? err.message : err);

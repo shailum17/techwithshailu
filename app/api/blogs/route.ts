@@ -5,6 +5,8 @@
  *   ?tag=           filter by tag
  *   ?q=             full-text search
  *   ?published=true only published posts
+ *   ?limit= / ?offset=  paging (default 50, max 100)
+ *   List rows omit `content`; fetch /api/blogs/:id for the full post.
  *
  * POST /api/blogs  — create post (admin only)
  */
@@ -14,7 +16,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
-import { pick, BLOG_FIELDS } from '@/lib/validate';
+import { clampLimit, clampOffset, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, pick, validateBlog, writeErrorStatus, BLOG_FIELDS } from '@/lib/validate';
 import { resolvePublishedAt } from '@/lib/blogPublish';
 
 /* ── GET ──────────────────────────────────────────────────────── */
@@ -27,7 +29,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     // Use anon client — respects Supabase RLS policies
-    let query = supabase.from('blogs').select('*');
+    // Summary columns only: full post HTML would make every list response huge
+    let query = supabase.from('blogs').select(
+      'id, title, slug, excerpt, category, tags, cover_url, read_time, author, published, published_at, created_at, updated_at',
+    );
 
     const tag       = searchParams.get('tag');
     const search    = searchParams.get('q');
@@ -37,14 +42,19 @@ export async function GET(req: NextRequest) {
     if (published === 'true') query = query.eq('published', true);
     if (search)               query = query.textSearch('fts', search, { type: 'websearch' });
 
-    query = query.order('published_at', { ascending: false });
+    const limit  = clampLimit(searchParams.get('limit'), LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT);
+    const offset = clampOffset(searchParams.get('offset'));
+    query = query
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .range(offset, offset + limit - 1);
 
     const { data, error } = await query;
     if (error) throw error;
     return NextResponse.json(data ?? []);
   } catch (err) {
     console.error('[GET /api/blogs]', err);
-    return NextResponse.json([]);
+    // 503 (not 200 []) so clients and monitoring can tell "no data" from "DB down"
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
   }
 }
 
@@ -54,7 +64,13 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), BLOG_FIELDS);
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const checked = validateBlog(pick(raw, BLOG_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
+    const body = checked.value;
     const doc  = {
       ...body,
       // Sanitize HTML content before storing to prevent XSS
@@ -67,7 +83,11 @@ export async function POST(req: NextRequest) {
       .insert(doc)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/blogs]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error('[POST /api/blogs]', err instanceof Error ? err.message : err);

@@ -18,6 +18,22 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
 import { resolvePublishedAt } from '@/lib/blogPublish';
+import { isMissingColumnError, isSlug, safeHttpUrl } from '@/lib/validate';
+
+/** Largest accepted .md file. Blog posts are text; 512 KB is generous. */
+const MAX_MD_BYTES = 512 * 1024;
+
+/**
+ * gray-matter ships a JavaScript front-matter engine that runs `---js`
+ * blocks through eval() — uploading a document must never execute it.
+ * Only YAML front-matter is accepted, and the code-executing engines are
+ * replaced with ones that throw, as a second layer.
+ */
+const ALLOWED_FRONTMATTER = new Set(['', 'yaml', 'yml']);
+const refuse = () => { throw new Error('Only YAML front-matter is allowed'); };
+const SAFE_MATTER_OPTIONS = {
+  engines: { js: refuse, javascript: refuse, coffee: refuse, coffeescript: refuse, cson: refuse },
+};
 
 marked.setOptions({ gfm: true, breaks: false });
 
@@ -51,20 +67,45 @@ export async function POST(req: NextRequest) {
   }
 
   const fileName = (file as File).name ?? '';
-  if (!fileName.endsWith('.md')) {
+  if (!/\.md$/i.test(fileName)) {
     return NextResponse.json({ error: 'Only .md files are accepted.' }, { status: 400 });
+  }
+  if ((file as File).size > MAX_MD_BYTES) {
+    return NextResponse.json({ error: `File too large (max ${MAX_MD_BYTES / 1024} KB).` }, { status: 413 });
   }
 
   const raw = await (file as File).text();
 
   // ── 2. Parse frontmatter ────────────────────────────────────
-  const { data, content: mdBody } = matter(raw) as { data: FrontMatter; content: string };
+  const lang = matter.language(raw).name.toLowerCase();
+  if (!ALLOWED_FRONTMATTER.has(lang)) {
+    return NextResponse.json({ error: 'Only YAML front-matter is allowed.' }, { status: 422 });
+  }
+  let data: FrontMatter;
+  let mdBody: string;
+  try {
+    ({ data, content: mdBody } = matter(raw, SAFE_MATTER_OPTIONS) as unknown as { data: FrontMatter; content: string });
+  } catch {
+    return NextResponse.json({ error: 'Invalid front-matter (YAML only).' }, { status: 422 });
+  }
 
-  if (!data.title) {
+  if (typeof data.title !== 'string' || !data.title.trim()) {
     return NextResponse.json({ error: 'Missing required frontmatter: title' }, { status: 422 });
   }
   if (!data.slug) {
     return NextResponse.json({ error: 'Missing required frontmatter: slug' }, { status: 422 });
+  }
+  if (!isSlug(data.slug)) {
+    return NextResponse.json(
+      { error: 'Invalid slug: use lowercase letters, digits and single hyphens (e.g. my-first-post)' },
+      { status: 422 },
+    );
+  }
+  let coverUrl = '';
+  if (data.cover_url !== undefined && data.cover_url !== null && data.cover_url !== '') {
+    const safe = safeHttpUrl(data.cover_url);
+    if (!safe) return NextResponse.json({ error: 'cover_url must be an http(s) URL' }, { status: 422 });
+    coverUrl = safe;
   }
 
   // ── 3. Markdown → HTML (sanitized) ────────────────────────────
@@ -99,11 +140,11 @@ export async function POST(req: NextRequest) {
 
   // ── 6. Upsert — try with optional cols, fall back without them ──
   const basePayload: Record<string, unknown> = {
-    title:        data.title,
+    title:        data.title.trim(),
     slug:         data.slug,
     excerpt:      data.excerpt   ?? '',
     content:      html,
-    cover_url:    data.cover_url ?? '',
+    cover_url:    coverUrl,
     author:       data.author    ?? 'Shailu',
     tags,
     published:    isPublished,
@@ -133,13 +174,9 @@ export async function POST(req: NextRequest) {
   if (!error1) {
     upserted = result1;
   } else {
-    // If the error is about a missing column, retry without those columns
-    const isMissingCol = error1.message.includes('column') ||
-                         error1.message.includes('schema cache') ||
-                         error1.message.includes('category') ||
-                         error1.message.includes('read_time');
-
-    if (isMissingCol) {
+    // Only a genuinely missing column (migration not applied) triggers the
+    // retry; other errors (constraint violations etc.) are reported as-is.
+    if (isMissingColumnError(error1)) {
       const { data: result2, error: error2 } = await supabaseAdmin
         .from('blogs')
         .upsert(basePayload, { onConflict: 'slug', ignoreDuplicates: false })

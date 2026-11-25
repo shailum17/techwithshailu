@@ -29,13 +29,27 @@ const sweeper = setInterval(() => {
 // Don't keep the process alive just for cleanup (tests, scripts)
 sweeper.unref?.();
 
-/** Best-effort client IP (Vercel sets x-forwarded-for; first entry is the client). */
+/**
+ * Best-effort client IP used as the rate-limit key.
+ *
+ * - On Vercel (`VERCEL` env is set by the platform) the edge overwrites
+ *   `X-Forwarded-For`, so its first entry is the real client.
+ * - Anywhere else the *first* entry is whatever the client sent, so we take
+ *   the entry added by our own proxy instead: the Nth from the right, where
+ *   N = TRUSTED_PROXY_HOPS (default 1 = one reverse proxy such as nginx).
+ *   Run behind a proxy that sets X-Forwarded-For; exposed directly, no
+ *   header can be trusted and all callers may share or spoof a bucket.
+ */
 export function clientIp(req: NextRequest): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-    req.headers.get('x-real-ip') ||
-    'anonymous'
-  );
+  const xff = (req.headers.get('x-forwarded-for') ?? '')
+    .split(',').map(s => s.trim()).filter(Boolean);
+
+  if (xff.length > 0) {
+    if (process.env.VERCEL) return xff[0];
+    const hops = Math.max(1, Math.floor(Number(process.env.TRUSTED_PROXY_HOPS)) || 1);
+    return xff[Math.max(0, xff.length - hops)];
+  }
+  return req.headers.get('x-real-ip')?.trim() || 'anonymous';
 }
 
 export interface RateLimitOptions {

@@ -8,7 +8,8 @@
  *   ?featured=true is_featured = true
  *   ?q=            full-text search (title, company, description)
  *   ?sort=newest|deadline
- *   ?limit=        max results
+ *   ?limit=        page size (default 50, max 100)
+ *   ?offset=       rows to skip (paging)
  *
  * POST /api/jobs  — create job (admin only)
  */
@@ -18,7 +19,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { listLiveJobs } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { clampLimit, pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
+import { clampLimit, clampOffset, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, pick, validateJob, writeErrorStatus, JOB_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -39,12 +40,15 @@ export async function GET(req: NextRequest) {
       featured:  searchParams.get('featured') === 'true',
       q:         searchParams.get('q') || undefined,
       sort:      searchParams.get('sort') === 'deadline' ? 'deadline' : 'newest',
-      limit:     limit ? clampLimit(limit, 20, 100) : undefined,
+      // Always bounded: no ?limit means the default page, never the whole table
+      limit:     clampLimit(limit, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT),
+      offset:    clampOffset(searchParams.get('offset')),
     });
     return NextResponse.json(jobs);
   } catch (err) {
     console.error('[GET /api/jobs]', err);
-    return NextResponse.json([]);
+    // 503 (not 200 []) so clients and monitoring can tell "no data" from "DB down"
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
   }
 }
 
@@ -54,18 +58,23 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), JOB_FIELDS);
-    if (body.apply_link) {
-      const link = safeHttpUrl(body.apply_link);
-      if (!link) return NextResponse.json({ error: 'apply_link must be an http(s) URL' }, { status: 400 });
-      body.apply_link = link;
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
+    const checked = validateJob(pick(raw, JOB_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
+
     const { data, error } = await supabaseAdmin
       .from('jobs')
-      .insert(body)
+      .insert(checked.value)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/jobs]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err: unknown) {
     console.error('[POST /api/jobs]', err);

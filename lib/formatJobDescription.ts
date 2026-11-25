@@ -80,6 +80,27 @@ function normalizeHeading(text: string): string {
   return '';
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", rsquo: '’', lsquo: '‘',
+  rdquo: '”', ldquo: '“', ndash: '–', mdash: '—', bull: '•', hellip: '…', rupee: '₹',
+};
+
+/** Decodes HTML entities in one pass (so "&amp;lt;" becomes "&lt;", not "<"). */
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, code: string) => {
+    if (code[0] === '#') {
+      const n = code[1] === 'x' || code[1] === 'X' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10);
+      return Number.isFinite(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '';
+    }
+    return NAMED_ENTITIES[code.toLowerCase()] ?? m;
+  });
+}
+
+/** Escapes text for safe insertion into HTML. */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function isBulletLine(text: string): boolean {
   return /^(\s*[•·▪▸\-–—*]|\s*\d+[.)]\s)/.test(text);
 }
@@ -88,8 +109,16 @@ function cleanBullet(text: string): string {
   return text.replace(/^[\s•·▪▸\-–—*]+/, '').replace(/^\d+[.)]\s*/, '').trim();
 }
 
+/**
+ * Longest raw description processed (characters). Real listings are a few
+ * thousand characters; the cap bounds storage and the regex passes below,
+ * some of which are quadratic on hostile input (e.g. many unclosed <script).
+ */
+export const MAX_RAW_DESCRIPTION_CHARS = 20_000;
+
 export function formatJobDescription(raw: string): string {
   if (!raw || !raw.trim()) return '<p>No description available.</p>';
+  if (raw.length > MAX_RAW_DESCRIPTION_CHARS) raw = raw.slice(0, MAX_RAW_DESCRIPTION_CHARS);
 
   // ── 1. Remove script/style/noscript entirely ──────────────
   let html = raw
@@ -106,6 +135,9 @@ export function formatJobDescription(raw: string): string {
   // ── 3. Normalise <br> abuse → newlines ────────────────────
   html = html.replace(/<br\s*\/?>/gi, '\n');
 
+  // ── 3b. List items → bullet lines, so they survive as <li> ─
+  html = html.replace(/<li\b[^>]*>/gi, '\n• ');
+
   // ── 4. Split into lines by block-level tags ───────────────
   // Insert newline before/after block elements
   html = html
@@ -115,14 +147,23 @@ export function formatJobDescription(raw: string): string {
   // ── 5. Flatten to plain lines ─────────────────────────────
   const lines = html
     .split('\n')
-    .map(l => l.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#\d+;/g, '').replace(/\s+/g, ' ').trim())
-    .filter(l => l.length > 1);
+    // Tags are removed first, then entities decoded: the result is plain text
+    // (escaped again when rendered), so decoded "<" can never become markup.
+    .map(l => decodeEntities(l.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim())
+    .filter(l => l.length > 1 && l !== '•');
 
   // ── 6. Parse into sections ────────────────────────────────
   const sections: Section[] = [];
   let current: Section = { heading: '', items: [], paras: [] };
 
   for (const line of lines) {
+    // Bullets are list items, never headings (an item like "• SQL" is all caps)
+    if (isBulletLine(line)) {
+      const item = cleanBullet(line);
+      if (item) current.items.push(item);
+      continue;
+    }
+
     const heading = normalizeHeading(line);
 
     if (heading && line.length < 120) {
@@ -131,8 +172,6 @@ export function formatJobDescription(raw: string): string {
         sections.push(current);
       }
       current = { heading, items: [], paras: [] };
-    } else if (isBulletLine(line)) {
-      current.items.push(cleanBullet(line));
     } else if (line.length > 10) {
       // Could be a run-on "bullet" line separated by commas or semicolons
       // but only if it's inside a known list section
@@ -145,6 +184,9 @@ export function formatJobDescription(raw: string): string {
         }
       }
       current.paras.push(line);
+    } else {
+      // Short lines ("Pune", "B.Tech") are content too — keep them
+      current.paras.push(line);
     }
   }
   // Push last section
@@ -154,12 +196,15 @@ export function formatJobDescription(raw: string): string {
 
   // ── 7. If no sections detected, just wrap everything ──────
   if (sections.length === 0) {
-    return `<p>${lines.join('</p><p>')}</p>`;
+    return `<p>${lines.map(escapeHtml).join('</p><p>')}</p>`;
   }
 
   // ── 8. Reorder into desired section order ─────────────────
   const ordered: Section[] = [];
   const usedIdxs = new Set<number>();
+
+  // Text before the first heading is the intro: keep it at the top
+  if (!sections[0].heading) { ordered.push(sections[0]); usedIdxs.add(0); }
 
   for (const desiredHeading of DESIRED_ORDER) {
     const idx = sections.findIndex((s, i) => !usedIdxs.has(i) && s.heading === desiredHeading);
@@ -173,16 +218,16 @@ export function formatJobDescription(raw: string): string {
 
   for (const section of ordered) {
     if (section.heading) {
-      parts.push(`<h2>${section.heading}</h2>`);
+      parts.push(`<h2>${escapeHtml(section.heading)}</h2>`);
     }
     for (const para of section.paras) {
-      parts.push(`<p>${para}</p>`);
+      parts.push(`<p>${escapeHtml(para)}</p>`);
     }
     if (section.items.length) {
-      const lis = section.items.map(item => `<li>${item}</li>`).join('');
+      const lis = section.items.map(item => `<li>${escapeHtml(item)}</li>`).join('');
       parts.push(`<ul>${lis}</ul>`);
     }
   }
 
-  return sanitizeJobHtml(parts.join('\n') || `<p>${lines.join('</p><p>')}</p>`);
+  return sanitizeJobHtml(parts.join('\n') || `<p>${lines.map(escapeHtml).join('</p><p>')}</p>`);
 }

@@ -59,3 +59,12 @@ describe('jsearchDatePosted', () => {
     },
   );
 });
+
+describe('todayInIndia (#19)', () => {
+  it('uses the India calendar date, not UTC', async () => {
+    const { todayInIndia, openDeadlineFilter } = await import('@/lib/jobPipeline');
+    expect(todayInIndia(new Date('2026-11-25T18:00:00Z'))).toBe('2026-11-25'); // 23:30 IST
+    expect(todayInIndia(new Date('2026-11-25T19:00:00Z'))).toBe('2026-11-26'); // 00:30 IST next day
+    expect(openDeadlineFilter('2026-11-26')).toBe('deadline.is.null,deadline.gte.2026-11-26');
+  });
+});

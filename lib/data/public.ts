@@ -17,6 +17,7 @@
 
 import { cache } from 'react';
 import { supabase } from '@/lib/supabase';
+import { openDeadlineFilter } from '@/lib/jobPipeline';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type JobRow  = Record<string, any> & { id: string; title: string; company: string };
@@ -32,11 +33,15 @@ export interface JobQuery {
   q?: string;
   sort?: 'newest' | 'deadline';
   limit?: number;
+  /** Rows to skip (used with limit for paging). */
+  offset?: number;
 }
 
 /** Live jobs matching the query. Throws on database errors. */
 export async function listLiveJobs(opts: JobQuery = {}): Promise<JobRow[]> {
-  let query = supabase.from('jobs').select('*').eq('status', 'live');
+  // Live and still open: past-deadline jobs are hidden even before the daily
+  // cron marks them expired
+  let query = supabase.from('jobs').select('*').eq('status', 'live').or(openDeadlineFilter());
 
   if (opts.type)                       query = query.eq('type', opts.type);
   if (opts.location)                   query = query.ilike('location', `%${opts.location}%`);
@@ -45,10 +50,13 @@ export async function listLiveJobs(opts: JobQuery = {}): Promise<JobRow[]> {
   if (opts.q)                          query = query.textSearch('fts', opts.q, { type: 'websearch' });
 
   query = opts.sort === 'deadline'
-    ? query.order('deadline', { ascending: true })
+    ? query.order('deadline', { ascending: true, nullsFirst: false })
     : query.order('created_at', { ascending: false });
 
-  if (opts.limit) query = query.limit(opts.limit);
+  if (opts.limit) {
+    const from = opts.offset ?? 0;
+    query = query.range(from, from + opts.limit - 1);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -65,6 +73,7 @@ export const getLiveJob = cache(async (id: string): Promise<JobRow | null> => {
     .select('*')
     .eq('id', id)
     .eq('status', 'live')
+    .or(openDeadlineFilter())
     .maybeSingle();
   if (error) {
     // Malformed ids (not a uuid) come back as a query error — treat as not found
@@ -79,6 +88,7 @@ export interface ToolQuery {
   featured?: boolean;
   q?: string;
   limit?: number;
+  offset?: number;
 }
 
 /** AI tools matching the query, newest first. Throws on database errors. */
@@ -90,7 +100,10 @@ export async function listTools(opts: ToolQuery = {}): Promise<ToolRow[]> {
   if (opts.q)        query = query.textSearch('fts', opts.q, { type: 'websearch' });
 
   query = query.order('created_at', { ascending: false });
-  if (opts.limit) query = query.limit(opts.limit);
+  if (opts.limit) {
+    const from = opts.offset ?? 0;
+    query = query.range(from, from + opts.limit - 1);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -121,6 +134,7 @@ export async function listSitemapJobs(max = 5000): Promise<SitemapRow[]> {
     .from('jobs')
     .select('id, updated_at')
     .eq('status', 'live')
+    .or(openDeadlineFilter())
     .order('updated_at', { ascending: false })
     .limit(max);
   if (error) { console.error('[sitemap jobs]', error.message); return []; }

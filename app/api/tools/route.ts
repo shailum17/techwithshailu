@@ -5,7 +5,8 @@
  *   ?category=     filter by category
  *   ?featured=true is_featured = true
  *   ?q=            full-text search
- *   ?limit=        max results
+ *   ?limit=        page size (default 50, max 100)
+ *   ?offset=       rows to skip (paging)
  *
  * POST /api/tools  — create tool (admin only)
  */
@@ -15,7 +16,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { listTools } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { clampLimit, pick, TOOL_FIELDS } from '@/lib/validate';
+import { clampLimit, clampOffset, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, pick, validateTool, writeErrorStatus, TOOL_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -30,12 +31,15 @@ export async function GET(req: NextRequest) {
       category: searchParams.get('category') || undefined,
       featured: searchParams.get('featured') === 'true',
       q:        searchParams.get('q') || undefined,
-      limit:    limit ? clampLimit(limit, 20, 100) : undefined,
+      // Always bounded: no ?limit means the default page, never the whole table
+      limit:    clampLimit(limit, LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT),
+      offset:   clampOffset(searchParams.get('offset')),
     });
     return NextResponse.json(tools);
   } catch (err) {
     console.error('[GET /api/tools]', err);
-    return NextResponse.json([]);
+    // 503 (not 200 []) so clients and monitoring can tell "no data" from "DB down"
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
   }
 }
 
@@ -45,13 +49,22 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), TOOL_FIELDS);
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const checked = validateTool(pick(raw, TOOL_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
     const { data, error } = await supabaseAdmin
       .from('tools')
-      .insert(body)
+      .insert(checked.value)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/tools]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error('[POST /api/tools]', err instanceof Error ? err.message : err);

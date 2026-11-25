@@ -18,37 +18,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
-import { pick, safeHttpUrl } from '@/lib/validate';
+import { isUuid, pick, validateJob } from '@/lib/validate';
 
 const OVERRIDE_FIELDS = [
   'title', 'company', 'location', 'type', 'salary', 'apply_link', 'description',
   'tags', 'deadline', 'batch_year', 'is_featured',
 ] as const;
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 type Overrides = Partial<Record<(typeof OVERRIDE_FIELDS)[number], unknown>>;
 
-/** Validates admin overrides; returns an error message or null. */
+/**
+ * Validates admin overrides with the same rules as job create/update
+ * (type, dates, URLs, tags…). Normalises in place; returns an error or null.
+ * Empty apply_link / deadline become null, which keeps the pending row's value.
+ */
 function validateOverrides(o: Overrides): string | null {
-  if (o.apply_link !== undefined && o.apply_link !== null && o.apply_link !== '') {
-    const link = safeHttpUrl(o.apply_link);
-    if (!link) return 'apply_link must be an http(s) URL';
-    o.apply_link = link;
-  }
-  if (o.tags !== undefined && o.tags !== null &&
-      !(Array.isArray(o.tags) && o.tags.every(t => typeof t === 'string'))) {
-    return 'tags must be an array of strings';
-  }
-  if (o.deadline !== undefined && o.deadline !== null && o.deadline !== '' &&
-      (typeof o.deadline !== 'string' || Number.isNaN(Date.parse(o.deadline)))) {
-    return 'deadline must be a date (YYYY-MM-DD)';
-  }
-  if (o.deadline === '') o.deadline = null;
-  if (o.batch_year !== undefined && o.batch_year !== null &&
-      !(Number.isInteger(o.batch_year))) {
-    return 'batch_year must be a whole number';
-  }
+  const checked = validateJob(o as Record<string, unknown>, true);
+  if (!checked.ok) return checked.error;
+  Object.assign(o, checked.value);
   return null;
 }
 
@@ -102,7 +89,7 @@ export async function POST(req: NextRequest) {
   }
 
   const jobId = typeof body.jobId === 'string' ? body.jobId : '';
-  if (!UUID_RE.test(jobId)) {
+  if (!isUuid(jobId)) {
     return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
   }
 

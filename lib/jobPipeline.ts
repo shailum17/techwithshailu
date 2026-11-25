@@ -90,3 +90,19 @@ export function chunk<T>(items: T[], size: number): T[][] {
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;
 }
+
+/** The site's audience is in India: deadlines are calendar dates in IST. */
+export const SITE_TIME_ZONE = 'Asia/Kolkata';
+
+/** Today's date (YYYY-MM-DD) in India. A job is open through its whole deadline day. */
+export function todayInIndia(now: Date = new Date()): string {
+  // en-CA formats as YYYY-MM-DD
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: SITE_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now);
+}
+
+/** PostgREST `or` filter: no deadline, or a deadline today or later (still open). */
+export function openDeadlineFilter(today: string = todayInIndia()): string {
+  return `deadline.is.null,deadline.gte.${today}`;
+}

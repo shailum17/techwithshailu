@@ -34,22 +34,23 @@ const call = (jobId: unknown) => POST(new NextRequest('http://localhost/api/admi
 beforeEach(() => {
   process.env.ADMIN_SECRET = 'admin-secret';
   rows.length = 0;
-  rows.push({ id: 'a', status: 'pending' }, { id: 'b', status: 'approved' });
+  rows.push({ id: 'aaaaaaaa-0000-4000-8000-000000000001', status: 'pending' }, { id: 'bbbbbbbb-0000-4000-8000-000000000002', status: 'approved' });
 });
 
 describe('POST /api/admin/jobs/reject', () => {
   it('marks a pending job rejected instead of deleting it', async () => {
-    expect((await call('a')).status).toBe(200);
-    expect(rows).toEqual([{ id: 'a', status: 'rejected' }, { id: 'b', status: 'approved' }]);
+    expect((await call('aaaaaaaa-0000-4000-8000-000000000001')).status).toBe(200);
+    expect(rows).toEqual([{ id: 'aaaaaaaa-0000-4000-8000-000000000001', status: 'rejected' }, { id: 'bbbbbbbb-0000-4000-8000-000000000002', status: 'approved' }]);
   });
 
   it('404s for unknown or already-reviewed jobs', async () => {
-    expect((await call('b')).status).toBe(404);
-    expect((await call('zzz')).status).toBe(404);
+    expect((await call('bbbbbbbb-0000-4000-8000-000000000002')).status).toBe(404);
+    expect((await call('cccccccc-0000-4000-8000-000000000003')).status).toBe(404);
     expect(rows[1].status).toBe('approved');
   });
 
-  it('requires a jobId', async () => {
+  it('requires a UUID jobId', async () => {
     expect((await call(undefined)).status).toBe(400);
+    expect((await call('not-a-uuid')).status).toBe(400);
   });
 });
