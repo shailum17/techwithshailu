@@ -12,7 +12,7 @@ const calls: { table: string; op: string; arg?: unknown }[] = [];
 function table(name: string) {
   db[name] ??= [];
   return {
-    select(_cols: string) {
+    select() {
       return {
         in(col: string, vals: unknown[]) {
           calls.push({ table: name, op: 'select-in', arg: vals.length });

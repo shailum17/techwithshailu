@@ -75,6 +75,9 @@ function ToolLogo({ name, url, logo, avatarClass }: {
 
   if (!errored) {
     return (
+      // 40px favicon with an onError fallback; next/image would need every
+      // tool's domain whitelisted and can't swap to the fallback the same way
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={faviconUrl}
         alt={name}
