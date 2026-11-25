@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { pick, TOOL_FIELDS } from '@/lib/validate';
+import { pick, TOOL_FIELDS, isUuid } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -20,6 +20,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   if (limited) return limited;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
     // Use anon client — respects Supabase RLS policies
     const { data, error } = await supabase
@@ -41,6 +42,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
     const body = pick(await req.json(), TOOL_FIELDS);
@@ -70,13 +72,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('tools')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
     if (error) throw error;
+    if (!data?.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[DELETE /api/tools/:id]', err);

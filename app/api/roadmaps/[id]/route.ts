@@ -9,12 +9,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
-import { pick, ROADMAP_FIELDS } from '@/lib/validate';
+import { pick, ROADMAP_FIELDS, isUuid } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
     // Use anon client so RLS policies are respected (not the admin bypass).
     const { data, error } = await supabase
@@ -35,6 +36,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
     const body = pick(await req.json(), ROADMAP_FIELDS);
@@ -63,13 +65,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('roadmaps')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
     if (error) throw error;
+    if (!data?.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[DELETE /api/roadmaps/:id]', err);

@@ -18,14 +18,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
-import { pick, safeHttpUrl } from '@/lib/validate';
+import { isUuid, pick, safeHttpUrl } from '@/lib/validate';
 
 const OVERRIDE_FIELDS = [
   'title', 'company', 'location', 'type', 'salary', 'apply_link', 'description',
   'tags', 'deadline', 'batch_year', 'is_featured',
 ] as const;
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Overrides = Partial<Record<(typeof OVERRIDE_FIELDS)[number], unknown>>;
 
@@ -102,7 +100,7 @@ export async function POST(req: NextRequest) {
   }
 
   const jobId = typeof body.jobId === 'string' ? body.jobId : '';
-  if (!UUID_RE.test(jobId)) {
+  if (!isUuid(jobId)) {
     return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
   }
 

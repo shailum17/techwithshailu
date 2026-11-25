@@ -11,7 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getLiveJob } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
+import { pick, safeHttpUrl, JOB_FIELDS, isUuid } from '@/lib/validate';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,6 +21,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   if (limited) return limited;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
     // Shared with the job detail page (lib/data/public.ts): anon client + status = 'live'
     const job = await getLiveJob(id);
@@ -38,6 +39,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
     // Only allow-listed columns can be written (no id / timestamps / fts)
@@ -73,13 +75,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('jobs')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select('id');
     if (error) throw error;
+    if (!data?.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[DELETE /api/jobs/:id]', err);
