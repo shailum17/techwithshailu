@@ -4,6 +4,28 @@ _Static review of the server side (Next.js API routes in `app/api/**`, `lib/**`,
 
 Defensive review only. Nothing was run against production; findings were checked by reading the code, running the local tool chain, and small local reproductions where noted.
 
+**Progress (2026-11-26): 18 of 18 issues fixed** on branch `claude/optimistic-johnson-8pnh5j`, worked from lowest to highest severity, one commit per issue. Tests went from 96 to 174; `npm audit --omit=dev` went from 8 advisories to **0**. See the [Resolution log](#resolution-log) at the end.
+
+**Deployment checklist** (these fixes only take full effect in production after this):
+
+1. **Set `ADMIN_SECRET` to at least 32 characters** in Vercel *before* deploying (e.g. `openssl rand -base64 36`). With a shorter one, admin login is refused in production (#11).
+2. Run the new migrations in `supabase/migrations/` in order (see `supabase/README.md`):
+   - `20261126000000_jobs_value_checks.sql` (#7)
+   - `20261126000100_job_dedupe_key.sql` (#5): **deletes duplicate `pending_jobs` rows** before adding the unique index (keeps approved, then rejected, then the oldest pending; `jobs` is untouched)
+   - `20261126000200_jobs_live_only_policy.sql` (#2)
+3. After migrating, run the `pg_policies` check in `supabase/README.md`. On `jobs`, the only anon `SELECT` policy should be `status = 'live'`.
+4. Log in to `/admin` again after the deploy. The session token format changed (#10).
+5. Self-hosting only (not Vercel): set `TRUSTED_PROXY_HOPS` to the number of reverse proxies in front of the app (#12).
+6. Optional: set `RATE_LIMIT_SALT` (#17).
+
+**Behaviour changes to be aware of**
+
+- `/api/jobs`, `/api/tools`, `/api/blogs` and `/api/roadmaps` now return one page (default 50, max 100; use `?limit` and `?offset`). `/api/blogs` list rows no longer include `content`. The admin panel reads tools from the new `/api/admin/tools`.
+- Public list endpoints return **503** (not `200 []`) when the database is down. Server-rendered pages are unaffected; they query Supabase directly.
+- `/api/db-check` now needs admin auth (the admin panel already sends it).
+- **Logout signs out every admin session**, in all browsers.
+- Admin writes return 400 with a message for invalid values. Blog slugs must be `lowercase-with-hyphens`, but an existing legacy slug can be re-saved unchanged.
+
 ---
 
 ## Summary
@@ -37,26 +59,26 @@ Defensive review only. Nothing was run against production; findings were checked
 
 ## Findings index
 
-| # | Sev | Area | Title | Status |
-|---|---|---|---|---|
-| 1 | 🔴 | Dependencies | `next@15.5.19` has critical advisories (Image Optimization RCE, cache poisoning, DoS) | CONFIRMED (version) |
-| 2 | 🔴 | Supabase RLS | Leftover `using (true)` policies make **all** jobs (draft/expired) readable with the public anon key | CONFIRMED (SQL) |
-| 3 | 🟠 | Injection | Markdown upload evaluates `---js` front-matter with `eval()` on the server | CONFIRMED (local repro) |
-| 4 | 🟠 | Dependencies | `sanitize-html@2.13.1` has 5 XSS-class advisories | CONFIRMED (version) |
-| 5 | 🟠 | Job pipeline | De-duplication can miss existing jobs → duplicate rows in the review queue | CONFIRMED (logic) |
-| 6 | 🟠 | DoS / data | Public list endpoints are unbounded by default and only limited per instance | CONFIRMED |
-| 7 | 🟡 | Validation | Admin writes have no type/enum/URL validation; bad input returns 500/503 | CONFIRMED |
-| 8 | 🟡 | API | Non-UUID ids return 500; DELETE reports success for ids that don't exist | CONFIRMED |
-| 9 | 🟡 | API | `/api/admin/logs?limit=abc` (or negative) returns 500 | CONFIRMED |
-| 10 | 🟡 | Auth | Admin sessions can't be revoked; logout only clears the cookie | CONFIRMED (design) |
-| 11 | 🟡 | Auth | Failed-login limiter can be exceeded with parallel requests; no secret-strength check | PLAUSIBLE |
-| 12 | 🟡 | Rate limiting | Client IP taken from first `X-Forwarded-For` entry — spoofable off Vercel | PLAUSIBLE (deployment-dependent) |
-| 13 | 🟡 | Exposure | `/api/db-check` is public, unthrottled and uses the service-role client | CONFIRMED |
-| 14 | 🟡 | Upload | `upload-md` has no size limit and doesn't validate `slug` / `cover_url` | CONFIRMED |
-| 15 | 🟡 | Error handling | Some routes turn DB failures into `200 []` | CONFIRMED |
-| 16 | ⚪ | Logic | `published: "true"` (string) can publish a post with `published_at = null` | PLAUSIBLE |
-| 17 | ⚪ | Crypto hygiene | Rate-limit IP salt falls back to `ADMIN_SECRET` / a constant | CONFIRMED |
-| 18 | ⚪ | Dependencies | `@supabase/supabase-js@2.49.4` low-severity advisory | CONFIRMED (version) |
+| # | Sev | Area | Title | Finding | Status |
+|---|---|---|---|---|---|
+| 1 | 🔴 | Dependencies | `next@15.5.19` has critical advisories (Image Optimization RCE, cache poisoning, DoS) | CONFIRMED (version) | ✅ Fixed |
+| 2 | 🔴 | Supabase RLS | Leftover `using (true)` policies make **all** jobs (draft/expired) readable with the public anon key | CONFIRMED (SQL) | ✅ Fixed (needs migration) |
+| 3 | 🟠 | Injection | Markdown upload evaluates `---js` front-matter with `eval()` on the server | CONFIRMED (local repro) | ✅ Fixed |
+| 4 | 🟠 | Dependencies | `sanitize-html@2.13.1` has 5 XSS-class advisories | CONFIRMED (version) | ✅ Fixed |
+| 5 | 🟠 | Job pipeline | De-duplication can miss existing jobs → duplicate rows in the review queue | CONFIRMED (logic) | ✅ Fixed (needs migration) |
+| 6 | 🟠 | DoS / data | Public list endpoints are unbounded by default and only limited per instance | CONFIRMED | ✅ Fixed |
+| 7 | 🟡 | Validation | Admin writes have no type/enum/URL validation; bad input returns 500/503 | CONFIRMED | ✅ Fixed (+ migration) |
+| 8 | 🟡 | API | Non-UUID ids return 500; DELETE reports success for ids that don't exist | CONFIRMED | ✅ Fixed |
+| 9 | 🟡 | API | `/api/admin/logs?limit=abc` (or negative) returns 500 | CONFIRMED | ✅ Fixed |
+| 10 | 🟡 | Auth | Admin sessions can't be revoked; logout only clears the cookie | CONFIRMED (design) | ✅ Fixed |
+| 11 | 🟡 | Auth | Failed-login limiter can be exceeded with parallel requests; no secret-strength check | PLAUSIBLE | ✅ Fixed (needs 32+ char secret) |
+| 12 | 🟡 | Rate limiting | Client IP taken from first `X-Forwarded-For` entry — spoofable off Vercel | PLAUSIBLE (deployment-dependent) | ✅ Fixed |
+| 13 | 🟡 | Exposure | `/api/db-check` is public, unthrottled and uses the service-role client | CONFIRMED | ✅ Fixed |
+| 14 | 🟡 | Upload | `upload-md` has no size limit and doesn't validate `slug` / `cover_url` | CONFIRMED | ✅ Fixed |
+| 15 | 🟡 | Error handling | Some routes turn DB failures into `200 []` | CONFIRMED | ✅ Fixed |
+| 16 | ⚪ | Logic | `published: "true"` (string) can publish a post with `published_at = null` | PLAUSIBLE | ✅ Fixed |
+| 17 | ⚪ | Crypto hygiene | Rate-limit IP salt falls back to `ADMIN_SECRET` / a constant | CONFIRMED | ✅ Fixed |
+| 18 | ⚪ | Dependencies | `@supabase/supabase-js@2.49.4` low-severity advisory | CONFIRMED (version) | ✅ Fixed |
 
 ---
 
@@ -382,3 +404,33 @@ GHSA-8r88-6cj9-9fh5 (low, `auth-js` path routing). This app doesn't use Supabase
 3. **#3, #4** gray-matter engine + sanitize-html upgrade (small, with tests).
 4. **#5, #6** pipeline de-dup constraint and default list limits.
 5. **#7–#15** validation and error-handling clean-up, ideally as one shared `lib/validate.ts` change.
+
+---
+
+## Resolution log
+
+Fixed 2026-11-26, from lowest to highest severity. Each fix has its own commit and tests. Every commit passed lint, typecheck and the full test suite.
+
+| # | Commit | What changed |
+|---|---|---|
+| 18 | `f1bf32b` | `@supabase/supabase-js` 2.49.4 → 2.119.2. |
+| 17 | `03a7dee` | IP-hash salt is `RATE_LIMIT_SALT` or an HMAC-derived key, never `ADMIN_SECRET` itself (`lib/sharedRateLimit.ts`). |
+| 16 | `a1b12c0` | Blog create/update reject a non-boolean `published` (400). Added `tests/helpers/fakeSupabase.ts` for route tests. |
+| 15 | `212874c` | `GET /api/{jobs,tools,blogs,roadmaps,users}` return 503 on DB failure instead of `200 []`. |
+| 14 | `b4687ca` | `upload-md`: 512 KB cap (413), `.md` case-insensitive, slug/title/`cover_url` validated, and the fallback only retries on a real missing-column error (`PGRST204`/`42703`). |
+| 13 | `bfc2695` | `/api/db-check` requires admin auth and uses `count: 'estimated'`. |
+| 12 | `74ca4e1` | `clientIp()` uses the first `X-Forwarded-For` entry only on Vercel. Elsewhere it takes the entry `TRUSTED_PROXY_HOPS` from the right (default 1). |
+| 11 | `9c8a6c0` | Every admin-key comparison is counted **before** comparing (60/min per IP), so parallel bursts can't beat the 20/min failure limit. Production refuses an `ADMIN_SECRET` under 32 characters. Cookie sessions are still never counted. |
+| 10 | `af3b0c7` | Session tokens carry a signed epoch stored in `app_settings` (`admin_session`). Logout with a valid session bumps the epoch, revoking every session including copied cookies. If `app_settings` can't be read, it falls back to epoch 0 (the old behaviour). |
+| 9 | `3093604` | `/api/admin/logs` uses `clampLimit()`. |
+| 8 | `d12e30b` | Non-UUID path ids → 404 with no DB call. `reject` needs a UUID `jobId` (400). DELETE returns 404 when nothing was deleted. `UUID_RE`/`isUuid` are shared from `lib/validate.ts`. |
+| 7 | `772002e` | `validateJob/Tool/Blog/Roadmap` check required fields, enums, `YYYY-MM-DD` dates, http(s) URLs, tags, booleans and integers. Bad JSON → 400. Constraint errors → 400/409 via `writeErrorStatus()`. PUT on a missing row → 404 (it was returning 500 from `PGRST116`). Approve overrides use the same validator. Migration adds `NOT VALID` checks on `jobs.type`/`status`. **Also fixes "Add job" without a deadline**, which sent `''` to a `date` column and failed with 503. |
+| 6 | `70efd87` | Public lists are always paged (default 50, max 100, `?offset`). The `/api/blogs` list omits `content`. `GET /api/roadmaps/:id` is rate-limited. New `GET /api/admin/tools`. |
+| 5 | `4d6f4cb` | Generated `dedupe_key` column on `pending_jobs`/`jobs` (same normalisation as `dedupeKey()`), with a unique index on `pending_jobs`. Lookups use the key. A failed lookup aborts the insert. Inserts use `ON CONFLICT DO NOTHING`. The old behaviour is kept as a fallback until the migration is applied. |
+| 4 | `d3a7620` | `sanitize-html` 2.13.1 → 2.18.2, with regression tests for the advisory payload classes. |
+| 3 | `77187b6` | `upload-md` accepts YAML front-matter only (`matter.language()` checked first), and the js/javascript/coffee engines are replaced with ones that throw. A test proves a `---js` payload is not executed. |
+| 2 | `3c1a652` | Migration drops the `using (true)` job read policies and recreates the live-only one. `schema.sql` and `rls_policies.sql` were corrected too. **Verified on local Postgres 16** with Supabase-like roles: before the fix, `anon` could read a draft job; after it, only live jobs, on an upgraded DB, a fresh DB, and with `rls_policies.sql` run afterwards. |
+| 1 | `73cebda` | `next` 15.5.19 → 15.5.29 (and `eslint-config-next`). `npm audit fix` updated sharp, postcss, nanoid and source-map-js. An `overrides` entry moves Next's pinned `postcss@8.4.31` to 8.5.33, since the upstream fix is only in Next 16. A clean `npm ci` + `next build` passes and the production server was smoke-tested. |
+
+**Final checks:** 174 tests pass, `tsc --noEmit` and `eslint` are clean, `next build` succeeds, and `npm audit --omit=dev` finds **0 vulnerabilities**.
+
