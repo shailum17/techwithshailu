@@ -14,7 +14,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
-import { pick, BLOG_FIELDS } from '@/lib/validate';
+import { pick, validateBlog, writeErrorStatus, BLOG_FIELDS } from '@/lib/validate';
 import { resolvePublishedAt } from '@/lib/blogPublish';
 
 /* ── GET ──────────────────────────────────────────────────────── */
@@ -55,10 +55,13 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), BLOG_FIELDS);
-    if (body.published !== undefined && typeof body.published !== 'boolean') {
-      return NextResponse.json({ error: '`published` must be true or false' }, { status: 400 });
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
+    const checked = validateBlog(pick(raw, BLOG_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
+    const body = checked.value;
     const doc  = {
       ...body,
       // Sanitize HTML content before storing to prevent XSS
@@ -71,7 +74,11 @@ export async function POST(req: NextRequest) {
       .insert(doc)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/blogs]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error('[POST /api/blogs]', err instanceof Error ? err.message : err);

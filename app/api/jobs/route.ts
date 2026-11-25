@@ -18,7 +18,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { listLiveJobs } from '@/lib/data/public';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { clampLimit, pick, safeHttpUrl, JOB_FIELDS } from '@/lib/validate';
+import { clampLimit, pick, validateJob, writeErrorStatus, JOB_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -55,18 +55,23 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), JOB_FIELDS);
-    if (body.apply_link) {
-      const link = safeHttpUrl(body.apply_link);
-      if (!link) return NextResponse.json({ error: 'apply_link must be an http(s) URL' }, { status: 400 });
-      body.apply_link = link;
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
+    const checked = validateJob(pick(raw, JOB_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
+
     const { data, error } = await supabaseAdmin
       .from('jobs')
-      .insert(body)
+      .insert(checked.value)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/jobs]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err: unknown) {
     console.error('[POST /api/jobs]', err);

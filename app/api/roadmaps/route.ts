@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
-import { pick, ROADMAP_FIELDS } from '@/lib/validate';
+import { pick, validateRoadmap, writeErrorStatus, ROADMAP_FIELDS } from '@/lib/validate';
 
 /* ── GET ──────────────────────────────────────────────────────── */
 export async function GET(req: NextRequest) {
@@ -50,13 +50,22 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const body = pick(await req.json(), ROADMAP_FIELDS);
+    let raw: unknown;
+    try { raw = await req.json(); } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const checked = validateRoadmap(pick(raw, ROADMAP_FIELDS));
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
     const { data, error } = await supabaseAdmin
       .from('roadmaps')
-      .insert(body)
+      .insert(checked.value)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /api/roadmaps]', error.code, error.message);
+      const { status, error: msg } = writeErrorStatus(error);
+      return NextResponse.json({ error: msg }, { status });
+    }
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     console.error('[POST /api/roadmaps]', err instanceof Error ? err.message : err);
