@@ -275,9 +275,9 @@ alter table users         enable row level security;
 
 -- ── Public READ (anon + authenticated) ────────────────────────
 
--- All live jobs are publicly readable
+-- Only live jobs are publicly readable (drafts / expired stay hidden)
 create policy "public read jobs"
-  on jobs for select using (true);
+  on jobs for select using (status = 'live');
 
 -- All tools are publicly readable
 create policy "public read tools"

@@ -28,6 +28,8 @@ Run these files in order (SQL Editor, or `psql`):
    - `20261126000100_job_dedupe_key.sql` — generated `dedupe_key` on `pending_jobs` / `jobs` and a unique
      index on `pending_jobs.dedupe_key`, so the fetch can't queue the same listing twice. **Deletes duplicate
      `pending_jobs` rows first** (keeps approved → rejected → oldest pending); `jobs` is not touched.
+   - `20261126000200_jobs_live_only_policy.sql` — drops the old `using (true)` read policies on `jobs`
+     so the public anon key can read **live** jobs only (drafts/expired were readable before).
 3. `seed-roadmaps.sql` — optional roadmap content (safe to re-run).
 
 `rls_policies.sql` is an older, more detailed version of the RLS setup and overlaps with
@@ -36,7 +38,19 @@ policies before recreating them), but the migration is the source of truth.
 
 ## Updating an existing database
 
-Every migration is idempotent. Run any file in `migrations/` that hasn't been applied
+Every migration is idempotent.
+
+After applying, check that no public policy is wider than intended:
+
+```sql
+select tablename, policyname, roles, cmd, qual
+from pg_policies
+where schemaname = 'public'
+order by tablename, cmd;
+```
+
+On `jobs` the only `SELECT` policy for `anon`/`authenticated` should be `status = 'live'`, and on `blogs`
+`published = true`. Policies of the same command are OR-ed, so one `using (true)` cancels a stricter one. Run any file in `migrations/` that hasn't been applied
 yet, or use `supabase db push` if the project is linked with the Supabase CLI.
 
 ## Adding changes
