@@ -11,14 +11,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/adminAuth';
+import { isUuid } from '@/lib/validate';
 
 export async function POST(req: NextRequest) {
   const authError = await checkAdminAuth(req);
   if (authError) return authError;
 
   try {
-    const { jobId } = await req.json();
-    if (typeof jobId !== 'string' || !jobId) {
+    let jobId: unknown;
+    try {
+      ({ jobId } = await req.json());
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    if (!isUuid(jobId)) {
       return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
     }
 
