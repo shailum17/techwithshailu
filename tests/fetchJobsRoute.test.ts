@@ -55,6 +55,20 @@ function table(name: string) {
       };
       return q;
     },
+    update(patch: Row) {
+      const conds: ((r: Row) => boolean)[] = [];
+      const q = {
+        eq(col: string, val: unknown) { conds.push(r => r[col] === val); return q; },
+        lt(col: string, val: string) { conds.push(r => r[col] != null && String(r[col]) < val); return q; },
+        select() {
+          const hit = db[name].filter(r => conds.every(c => c(r)));
+          hit.forEach(r => Object.assign(r, patch));
+          calls.push({ table: name, op: 'update', arg: hit.length });
+          return Promise.resolve({ data: hit.map(r => ({ id: r.title })), error: null });
+        },
+      };
+      return q;
+    },
     // ON CONFLICT (dedupe_key) DO NOTHING — only exists once migrated
     upsert(rows: Row[], opts: { onConflict?: string; ignoreDuplicates?: boolean }) {
       return {
@@ -266,5 +280,22 @@ describe('GET /api/cron/fetch-jobs', () => {
     expect(body.added_to_pending).toBe(2);
     expect(calls.some(c => c.op === 'select-in:title')).toBe(true);
     expect(calls.some(c => c.op === 'insert' && c.table === 'pending_jobs')).toBe(true);
+  });
+
+  it('expires live jobs past their deadline (India date) on every run, even with no new listings (#19)', async () => {
+    const { todayInIndia } = await import('@/lib/jobPipeline');
+    const today = todayInIndia();
+    const yesterday = todayInIndia(new Date(Date.now() - 86_400_000));
+    db.jobs = [
+      { title: 'Closed',    company: 'A', status: 'live',  deadline: yesterday },
+      { title: 'Last day',  company: 'B', status: 'live',  deadline: today },
+      { title: 'No date',   company: 'C', status: 'live',  deadline: null },
+      { title: 'Old draft', company: 'D', status: 'draft', deadline: yesterday },
+    ];
+    const { body } = await run('?source=adzuna', { 'x-admin-key': 'admin-secret' }); // fetches nothing
+    expect(body.expired_jobs).toBe(1);
+    expect(Object.fromEntries(db.jobs.map(j => [j.title, j.status]))).toEqual({
+      'Closed': 'expired', 'Last day': 'live', 'No date': 'live', 'Old draft': 'draft',
+    });
   });
 });

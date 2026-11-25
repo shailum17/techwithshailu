@@ -22,7 +22,7 @@ export function createFakeSupabase() {
       return b;
     };
     for (const m of [
-      'select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'in', 'lt', 'gt',
+      'select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'in', 'lt', 'gt', 'or',
       'ilike', 'contains', 'textSearch', 'order', 'limit', 'range',
     ]) b[m] = chain(m);
     b.single = (...args: unknown[]) => { calls.push({ table, method: 'single', args }); return Promise.resolve(next()); };
