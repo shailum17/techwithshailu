@@ -407,6 +407,60 @@ GHSA-8r88-6cj9-9fh5 (low, `auth-js` path routing). This app doesn't use Supabase
 
 ---
 
+## Second pass (2026-11-26)
+
+After the first 18 fixes, a further sweep of server-rendered pages, `lib/roadmaps.ts`, the job pipeline's handling of third-party text, and the admin debug route found five more issues.
+
+| # | Sev | Area | Title | Finding | Status |
+|---|---|---|---|---|---|
+| 19 | 🟠 | Job lifecycle | Jobs past their deadline are never expired — they stay live, top the "deadline" sort and stay in the sitemap | CONFIRMED | ⏳ Open |
+| 20 | 🟡 | Performance | Blog post page loads every published post (full HTML) on each request | CONFIRMED | ⏳ Open |
+| 21 | 🟡 | Least privilege | Public roadmap pages use the service-role key; one malformed row hides all roadmaps; resource links aren't scheme-checked | CONFIRMED | ⏳ Open |
+| 22 | 🟡 | Input limits | Third-party job descriptions are unbounded in size | CONFIRMED | ⏳ Open |
+| 23 | 🟡 | Reliability | Admin `debug-fetch` has no timeouts and an unbounded query | CONFIRMED | ⏳ Open |
+
+### 19. Jobs past their deadline are never expired
+
+**Where:** `lib/data/public.ts` (`listLiveJobs`, `getLiveJob`, `listSitemapJobs`), `app/api/cron/fetch-jobs/route.ts`
+
+`jobs.status` allows `'expired'`, but no code ever sets it, and the public queries filter only on `status = 'live'`. A job whose `deadline` has passed keeps showing on `/jobs`, on the home page, in `/api/jobs` and in the sitemap. With `?sort=deadline` (ascending), the **already-closed** jobs are listed first, so "Deadline soon" leads with jobs students can no longer apply to.
+
+**Fix:** public queries also require `deadline is null or deadline >= today`, with today taken in India time (`Asia/Kolkata`, the site's audience), so a job is hidden right after its deadline day ends. The daily cron also marks those rows `status = 'expired'`, so the admin panel and the database agree.
+
+### 20. Blog post page loads every published post on each request
+
+**Where:** `app/blog/[slug]/page.tsx` (`getAllPosts`)
+
+To render one post, the page selects **all** published posts, including their full `content` HTML, then finds the one with `.find()` in JavaScript and derives related posts from the same list. The cost grows with the size of the blog on every request.
+
+**Fix:** fetch the one post by `slug`, and fetch related posts separately (same category, summary columns only, `limit 4`).
+
+### 21. Roadmaps read with the service-role key
+
+**Where:** `lib/roadmaps.ts`
+
+`getRoadmapCategories()` and `getRoadmapCategory()` serve public pages but use `supabaseAdmin`, which bypasses RLS. Public data should be read with the anon client, so a policy mistake can't expose more than intended. Also, `JSON.parse(row.content)` runs inside the shared `try`, so one row with malformed JSON makes the whole list return `[]` (every roadmap disappears), and resource `url`s from `content` are rendered as links without a scheme check.
+
+**Fix:** use the anon client; parse each row on its own and skip a bad one with a log line; keep only `http(s)` resource links.
+
+### 22. Third-party job descriptions are unbounded
+
+**Where:** `app/api/cron/fetch-jobs/route.ts`, `lib/formatJobDescription.ts`
+
+Descriptions from Unstop/Adzuna/JSearch are stored and formatted at whatever size the source returns. Large inputs bloat `pending_jobs`/`jobs`, and some of the formatter's regexes (e.g. `<script[\s\S]*?<\/script>` with many unclosed openings) do quadratic work on hostile input.
+
+**Fix:** cap raw third-party text before formatting (20,000 characters, far more than a real listing), inside `formatJobDescription()` so every caller is covered.
+
+### 23. Admin `debug-fetch` has no timeouts
+
+**Where:** `app/api/admin/debug-fetch/route.ts`
+
+Unlike the cron route, the three source calls use bare `fetch()` without a timeout. A slow source holds the function until the platform kills it. The `q` parameter is also passed upstream without a length cap.
+
+**Fix:** reuse an 8-second timeout (answering with a clear 504 when it fires) and cap `q` at 200 characters, like the cron route.
+
+---
+
 ## Resolution log
 
 Fixed 2026-11-26, from lowest to highest severity. Each fix has its own commit and tests. Every commit passed lint, typecheck and the full test suite.
