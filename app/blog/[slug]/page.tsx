@@ -2,22 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReadingProgress from '@/components/ReadingProgress';
-import { supabase } from '@/lib/supabase';
+import { getPublishedPost, getSidebarPosts } from '@/lib/data/blog';
 import { sanitizeBlogHtml } from '@/lib/sanitize';
 import BlogSidebar from './BlogSidebar';
 
-interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  content: string;
-  published_at: string;
-  read_time: string;
-  cover_url?: string;
-  tags?: string[];
-}
 
 /* ── category styles ──────────────────────────────────────────── */
 const categoryColor: Record<string, string> = {
@@ -42,33 +30,12 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/* ── data fetching ────────────────────────────────────────────── */
-async function getAllPosts(): Promise<BlogPost[]> {
-  try {
-    const { data, error } = await supabase
-      .from('blogs')
-      .select('id,slug,title,excerpt,category,content,published_at,read_time,cover_url,tags')
-      .eq('published', true)
-      .order('published_at', { ascending: false });
-    if (error) { console.error('[blog detail] supabase:', error.message); return []; }
-    return (data ?? []) as BlogPost[];
-  } catch (err) {
-    console.error('[blog detail]', err);
-    return [];
-  }
-}
-
 /* ── metadata ─────────────────────────────────────────────────── */
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
-  const { data: post } = await supabase
-    .from('blogs')
-    .select('title,excerpt,cover_url')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle();
+  const post = await getPublishedPost(slug);
   if (!post) return { title: 'Post Not Found' };
   return {
     title:       `${post.title} — techwithshailu`,
@@ -86,23 +53,11 @@ export default async function BlogPostPage(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const allPosts = await getAllPosts();
-  const post     = allPosts.find(p => p.slug === slug);
+  const post = await getPublishedPost(slug);
   if (!post) notFound();
 
-  /* Related — same category, exclude current, max 4 */
-  const related = allPosts
-    .filter(p => p.slug !== slug && p.category === post.category)
-    .slice(0, 4);
-
-  /* Recent — different category, newest first, max 5 */
-  const relatedSlugs = new Set([slug, ...related.map(p => p.slug)]);
-  const recent = allPosts
-    .filter(p => !relatedSlugs.has(p.slug))
-    .slice(0, 5);
-
-  /* Fallback — all other posts if both lists are empty */
-  const otherPosts = allPosts.filter(p => p.slug !== slug).slice(0, 5);
+  // Bounded sidebar queries instead of loading every post (#20)
+  const { related, recent, otherPosts } = await getSidebarPosts(slug, post.category);
 
   return (
     <div className="pt-20 pb-20 min-h-screen" style={{ background: '#080808' }}>
