@@ -22,7 +22,7 @@ import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { checkAdminAuth, safeEqual } from '@/lib/adminAuth';
 import { formatJobDescription } from '@/lib/formatJobDescription';
-import { safeHttpUrl } from '@/lib/validate';
+import { isMissingColumnError, safeHttpUrl } from '@/lib/validate';
 import { SITE_URL } from '@/lib/site';
 import { getAutoFetchEnabled } from '@/lib/settings';
 import {
@@ -473,6 +473,62 @@ async function fetchRapidAPI(
   return all;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   De-duplication helpers
+   Uses the generated `dedupe_key` column + unique index from
+   supabase/migrations/20261126000100_job_dedupe_key.sql. Until that
+   migration is applied, falls back to the older exact-title lookup and
+   plain insert.
+───────────────────────────────────────────────────────────── */
+type PendingRow = Record<string, unknown>;
+
+/** Keys of jobs already in pending_jobs or jobs. `error` set when a lookup failed. */
+async function findExistingKeys(jobs: Job[]): Promise<{ keys: Set<string>; error?: string }> {
+  const keys     = new Set<string>();
+  const wanted   = Array.from(new Set(jobs.map(j => dedupeKey(j.title, j.company))));
+  const titles   = Array.from(new Set(jobs.map(j => j.title)));
+
+  for (const table of ['pending_jobs', 'jobs'] as const) {
+    let byKey = true;
+    for (const batch of chunk(wanted, 50)) {
+      const { data, error } = await supabaseAdmin.from(table).select('dedupe_key').in('dedupe_key', batch);
+      if (error && isMissingColumnError(error)) { byKey = false; break; }
+      if (error) return { keys, error: `check ${table}: ${error.message}` };
+      for (const row of data ?? []) if (row.dedupe_key) keys.add(String(row.dedupe_key));
+    }
+    if (byKey) continue;
+
+    // Legacy path (migration not applied): exact title match, normalised compare
+    for (const batch of chunk(titles, 50)) {
+      const { data, error } = await supabaseAdmin.from(table).select('title, company').in('title', batch);
+      if (error) return { keys, error: `check ${table}: ${error.message}` };
+      for (const row of data ?? []) keys.add(dedupeKey(row.title ?? '', row.company ?? ''));
+    }
+  }
+  return { keys };
+}
+
+/**
+ * Inserts rows, skipping any whose dedupe_key already exists (ON CONFLICT DO
+ * NOTHING), so overlapping runs can't double-queue a listing. Returns how
+ * many rows were actually inserted.
+ */
+async function insertPending(rows: PendingRow[]): Promise<{ inserted: number; error?: string }> {
+  const up = await supabaseAdmin
+    .from('pending_jobs')
+    .upsert(rows, { onConflict: 'dedupe_key', ignoreDuplicates: true })
+    .select('id');
+  if (!up.error) return { inserted: up.data?.length ?? 0 };
+
+  // 42P10 = no unique index for ON CONFLICT yet; missing column = migration not applied
+  if (up.error.code === '42P10' || isMissingColumnError(up.error)) {
+    const ins = await supabaseAdmin.from('pending_jobs').insert(rows).select('id');
+    if (!ins.error) return { inserted: ins.data?.length ?? rows.length };
+    return { inserted: 0, error: ins.error.message };
+  }
+  return { inserted: 0, error: up.error.message };
+}
+
 /* ═════════════════════════════════════════════════════════════
    MAIN HANDLER
 ═════════════════════════════════════════════════════════════ */
@@ -548,30 +604,26 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Insert non-duplicates into pending_jobs ───────────────
-  // Batched: one lookup per 50 titles + one bulk insert, instead of a
-  // SELECT and an INSERT per job (which could approach maxDuration).
+  // Batched: one lookup per 50 keys per table + one bulk insert.
   let newCount  = 0;
   let dupeCount = 0;
   const errors: string[] = [];
 
   // "Seen before" = any pending_jobs row (pending, approved or rejected — reviewed
   // rows are kept for exactly this) or any job already on the site.
-  const existingKeys = new Set<string>();
-  const titles = Array.from(new Set(allJobs.map(j => j.title)));
-  for (const batch of chunk(titles, 50)) {
-    for (const table of ['pending_jobs', 'jobs'] as const) {
-      const { data, error } = await supabaseAdmin
-        .from(table)
-        .select('title, company')
-        .in('title', batch);
-      if (error) { errors.push(`check ${table}: ${error.message}`); continue; }
-      for (const row of data ?? []) existingKeys.add(dedupeKey(row.title ?? '', row.company ?? ''));
-    }
+  const lookup = await findExistingKeys(allJobs);
+  if (lookup.error) {
+    // Without a reliable lookup every job would look new — don't flood the queue
+    console.error('[cron] duplicate lookup failed, nothing inserted:', lookup.error);
+    await saveLog({ trigger_type: trigger, query: rawQuery, status: 'error', fetched: allJobs.length,
+                    error_message: `duplicate check failed: ${lookup.error}`, raw_response: JSON.stringify(summary) });
+    return Response.json({ success: false, error: 'Duplicate check failed; nothing was added. See automation logs.' },
+                         { status: 500 });
   }
 
   const rows = [];
   for (const job of allJobs) {
-    if (existingKeys.has(dedupeKey(job.title, job.company))) { dupeCount++; continue; }
+    if (lookup.keys.has(dedupeKey(job.title, job.company))) { dupeCount++; continue; }
     rows.push({
       title:       job.title,
       company:     job.company,
@@ -586,17 +638,19 @@ export async function GET(req: NextRequest) {
   }
 
   if (rows.length > 0) {
-    const { error: bulkErr } = await supabaseAdmin.from('pending_jobs').insert(rows);
-    if (!bulkErr) {
-      newCount = rows.length;
+    const bulk = await insertPending(rows);
+    if (!bulk.error) {
+      newCount   = bulk.inserted;
+      dupeCount += rows.length - bulk.inserted;   // lost a race with a concurrent run
     } else {
       // One bad row fails the whole statement — retry individually so the
       // good rows still land and the bad ones are reported.
-      console.warn('[cron] bulk insert failed, retrying per row:', bulkErr.message);
+      console.warn('[cron] bulk insert failed, retrying per row:', bulk.error);
       for (const row of rows) {
-        const { error } = await supabaseAdmin.from('pending_jobs').insert(row);
-        if (error) errors.push(error.message);
-        else       newCount++;
+        const one = await insertPending([row]);
+        if (one.error)         errors.push(one.error);
+        else if (one.inserted) newCount++;
+        else                   dupeCount++;
       }
     }
   }

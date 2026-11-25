@@ -25,6 +25,9 @@ Run these files in order (SQL Editor, or `psql`):
      `approve_pending_job()` accordingly and adds title/status indexes.
    - `20261126000000_jobs_value_checks.sql` — `check` constraints for `jobs.type` and `jobs.status`
      (added `NOT VALID`, so existing rows don't block it; see the file for how to validate them).
+   - `20261126000100_job_dedupe_key.sql` — generated `dedupe_key` on `pending_jobs` / `jobs` and a unique
+     index on `pending_jobs.dedupe_key`, so the fetch can't queue the same listing twice. **Deletes duplicate
+     `pending_jobs` rows first** (keeps approved → rejected → oldest pending); `jobs` is not touched.
 3. `seed-roadmaps.sql` — optional roadmap content (safe to re-run).
 
 `rls_policies.sql` is an older, more detailed version of the RLS setup and overlaps with
